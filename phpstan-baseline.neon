@@ -1,0 +1,66 @@
+parameters:
+	ignoreErrors:
+		-
+			message: "#^Access to an undefined property React\\\\Socket\\\\ConnectionInterface\\:\\:\\$stream\\.$#"
+			count: 1
+			path: src/ReactPhpServer.php
+
+		-
+			message: "#^Parameter \\#1 \\$haystack of function str_contains expects string, string\\|null given\\.$#"
+			count: 1
+			path: src/ReactPhpServer.php
+
+		-
+			message: "#^Parameter \\#1 \\$string of function trim expects string, string\\|false\\|null given\\.$#"
+			count: 1
+			path: src/ReactPhpServer.php
+
+		-
+			message: "#^Property BabDev\\\\WebSocket\\\\Server\\\\ReactPhpServer\\:\\:\\$socket is never read, only written\\.$#"
+			count: 1
+			path: src/ReactPhpServer.php
+
+		-
+			message: "#^Parameter \\#1 \\$haystack of function str_contains expects string, string\\|null given\\.$#"
+			count: 1
+			path: tests/ReactPhpServerTest.php
+
+		-
+			message: "#^Parameter \\#1 \\$socket of function socket_close expects Socket, Socket\\|false given\\.$#"
+			count: 3
+			path: tests/ReactPhpServerTest.php
+
+		-
+			message: "#^Parameter \\#1 \\$socket of function socket_connect expects Socket, Socket\\|false given\\.$#"
+			count: 3
+			path: tests/ReactPhpServerTest.php
+
+		-
+			message: "#^Parameter \\#1 \\$socket of function socket_set_block expects Socket, Socket\\|false given\\.$#"
+			count: 3
+			path: tests/ReactPhpServerTest.php
+
+		-
+			message: "#^Parameter \\#1 \\$socket of function socket_set_option expects Socket, Socket\\|false given\\.$#"
+			count: 6
+			path: tests/ReactPhpServerTest.php
+
+		-
+			message: "#^Parameter \\#1 \\$socket of function socket_shutdown expects Socket, Socket\\|false given\\.$#"
+			count: 6
+			path: tests/ReactPhpServerTest.php
+
+		-
+			message: "#^Parameter \\#1 \\$socket of function socket_write expects Socket, Socket\\|false given\\.$#"
+			count: 2
+			path: tests/ReactPhpServerTest.php
+
+		-
+			message: "#^Property BabDev\\\\WebSocket\\\\Server\\\\Tests\\\\ReactPhpServerTest\\:\\:\\$port \\(int\\) does not accept int\\|false\\|null\\.$#"
+			count: 1
+			path: tests/ReactPhpServerTest.php
+
+		-
+			message: "#^Property BabDev\\\\WebSocket\\\\Server\\\\Tests\\\\ReactPhpServerTest\\:\\:\\$server is never read, only written\\.$#"
+			count: 1
+			path: tests/ReactPhpServerTest.php
