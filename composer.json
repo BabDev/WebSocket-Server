@@ -1,0 +1,33 @@
+{
+    "name": "babdev/websocket-server",
+    "type": "library",
+    "description": "PHP library to create a WebSocket server",
+    "keywords": [
+        "websocket"
+    ],
+    "license": "MIT",
+    "require": {
+        "php": "8.1.*"
+    },
+    "require-dev": {
+        "phpstan/extension-installer": "^1.1",
+        "phpstan/phpstan": "1.6.8",
+        "phpunit/phpunit": "^9.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "BabDev\\WebSocket\\Server\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "BabDev\\WebSocket\\Server\\\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "phpstan/extension-installer": true
+        }
+    },
+    "minimum-stability": "dev"
+}
