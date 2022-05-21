@@ -10,9 +10,9 @@ use React\Socket\ConnectionInterface as ReactSocketConnectionInterface;
 
 final class ReactSocketConnectionTest extends TestCase
 {
-    private MockObject&ReactSocketConnectionInterface $reactConnection;
+    private MockObject & ReactSocketConnectionInterface $reactConnection;
 
-    private MockObject&AttributeStoreInterface $attributeStore;
+    private MockObject & AttributeStoreInterface $attributeStore;
 
     private ReactSocketConnection $connection;
 

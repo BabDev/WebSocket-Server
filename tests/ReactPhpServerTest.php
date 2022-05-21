@@ -14,7 +14,7 @@ use React\Socket\SocketServer;
 
 final class ReactPhpServerTest extends TestCase
 {
-    private MockObject&ServerComponentInterface $app;
+    private MockObject & ServerComponentInterface $app;
 
     private SocketServer $socket;
 
@@ -32,14 +32,14 @@ final class ReactPhpServerTest extends TestCase
 
         $uri = $this->socket->getAddress();
 
-        $this->port = parse_url((!str_contains($uri, '://') ? 'tcp://' : '') . $uri, PHP_URL_PORT);
+        $this->port = parse_url((!str_contains($uri, '://') ? 'tcp://' : '').$uri, \PHP_URL_PORT);
 
         $this->server = new ReactPhpServer($this->app, $this->socket, Loop::get());
     }
 
     protected function tickLoop(LoopInterface $loop): void
     {
-        $loop->futureTick(function () use ($loop) {
+        $loop->futureTick(function () use ($loop): void {
             $loop->stop();
         });
 
@@ -71,9 +71,9 @@ final class ReactPhpServerTest extends TestCase
             ->method('onMessage')
             ->with($this->isInstanceOf(ConnectionInterface::class), $message);
 
-        $client = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
-        socket_set_option($client, SOL_SOCKET, SO_REUSEADDR, 1);
-        socket_set_option($client, SOL_SOCKET, SO_SNDBUF, 4096);
+        $client = socket_create(\AF_INET, \SOCK_STREAM, \SOL_TCP);
+        socket_set_option($client, \SOL_SOCKET, \SO_REUSEADDR, 1);
+        socket_set_option($client, \SOL_SOCKET, \SO_SNDBUF, 4096);
         socket_set_block($client);
         socket_connect($client, 'localhost', $this->port);
 
@@ -99,9 +99,9 @@ final class ReactPhpServerTest extends TestCase
             ->method('onClose')
             ->with($this->isInstanceOf(ConnectionInterface::class));
 
-        $client = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
-        socket_set_option($client, SOL_SOCKET, SO_REUSEADDR, 1);
-        socket_set_option($client, SOL_SOCKET, SO_SNDBUF, 4096);
+        $client = socket_create(\AF_INET, \SOCK_STREAM, \SOL_TCP);
+        socket_set_option($client, \SOL_SOCKET, \SO_REUSEADDR, 1);
+        socket_set_option($client, \SOL_SOCKET, \SO_SNDBUF, 4096);
         socket_set_block($client);
         socket_connect($client, 'localhost', $this->port);
 
@@ -132,9 +132,9 @@ final class ReactPhpServerTest extends TestCase
             ->method('onError')
             ->with($this->isInstanceOf(ConnectionInterface::class), $exception);
 
-        $client = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
-        socket_set_option($client, SOL_SOCKET, SO_REUSEADDR, 1);
-        socket_set_option($client, SOL_SOCKET, SO_SNDBUF, 4096);
+        $client = socket_create(\AF_INET, \SOCK_STREAM, \SOL_TCP);
+        socket_set_option($client, \SOL_SOCKET, \SO_REUSEADDR, 1);
+        socket_set_option($client, \SOL_SOCKET, \SO_SNDBUF, 4096);
         socket_set_block($client);
         socket_connect($client, 'localhost', $this->port);
 

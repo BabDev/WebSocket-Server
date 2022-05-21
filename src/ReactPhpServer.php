@@ -37,7 +37,7 @@ final class ReactPhpServer implements ServerInterface
     }
 
     /**
-     * Handles a new connection on the provided {@see ReactSocketServerInterface} instance
+     * Handles a new connection on the provided {@see ReactSocketServerInterface} instance.
      *
      * @internal
      */
@@ -50,7 +50,7 @@ final class ReactPhpServer implements ServerInterface
         $decoratedConnection->getAttributeStore()->set(
             'remote_address',
             trim(
-                parse_url((!str_contains($uri, '://') ? 'tcp://' : '') . $uri, PHP_URL_HOST),
+                parse_url((!str_contains($uri, '://') ? 'tcp://' : '').$uri, \PHP_URL_HOST),
                 '[]'
             )
         );
@@ -80,11 +80,12 @@ final class ReactPhpServer implements ServerInterface
     }
 
     /**
-     * Handles incoming data on the provided {@see ReactSocketServerInterface} instance
+     * Handles incoming data on the provided {@see ReactSocketServerInterface} instance.
      *
      * @internal
      */
-    public function onData(ConnectionInterface $connection, string $data) {
+    public function onData(ConnectionInterface $connection, string $data): void
+    {
         try {
             $this->app->onMessage($connection, $data);
         } catch (\Throwable $throwable) {
@@ -93,11 +94,12 @@ final class ReactPhpServer implements ServerInterface
     }
 
     /**
-     * Handles the {@see ReactSocketServerInterface} instance being closed
+     * Handles the {@see ReactSocketServerInterface} instance being closed.
      *
      * @internal
      */
-    public function onEnd(ConnectionInterface $connection) {
+    public function onEnd(ConnectionInterface $connection): void
+    {
         try {
             $this->app->onClose($connection);
         } catch (\Throwable $throwable) {
@@ -106,11 +108,12 @@ final class ReactPhpServer implements ServerInterface
     }
 
     /**
-     * Handles an uncaught Throwable
+     * Handles an uncaught Throwable.
      *
      * @internal
      */
-    public function onError(ConnectionInterface $connection, \Throwable $throwable) {
+    public function onError(ConnectionInterface $connection, \Throwable $throwable): void
+    {
         $this->app->onError($connection, $throwable);
     }
 }
