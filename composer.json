@@ -7,12 +7,17 @@
     ],
     "license": "MIT",
     "require": {
-        "php": "8.1.*"
+        "php": "8.1.*",
+        "react/event-loop": "^1.3",
+        "react/socket": "^1.11"
     },
     "require-dev": {
+        "ext-sockets": "*",
         "phpstan/extension-installer": "^1.1",
         "phpstan/phpstan": "1.6.8",
-        "phpunit/phpunit": "^9.5"
+        "phpstan/phpstan-phpunit": "1.1.1",
+        "phpunit/phpunit": "^9.5",
+        "symfony/phpunit-bridge": "^5.4 || ^6.0"
     },
     "autoload": {
         "psr-4": {
@@ -21,7 +26,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "BabDev\\WebSocket\\Server\\\\Tests\\": "tests/"
+            "BabDev\\WebSocket\\Server\\Tests\\": "tests/"
         }
     },
     "config": {
