@@ -3,8 +3,8 @@
 namespace BabDev\WebSocket\Server\Tests;
 
 use BabDev\WebSocket\Server\ConnectionInterface;
+use BabDev\WebSocket\Server\RawDataServerComponentInterface;
 use BabDev\WebSocket\Server\ReactPhpServer;
-use BabDev\WebSocket\Server\ServerComponentInterface;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use React\EventLoop\Loop;
@@ -14,7 +14,7 @@ use React\Socket\SocketServer;
 
 final class ReactPhpServerTest extends TestCase
 {
-    private MockObject & ServerComponentInterface $app;
+    private MockObject & RawDataServerComponentInterface $component;
 
     private SocketServer $socket;
 
@@ -24,7 +24,7 @@ final class ReactPhpServerTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->app = $this->createMock(ServerComponentInterface::class);
+        $this->component = $this->createMock(RawDataServerComponentInterface::class);
 
         Loop::set(new StreamSelectLoop());
 
@@ -34,7 +34,7 @@ final class ReactPhpServerTest extends TestCase
 
         $this->port = parse_url((!str_contains($uri, '://') ? 'tcp://' : '').$uri, \PHP_URL_PORT);
 
-        $this->server = new ReactPhpServer($this->app, $this->socket, Loop::get());
+        $this->server = new ReactPhpServer($this->component, $this->socket, Loop::get());
     }
 
     protected function tickLoop(LoopInterface $loop): void
@@ -51,7 +51,7 @@ final class ReactPhpServerTest extends TestCase
      */
     public function testOnOpen(): void
     {
-        $this->app->expects($this->once())
+        $this->component->expects($this->once())
             ->method('onOpen')
             ->with($this->isInstanceOf(ConnectionInterface::class));
 
@@ -67,7 +67,7 @@ final class ReactPhpServerTest extends TestCase
     {
         $message = 'Hello World!';
 
-        $this->app->expects($this->once())
+        $this->component->expects($this->once())
             ->method('onMessage')
             ->with($this->isInstanceOf(ConnectionInterface::class), $message);
 
@@ -95,7 +95,7 @@ final class ReactPhpServerTest extends TestCase
      */
     public function testOnEnd(): void
     {
-        $this->app->expects($this->once())
+        $this->component->expects($this->once())
             ->method('onClose')
             ->with($this->isInstanceOf(ConnectionInterface::class));
 
@@ -123,12 +123,12 @@ final class ReactPhpServerTest extends TestCase
 
         $message = 'Hello World!';
 
-        $this->app->expects($this->once())
+        $this->component->expects($this->once())
             ->method('onMessage')
             ->with($this->isInstanceOf(ConnectionInterface::class), $message)
             ->willThrowException($exception);
 
-        $this->app->expects($this->once())
+        $this->component->expects($this->once())
             ->method('onError')
             ->with($this->isInstanceOf(ConnectionInterface::class), $exception);
 

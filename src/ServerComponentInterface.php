@@ -8,11 +8,6 @@ namespace BabDev\WebSocket\Server;
 interface ServerComponentInterface
 {
     /**
-     * Handles a new connection to the server.
-     */
-    public function onOpen(ConnectionInterface $connection): void;
-
-    /**
      * Handles incoming data on the connection.
      */
     public function onMessage(ConnectionInterface $connection, string $data): void;
@@ -25,5 +20,5 @@ interface ServerComponentInterface
     /**
      * Reacts to an unhandled Throwable.
      */
-    public function onError(ConnectionInterface $connection, \Throwable $e): void;
+    public function onError(ConnectionInterface $connection, \Throwable $throwable): void;
 }

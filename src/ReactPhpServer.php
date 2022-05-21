@@ -18,7 +18,7 @@ final class ReactPhpServer implements ServerInterface
     private readonly LoopInterface $loop;
 
     public function __construct(
-        private readonly ServerComponentInterface $app,
+        private readonly RawDataServerComponentInterface $component,
         private readonly ReactSocketServerInterface $socket,
         ?LoopInterface $loop = null
     ) {
@@ -55,7 +55,7 @@ final class ReactPhpServer implements ServerInterface
             )
         );
 
-        $this->app->onOpen($decoratedConnection);
+        $this->component->onOpen($decoratedConnection);
 
         $connection->on(
             'data',
@@ -87,7 +87,7 @@ final class ReactPhpServer implements ServerInterface
     public function onData(ConnectionInterface $connection, string $data): void
     {
         try {
-            $this->app->onMessage($connection, $data);
+            $this->component->onMessage($connection, $data);
         } catch (\Throwable $throwable) {
             $this->onError($connection, $throwable);
         }
@@ -101,7 +101,7 @@ final class ReactPhpServer implements ServerInterface
     public function onEnd(ConnectionInterface $connection): void
     {
         try {
-            $this->app->onClose($connection);
+            $this->component->onClose($connection);
         } catch (\Throwable $throwable) {
             $this->onError($connection, $throwable);
         }
@@ -114,6 +114,6 @@ final class ReactPhpServer implements ServerInterface
      */
     public function onError(ConnectionInterface $connection, \Throwable $throwable): void
     {
-        $this->app->onError($connection, $throwable);
+        $this->component->onError($connection, $throwable);
     }
 }
