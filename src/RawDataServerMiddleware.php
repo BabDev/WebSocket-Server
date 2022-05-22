@@ -7,12 +7,12 @@ namespace BabDev\WebSocket\Server;
  * data.
  *
  * These middleware components are intended for early execution and are responsible for generating the request for
- * {@see RequestAwareServerComponentInterface} middleware to parse
+ * {@see RequestAwareServerMiddleware} middleware to parse
  */
-interface RawDataServerComponentInterface extends ServerComponentInterface
+interface RawDataServerMiddleware extends ServerMiddleware
 {
     /**
      * Handles a new connection to the server.
      */
-    public function onOpen(ConnectionInterface $connection): void;
+    public function onOpen(Connection $connection): void;
 }

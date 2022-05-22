@@ -2,8 +2,8 @@
 
 namespace BabDev\WebSocket\Server\Tests;
 
-use BabDev\WebSocket\Server\ConnectionInterface;
-use BabDev\WebSocket\Server\RawDataServerComponentInterface;
+use BabDev\WebSocket\Server\Connection;
+use BabDev\WebSocket\Server\RawDataServerMiddleware;
 use BabDev\WebSocket\Server\ReactPhpServer;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -14,7 +14,7 @@ use React\Socket\SocketServer;
 
 final class ReactPhpServerTest extends TestCase
 {
-    private MockObject & RawDataServerComponentInterface $component;
+    private MockObject & RawDataServerMiddleware $component;
 
     private SocketServer $socket;
 
@@ -24,7 +24,7 @@ final class ReactPhpServerTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->component = $this->createMock(RawDataServerComponentInterface::class);
+        $this->component = $this->createMock(RawDataServerMiddleware::class);
 
         Loop::set(new StreamSelectLoop());
 
@@ -53,7 +53,7 @@ final class ReactPhpServerTest extends TestCase
     {
         $this->component->expects($this->once())
             ->method('onOpen')
-            ->with($this->isInstanceOf(ConnectionInterface::class));
+            ->with($this->isInstanceOf(Connection::class));
 
         stream_socket_client("tcp://localhost:{$this->port}");
 
@@ -69,7 +69,7 @@ final class ReactPhpServerTest extends TestCase
 
         $this->component->expects($this->once())
             ->method('onMessage')
-            ->with($this->isInstanceOf(ConnectionInterface::class), $message);
+            ->with($this->isInstanceOf(Connection::class), $message);
 
         $client = socket_create(\AF_INET, \SOCK_STREAM, \SOL_TCP);
         socket_set_option($client, \SOL_SOCKET, \SO_REUSEADDR, 1);
@@ -97,7 +97,7 @@ final class ReactPhpServerTest extends TestCase
     {
         $this->component->expects($this->once())
             ->method('onClose')
-            ->with($this->isInstanceOf(ConnectionInterface::class));
+            ->with($this->isInstanceOf(Connection::class));
 
         $client = socket_create(\AF_INET, \SOCK_STREAM, \SOL_TCP);
         socket_set_option($client, \SOL_SOCKET, \SO_REUSEADDR, 1);
@@ -125,12 +125,12 @@ final class ReactPhpServerTest extends TestCase
 
         $this->component->expects($this->once())
             ->method('onMessage')
-            ->with($this->isInstanceOf(ConnectionInterface::class), $message)
+            ->with($this->isInstanceOf(Connection::class), $message)
             ->willThrowException($exception);
 
         $this->component->expects($this->once())
             ->method('onError')
-            ->with($this->isInstanceOf(ConnectionInterface::class), $exception);
+            ->with($this->isInstanceOf(Connection::class), $exception);
 
         $client = socket_create(\AF_INET, \SOCK_STREAM, \SOL_TCP);
         socket_set_option($client, \SOL_SOCKET, \SO_REUSEADDR, 1);

@@ -2,14 +2,14 @@
 
 namespace BabDev\WebSocket\Server\Tests\Http;
 
-use BabDev\WebSocket\Server\Connection\AttributeStoreInterface;
-use BabDev\WebSocket\Server\ConnectionInterface;
-use BabDev\WebSocket\Server\Http\RequestParser;
+use BabDev\WebSocket\Server\Connection;
+use BabDev\WebSocket\Server\Connection\AttributeStore;
+use BabDev\WebSocket\Server\Http\GuzzleRequestParser;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
 
-final class RequestParserTest extends TestCase
+final class GuzzleRequestParserTest extends TestCase
 {
     /**
      * @return \Generator<string, array>
@@ -29,8 +29,8 @@ final class RequestParserTest extends TestCase
      */
     public function testConvertsToRequest(bool $valid, string $message): void
     {
-        /** @var MockObject&AttributeStoreInterface $attributeStore */
-        $attributeStore = $this->createMock(AttributeStoreInterface::class);
+        /** @var MockObject&AttributeStore $attributeStore */
+        $attributeStore = $this->createMock(AttributeStore::class);
         $attributeStore->expects($this->once())
             ->method('get')
             ->with('http.buffer', '')
@@ -40,8 +40,8 @@ final class RequestParserTest extends TestCase
             ->method('set')
             ->with('http.buffer', $message);
 
-        /** @var MockObject&ConnectionInterface $connection */
-        $connection = $this->createMock(ConnectionInterface::class);
+        /** @var MockObject&Connection $connection */
+        $connection = $this->createMock(Connection::class);
         $connection->expects($this->atLeastOnce())
             ->method('getAttributeStore')
             ->willReturn($attributeStore);
@@ -52,10 +52,10 @@ final class RequestParserTest extends TestCase
                 ->with('http.buffer');
             $this->assertInstanceOf(
                 RequestInterface::class,
-                (new RequestParser())->parse($connection, $message)
+                (new GuzzleRequestParser())->parse($connection, $message)
             );
         } else {
-            $this->assertNull((new RequestParser())->parse($connection, $message));
+            $this->assertNull((new GuzzleRequestParser())->parse($connection, $message));
         }
     }
 
@@ -65,8 +65,8 @@ final class RequestParserTest extends TestCase
 
         $message = 'Header-Is: Too Big';
 
-        /** @var MockObject&AttributeStoreInterface $attributeStore */
-        $attributeStore = $this->createMock(AttributeStoreInterface::class);
+        /** @var MockObject&AttributeStore $attributeStore */
+        $attributeStore = $this->createMock(AttributeStore::class);
         $attributeStore->expects($this->once())
             ->method('get')
             ->with('http.buffer', '')
@@ -76,13 +76,13 @@ final class RequestParserTest extends TestCase
             ->method('set')
             ->with('http.buffer', $message);
 
-        /** @var MockObject&ConnectionInterface $connection */
-        $connection = $this->createMock(ConnectionInterface::class);
+        /** @var MockObject&Connection $connection */
+        $connection = $this->createMock(Connection::class);
         $connection->expects($this->atLeastOnce())
             ->method('getAttributeStore')
             ->willReturn($attributeStore);
 
-        $parser = new RequestParser();
+        $parser = new GuzzleRequestParser();
         $parser->maxRequestSize = 10;
 
         $parser->parse($connection, $message);

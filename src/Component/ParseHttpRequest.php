@@ -2,31 +2,32 @@
 
 namespace BabDev\WebSocket\Server\Component;
 
+use BabDev\WebSocket\Server\Connection;
 use BabDev\WebSocket\Server\Connection\ClosesConnectionWithResponse;
-use BabDev\WebSocket\Server\ConnectionInterface;
+use BabDev\WebSocket\Server\Http\GuzzleRequestParser;
 use BabDev\WebSocket\Server\Http\RequestParser;
-use BabDev\WebSocket\Server\Http\RequestParserInterface;
-use BabDev\WebSocket\Server\RawDataServerComponentInterface;
-use BabDev\WebSocket\Server\RequestAwareServerComponentInterface;
+use BabDev\WebSocket\Server\RawDataServerMiddleware;
+use BabDev\WebSocket\Server\RequestAwareServerMiddleware;
 use Psr\Http\Message\RequestInterface;
 
 /**
- * The parse HTTP request server component transforms the incoming HTTP request into a {@see RequestInterface} object.
+ * The parse HTTP request server component transforms the incoming HTTP request into a {@see RequestInterface} object
+ * and forwards the message to the request-aware server middleware.
  */
-final class ParseHttpRequest implements RawDataServerComponentInterface
+final class ParseHttpRequest implements RawDataServerMiddleware
 {
     use ClosesConnectionWithResponse;
 
     public function __construct(
-        private readonly RequestAwareServerComponentInterface $component,
-        private readonly RequestParserInterface $requestParser = new RequestParser(),
+        private readonly RequestAwareServerMiddleware $component,
+        private readonly RequestParser $requestParser = new GuzzleRequestParser(),
     ) {
     }
 
     /**
      * Handles a new connection to the server.
      */
-    public function onOpen(ConnectionInterface $connection): void
+    public function onOpen(Connection $connection): void
     {
         $connection->getAttributeStore()->set('http.headers_received', false);
     }
@@ -34,7 +35,7 @@ final class ParseHttpRequest implements RawDataServerComponentInterface
     /**
      * Handles incoming data on the connection.
      */
-    public function onMessage(ConnectionInterface $connection, string $data): void
+    public function onMessage(Connection $connection, string $data): void
     {
         if (true === $connection->getAttributeStore()->get('http.headers_received')) {
             $this->component->onMessage($connection, $data);
@@ -60,7 +61,7 @@ final class ParseHttpRequest implements RawDataServerComponentInterface
     /**
      * Reacts to a connection being closed.
      */
-    public function onClose(ConnectionInterface $connection): void
+    public function onClose(Connection $connection): void
     {
         if (true === $connection->getAttributeStore()->get('http.headers_received')) {
             $this->component->onClose($connection);
@@ -70,7 +71,7 @@ final class ParseHttpRequest implements RawDataServerComponentInterface
     /**
      * Reacts to an unhandled Throwable.
      */
-    public function onError(ConnectionInterface $connection, \Throwable $throwable): void
+    public function onError(Connection $connection, \Throwable $throwable): void
     {
         if (true === $connection->getAttributeStore()->get('http.headers_received')) {
             $this->component->onError($connection, $throwable);

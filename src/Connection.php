@@ -2,15 +2,15 @@
 
 namespace BabDev\WebSocket\Server;
 
-use BabDev\WebSocket\Server\Connection\AttributeStoreInterface;
+use BabDev\WebSocket\Server\Connection\AttributeStore;
 
 /**
  * The connection interface provides access to a connection resource and an attribute store for each connected client
  * to the WebSocket server.
  */
-interface ConnectionInterface
+interface Connection
 {
-    public function getAttributeStore(): AttributeStoreInterface;
+    public function getAttributeStore(): AttributeStore;
 
     public function getConnection(): mixed;
 

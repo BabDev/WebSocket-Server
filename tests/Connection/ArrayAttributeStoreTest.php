@@ -2,14 +2,14 @@
 
 namespace BabDev\WebSocket\Server\Tests\Connection;
 
-use BabDev\WebSocket\Server\Connection\AttributeStore;
+use BabDev\WebSocket\Server\Connection\ArrayAttributeStore;
 use PHPUnit\Framework\TestCase;
 
-final class AttributeStoreTest extends TestCase
+final class ArrayAttributeStoreTest extends TestCase
 {
     public function testProvidesAllAttributes(): void
     {
-        $store = new AttributeStore();
+        $store = new ArrayAttributeStore();
 
         $this->assertEmpty($store->all(), 'The store should provide an empty array by default.');
 
@@ -18,7 +18,7 @@ final class AttributeStoreTest extends TestCase
             'goo' => 'car',
         ];
 
-        $store = new AttributeStore();
+        $store = new ArrayAttributeStore();
         $store->replace($attributes);
 
         $this->assertSame($attributes, $store->all());
@@ -26,7 +26,7 @@ final class AttributeStoreTest extends TestCase
 
     public function testGetSetAndRemoveAttributes(): void
     {
-        $store = new AttributeStore();
+        $store = new ArrayAttributeStore();
 
         $this->assertNull($store->get('foo'), 'The store provides null by default when an attribute is not stored.');
         $this->assertSame('car', $store->get('foo', 'car'), 'The store returns the given default value when an attribute is not stored.');
@@ -42,7 +42,7 @@ final class AttributeStoreTest extends TestCase
 
     public function testHasAttribute(): void
     {
-        $store = new AttributeStore();
+        $store = new ArrayAttributeStore();
 
         $this->assertFalse($store->has('foo'), 'The store reports an attribute is not stored.');
 

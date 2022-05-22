@@ -2,23 +2,27 @@
 
 namespace BabDev\WebSocket\Server\Connection;
 
-use BabDev\WebSocket\Server\ConnectionInterface;
-use React\Socket\ConnectionInterface as ReactSocketConnectionInterface;
+use BabDev\WebSocket\Server\Connection;
+use React\Socket\ConnectionInterface;
 
-final class ReactSocketConnection implements ConnectionInterface
+/**
+ * The React socket connection is a connection class wrapping a {@see ConnectionInterface}
+ * from the `react/socket` package.
+ */
+final class ReactSocketConnection implements Connection
 {
     public function __construct(
-        private readonly ReactSocketConnectionInterface $connection,
-        private readonly AttributeStoreInterface $attributeStore,
+        private readonly ConnectionInterface $connection,
+        private readonly AttributeStore $attributeStore,
     ) {
     }
 
-    public function getAttributeStore(): AttributeStoreInterface
+    public function getAttributeStore(): AttributeStore
     {
         return $this->attributeStore;
     }
 
-    public function getConnection(): ReactSocketConnectionInterface
+    public function getConnection(): ConnectionInterface
     {
         return $this->connection;
     }

@@ -3,24 +3,24 @@
 namespace BabDev\WebSocket\Server\Tests\Component;
 
 use BabDev\WebSocket\Server\Component\ParseHttpRequest;
-use BabDev\WebSocket\Server\Connection\AttributeStoreInterface;
-use BabDev\WebSocket\Server\ConnectionInterface;
-use BabDev\WebSocket\Server\Http\RequestParserInterface;
-use BabDev\WebSocket\Server\RequestAwareServerComponentInterface;
+use BabDev\WebSocket\Server\Connection;
+use BabDev\WebSocket\Server\Connection\AttributeStore;
+use BabDev\WebSocket\Server\Http\RequestParser;
+use BabDev\WebSocket\Server\RequestAwareServerMiddleware;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
 
 final class ParseHttpRequestTest extends TestCase
 {
-    private MockObject&RequestAwareServerComponentInterface $decoratedComponent;
-    private MockObject&RequestParserInterface $requestParser;
+    private MockObject & RequestAwareServerMiddleware $decoratedComponent;
+    private MockObject & RequestParser $requestParser;
     private ParseHttpRequest $component;
 
     protected function setUp(): void
     {
-        $this->decoratedComponent = $this->createMock(RequestAwareServerComponentInterface::class);
-        $this->requestParser = $this->createMock(RequestParserInterface::class);
+        $this->decoratedComponent = $this->createMock(RequestAwareServerMiddleware::class);
+        $this->requestParser = $this->createMock(RequestParser::class);
 
         $this->component = new ParseHttpRequest($this->decoratedComponent, $this->requestParser);
     }
@@ -30,14 +30,14 @@ final class ParseHttpRequestTest extends TestCase
      */
     public function testOnOpen(): void
     {
-        /** @var MockObject&AttributeStoreInterface $attributeStore */
-        $attributeStore = $this->createMock(AttributeStoreInterface::class);
+        /** @var MockObject&AttributeStore $attributeStore */
+        $attributeStore = $this->createMock(AttributeStore::class);
         $attributeStore->expects($this->once())
             ->method('set')
             ->with('http.headers_received', false);
 
-        /** @var MockObject&ConnectionInterface $connection */
-        $connection = $this->createMock(ConnectionInterface::class);
+        /** @var MockObject&Connection $connection */
+        $connection = $this->createMock(Connection::class);
         $connection->expects($this->once())
             ->method('getAttributeStore')
             ->willReturn($attributeStore);
@@ -55,8 +55,8 @@ final class ParseHttpRequestTest extends TestCase
         /** @var MockObject&RequestInterface $request */
         $request = $this->createMock(RequestInterface::class);
 
-        /** @var MockObject&AttributeStoreInterface $attributeStore */
-        $attributeStore = $this->createMock(AttributeStoreInterface::class);
+        /** @var MockObject&AttributeStore $attributeStore */
+        $attributeStore = $this->createMock(AttributeStore::class);
         $attributeStore->expects($this->once())
             ->method('get')
             ->with('http.headers_received')
@@ -66,8 +66,8 @@ final class ParseHttpRequestTest extends TestCase
             ->method('set')
             ->with('http.headers_received', true);
 
-        /** @var MockObject&ConnectionInterface $connection */
-        $connection = $this->createMock(ConnectionInterface::class);
+        /** @var MockObject&Connection $connection */
+        $connection = $this->createMock(Connection::class);
         $connection->expects($this->exactly(2))
             ->method('getAttributeStore')
             ->willReturn($attributeStore);
@@ -91,15 +91,15 @@ final class ParseHttpRequestTest extends TestCase
     {
         $message = 'Testing';
 
-        /** @var MockObject&AttributeStoreInterface $attributeStore */
-        $attributeStore = $this->createMock(AttributeStoreInterface::class);
+        /** @var MockObject&AttributeStore $attributeStore */
+        $attributeStore = $this->createMock(AttributeStore::class);
         $attributeStore->expects($this->once())
             ->method('get')
             ->with('http.headers_received')
             ->willReturn(true);
 
-        /** @var MockObject&ConnectionInterface $connection */
-        $connection = $this->createMock(ConnectionInterface::class);
+        /** @var MockObject&Connection $connection */
+        $connection = $this->createMock(Connection::class);
         $connection->expects($this->once())
             ->method('getAttributeStore')
             ->willReturn($attributeStore);
@@ -121,15 +121,15 @@ final class ParseHttpRequestTest extends TestCase
     {
         $message = 'Testing';
 
-        /** @var MockObject&AttributeStoreInterface $attributeStore */
-        $attributeStore = $this->createMock(AttributeStoreInterface::class);
+        /** @var MockObject&AttributeStore $attributeStore */
+        $attributeStore = $this->createMock(AttributeStore::class);
         $attributeStore->expects($this->once())
             ->method('get')
             ->with('http.headers_received')
             ->willReturn(false);
 
-        /** @var MockObject&ConnectionInterface $connection */
-        $connection = $this->createMock(ConnectionInterface::class);
+        /** @var MockObject&Connection $connection */
+        $connection = $this->createMock(Connection::class);
         $connection->expects($this->once())
             ->method('getAttributeStore')
             ->willReturn($attributeStore);
@@ -156,15 +156,15 @@ final class ParseHttpRequestTest extends TestCase
      */
     public function testOnCloseWhenRequestParsed(): void
     {
-        /** @var MockObject&AttributeStoreInterface $attributeStore */
-        $attributeStore = $this->createMock(AttributeStoreInterface::class);
+        /** @var MockObject&AttributeStore $attributeStore */
+        $attributeStore = $this->createMock(AttributeStore::class);
         $attributeStore->expects($this->once())
             ->method('get')
             ->with('http.headers_received')
             ->willReturn(true);
 
-        /** @var MockObject&ConnectionInterface $connection */
-        $connection = $this->createMock(ConnectionInterface::class);
+        /** @var MockObject&Connection $connection */
+        $connection = $this->createMock(Connection::class);
         $connection->expects($this->once())
             ->method('getAttributeStore')
             ->willReturn($attributeStore);
@@ -183,15 +183,15 @@ final class ParseHttpRequestTest extends TestCase
     {
         $exception = new \RuntimeException('Testing');
 
-        /** @var MockObject&AttributeStoreInterface $attributeStore */
-        $attributeStore = $this->createMock(AttributeStoreInterface::class);
+        /** @var MockObject&AttributeStore $attributeStore */
+        $attributeStore = $this->createMock(AttributeStore::class);
         $attributeStore->expects($this->once())
             ->method('get')
             ->with('http.headers_received')
             ->willReturn(true);
 
-        /** @var MockObject&ConnectionInterface $connection */
-        $connection = $this->createMock(ConnectionInterface::class);
+        /** @var MockObject&Connection $connection */
+        $connection = $this->createMock(Connection::class);
         $connection->expects($this->once())
             ->method('getAttributeStore')
             ->willReturn($attributeStore);
@@ -210,15 +210,15 @@ final class ParseHttpRequestTest extends TestCase
     {
         $exception = new \RuntimeException('Testing');
 
-        /** @var MockObject&AttributeStoreInterface $attributeStore */
-        $attributeStore = $this->createMock(AttributeStoreInterface::class);
+        /** @var MockObject&AttributeStore $attributeStore */
+        $attributeStore = $this->createMock(AttributeStore::class);
         $attributeStore->expects($this->once())
             ->method('get')
             ->with('http.headers_received')
             ->willReturn(false);
 
-        /** @var MockObject&ConnectionInterface $connection */
-        $connection = $this->createMock(ConnectionInterface::class);
+        /** @var MockObject&Connection $connection */
+        $connection = $this->createMock(Connection::class);
         $connection->expects($this->once())
             ->method('getAttributeStore')
             ->willReturn($attributeStore);

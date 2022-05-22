@@ -2,24 +2,24 @@
 
 namespace BabDev\WebSocket\Server;
 
-use BabDev\WebSocket\Server\Connection\AttributeStore;
+use BabDev\WebSocket\Server\Connection\ArrayAttributeStore;
 use BabDev\WebSocket\Server\Connection\ReactSocketConnection;
 use React\EventLoop\Loop;
 use React\EventLoop\LoopInterface;
-use React\Socket\ConnectionInterface as ReactSocketConnectionInterface;
-use React\Socket\ServerInterface as ReactSocketServerInterface;
+use React\Socket\ConnectionInterface;
+use React\Socket\ServerInterface;
 
 /**
  * The {@see ReactPhpServer} is an implementation of the server interface which runs a WebSocket server stack using
  * the ReactPHP library.
  */
-final class ReactPhpServer implements ServerInterface
+final class ReactPhpServer implements Server
 {
     private readonly LoopInterface $loop;
 
     public function __construct(
-        private readonly RawDataServerComponentInterface $component,
-        private readonly ReactSocketServerInterface $socket,
+        private readonly RawDataServerMiddleware $component,
+        private readonly ServerInterface $socket,
         ?LoopInterface $loop = null
     ) {
         gc_enable();
@@ -37,15 +37,15 @@ final class ReactPhpServer implements ServerInterface
     }
 
     /**
-     * Handles a new connection on the provided {@see ReactSocketServerInterface} instance.
+     * Handles a new connection on the provided {@see ServerInterface} instance.
      *
      * @internal
      */
-    public function onConnection(ReactSocketConnectionInterface $connection): void
+    public function onConnection(ConnectionInterface $connection): void
     {
         $uri = $connection->getRemoteAddress();
 
-        $decoratedConnection = new ReactSocketConnection($connection, new AttributeStore());
+        $decoratedConnection = new ReactSocketConnection($connection, new ArrayAttributeStore());
         $decoratedConnection->getAttributeStore()->set('resource_id', (int) $connection->stream);
         $decoratedConnection->getAttributeStore()->set(
             'remote_address',
@@ -80,11 +80,11 @@ final class ReactPhpServer implements ServerInterface
     }
 
     /**
-     * Handles incoming data on the provided {@see ReactSocketServerInterface} instance.
+     * Handles incoming data on the provided {@see ServerInterface} instance.
      *
      * @internal
      */
-    public function onData(ConnectionInterface $connection, string $data): void
+    public function onData(Connection $connection, string $data): void
     {
         try {
             $this->component->onMessage($connection, $data);
@@ -94,11 +94,11 @@ final class ReactPhpServer implements ServerInterface
     }
 
     /**
-     * Handles the {@see ReactSocketServerInterface} instance being closed.
+     * Handles the {@see ServerInterface} instance being closed.
      *
      * @internal
      */
-    public function onEnd(ConnectionInterface $connection): void
+    public function onEnd(Connection $connection): void
     {
         try {
             $this->component->onClose($connection);
@@ -112,7 +112,7 @@ final class ReactPhpServer implements ServerInterface
      *
      * @internal
      */
-    public function onError(ConnectionInterface $connection, \Throwable $throwable): void
+    public function onError(Connection $connection, \Throwable $throwable): void
     {
         $this->component->onError($connection, $throwable);
     }

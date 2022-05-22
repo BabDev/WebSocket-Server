@@ -2,7 +2,7 @@
 
 namespace BabDev\WebSocket\Server\Tests\Connection;
 
-use BabDev\WebSocket\Server\Connection\AttributeStoreInterface;
+use BabDev\WebSocket\Server\Connection\AttributeStore;
 use BabDev\WebSocket\Server\Connection\ReactSocketConnection;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -12,14 +12,14 @@ final class ReactSocketConnectionTest extends TestCase
 {
     private MockObject & ReactSocketConnectionInterface $reactConnection;
 
-    private MockObject & AttributeStoreInterface $attributeStore;
+    private MockObject & AttributeStore $attributeStore;
 
     private ReactSocketConnection $connection;
 
     protected function setUp(): void
     {
         $this->reactConnection = $this->createMock(ReactSocketConnectionInterface::class);
-        $this->attributeStore = $this->createMock(AttributeStoreInterface::class);
+        $this->attributeStore = $this->createMock(AttributeStore::class);
 
         $this->connection = new ReactSocketConnection($this->reactConnection, $this->attributeStore);
     }
