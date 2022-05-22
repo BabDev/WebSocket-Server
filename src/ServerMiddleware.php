@@ -4,13 +4,14 @@ namespace BabDev\WebSocket\Server;
 
 /**
  * The server middleware interface defines a middleware component for the WebSocket server.
- *
- * Server components should not directly implement this interface, components should implement
- * either {@see RawDataServerMiddleware} or {@see RequestAwareServerMiddleware} depending on where
- * in the middleware stack they should operate.
  */
 interface ServerMiddleware extends Middleware
 {
+    /**
+     * Handles a new connection to the server.
+     */
+    public function onOpen(Connection $connection): void;
+
     /**
      * Handles incoming data on the connection.
      */

@@ -6,20 +6,19 @@ use BabDev\WebSocket\Server\Connection;
 use BabDev\WebSocket\Server\Connection\ClosesConnectionWithResponse;
 use BabDev\WebSocket\Server\Http\GuzzleRequestParser;
 use BabDev\WebSocket\Server\Http\RequestParser;
-use BabDev\WebSocket\Server\RawDataServerMiddleware;
-use BabDev\WebSocket\Server\RequestAwareServerMiddleware;
+use BabDev\WebSocket\Server\ServerMiddleware;
 use Psr\Http\Message\RequestInterface;
 
 /**
  * The parse HTTP request server component transforms the incoming HTTP request into a {@see RequestInterface} object
  * and forwards the message to the request-aware server middleware.
  */
-final class ParseHttpRequest implements RawDataServerMiddleware
+final class ParseHttpRequest implements ServerMiddleware
 {
     use ClosesConnectionWithResponse;
 
     public function __construct(
-        private readonly RequestAwareServerMiddleware $component,
+        private readonly ServerMiddleware $component,
         private readonly RequestParser $requestParser = new GuzzleRequestParser(),
     ) {
     }
@@ -54,8 +53,9 @@ final class ParseHttpRequest implements RawDataServerMiddleware
         }
 
         $connection->getAttributeStore()->set('http.headers_received', true);
+        $connection->getAttributeStore()->set('http.request', $request);
 
-        $this->component->onOpen($connection, $request);
+        $this->component->onOpen($connection);
     }
 
     /**

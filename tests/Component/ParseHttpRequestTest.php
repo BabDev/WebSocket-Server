@@ -6,20 +6,20 @@ use BabDev\WebSocket\Server\Component\ParseHttpRequest;
 use BabDev\WebSocket\Server\Connection;
 use BabDev\WebSocket\Server\Connection\AttributeStore;
 use BabDev\WebSocket\Server\Http\RequestParser;
-use BabDev\WebSocket\Server\RequestAwareServerMiddleware;
+use BabDev\WebSocket\Server\ServerMiddleware;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
 
 final class ParseHttpRequestTest extends TestCase
 {
-    private MockObject & RequestAwareServerMiddleware $decoratedComponent;
+    private MockObject & ServerMiddleware $decoratedComponent;
     private MockObject & RequestParser $requestParser;
     private ParseHttpRequest $component;
 
     protected function setUp(): void
     {
-        $this->decoratedComponent = $this->createMock(RequestAwareServerMiddleware::class);
+        $this->decoratedComponent = $this->createMock(ServerMiddleware::class);
         $this->requestParser = $this->createMock(RequestParser::class);
 
         $this->component = new ParseHttpRequest($this->decoratedComponent, $this->requestParser);
@@ -62,13 +62,16 @@ final class ParseHttpRequestTest extends TestCase
             ->with('http.headers_received')
             ->willReturn(false);
 
-        $attributeStore->expects($this->once())
+        $attributeStore->expects($this->exactly(2))
             ->method('set')
-            ->with('http.headers_received', true);
+            ->withConsecutive(
+                ['http.headers_received', true],
+                ['http.request', $request],
+            );
 
         /** @var MockObject&Connection $connection */
         $connection = $this->createMock(Connection::class);
-        $connection->expects($this->exactly(2))
+        $connection->expects($this->exactly(3))
             ->method('getAttributeStore')
             ->willReturn($attributeStore);
 
@@ -79,7 +82,7 @@ final class ParseHttpRequestTest extends TestCase
 
         $this->decoratedComponent->expects($this->once())
             ->method('onOpen')
-            ->with($connection, $request);
+            ->with($connection);
 
         $this->component->onMessage($connection, $message);
     }

@@ -18,7 +18,7 @@ final class ReactPhpServer implements Server
     private readonly LoopInterface $loop;
 
     public function __construct(
-        private readonly RawDataServerMiddleware $component,
+        private readonly ServerMiddleware $component,
         private readonly ServerInterface $socket,
         ?LoopInterface $loop = null
     ) {

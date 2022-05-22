@@ -3,8 +3,8 @@
 namespace BabDev\WebSocket\Server\Tests;
 
 use BabDev\WebSocket\Server\Connection;
-use BabDev\WebSocket\Server\RawDataServerMiddleware;
 use BabDev\WebSocket\Server\ReactPhpServer;
+use BabDev\WebSocket\Server\ServerMiddleware;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use React\EventLoop\Loop;
@@ -14,7 +14,7 @@ use React\Socket\SocketServer;
 
 final class ReactPhpServerTest extends TestCase
 {
-    private MockObject & RawDataServerMiddleware $component;
+    private MockObject & ServerMiddleware $component;
 
     private SocketServer $socket;
 
@@ -24,7 +24,7 @@ final class ReactPhpServerTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->component = $this->createMock(RawDataServerMiddleware::class);
+        $this->component = $this->createMock(ServerMiddleware::class);
 
         Loop::set(new StreamSelectLoop());
 
