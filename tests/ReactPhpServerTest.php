@@ -14,7 +14,7 @@ use React\Socket\SocketServer;
 
 final class ReactPhpServerTest extends TestCase
 {
-    private MockObject & ServerMiddleware $component;
+    private MockObject & ServerMiddleware $middleware;
 
     private SocketServer $socket;
 
@@ -24,7 +24,7 @@ final class ReactPhpServerTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->component = $this->createMock(ServerMiddleware::class);
+        $this->middleware = $this->createMock(ServerMiddleware::class);
 
         Loop::set(new StreamSelectLoop());
 
@@ -34,7 +34,7 @@ final class ReactPhpServerTest extends TestCase
 
         $this->port = parse_url((!str_contains($uri, '://') ? 'tcp://' : '').$uri, \PHP_URL_PORT);
 
-        $this->server = new ReactPhpServer($this->component, $this->socket, Loop::get());
+        $this->server = new ReactPhpServer($this->middleware, $this->socket, Loop::get());
     }
 
     protected function tickLoop(LoopInterface $loop): void
@@ -51,7 +51,7 @@ final class ReactPhpServerTest extends TestCase
      */
     public function testOnOpen(): void
     {
-        $this->component->expects($this->once())
+        $this->middleware->expects($this->once())
             ->method('onOpen')
             ->with($this->isInstanceOf(Connection::class));
 
@@ -67,7 +67,7 @@ final class ReactPhpServerTest extends TestCase
     {
         $message = 'Hello World!';
 
-        $this->component->expects($this->once())
+        $this->middleware->expects($this->once())
             ->method('onMessage')
             ->with($this->isInstanceOf(Connection::class), $message);
 
@@ -95,7 +95,7 @@ final class ReactPhpServerTest extends TestCase
      */
     public function testOnEnd(): void
     {
-        $this->component->expects($this->once())
+        $this->middleware->expects($this->once())
             ->method('onClose')
             ->with($this->isInstanceOf(Connection::class));
 
@@ -123,12 +123,12 @@ final class ReactPhpServerTest extends TestCase
 
         $message = 'Hello World!';
 
-        $this->component->expects($this->once())
+        $this->middleware->expects($this->once())
             ->method('onMessage')
             ->with($this->isInstanceOf(Connection::class), $message)
             ->willThrowException($exception);
 
-        $this->component->expects($this->once())
+        $this->middleware->expects($this->once())
             ->method('onError')
             ->with($this->isInstanceOf(Connection::class), $exception);
 
