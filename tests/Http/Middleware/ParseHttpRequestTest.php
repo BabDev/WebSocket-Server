@@ -4,6 +4,7 @@ namespace BabDev\WebSocket\Server\Tests\Http\Middleware;
 
 use BabDev\WebSocket\Server\Connection;
 use BabDev\WebSocket\Server\Connection\AttributeStore;
+use BabDev\WebSocket\Server\Http\Exception\MessageTooLarge;
 use BabDev\WebSocket\Server\Http\Middleware\ParseHttpRequest;
 use BabDev\WebSocket\Server\Http\RequestParser;
 use BabDev\WebSocket\Server\ServerMiddleware;
@@ -146,7 +147,7 @@ final class ParseHttpRequestTest extends TestCase
         $this->requestParser->expects($this->once())
             ->method('parse')
             ->with($connection, $message)
-            ->willThrowException(new \OverflowException('Testing'));
+            ->willThrowException(new MessageTooLarge('Testing'));
 
         $this->decoratedMiddleware->expects($this->never())
             ->method('onOpen');
