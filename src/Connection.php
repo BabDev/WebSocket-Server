@@ -16,5 +16,5 @@ interface Connection
 
     public function send(string $data): void;
 
-    public function close(): void;
+    public function close(mixed $data = null): void;
 }

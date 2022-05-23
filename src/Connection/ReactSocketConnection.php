@@ -32,8 +32,8 @@ final class ReactSocketConnection implements Connection
         $this->connection->write($data);
     }
 
-    public function close(): void
+    public function close(mixed $data = null): void
     {
-        $this->connection->end();
+        $this->connection->end($data);
     }
 }
