@@ -3,6 +3,7 @@
 namespace BabDev\WebSocket\Server\Http;
 
 use BabDev\WebSocket\Server\Connection;
+use BabDev\WebSocket\Server\Http\Exception\MessageTooLarge;
 use Psr\Http\Message\RequestInterface;
 
 /**
@@ -13,7 +14,7 @@ interface RequestParser
     final public const END_OF_MESSAGE_MARKER = "\r\n\r\n";
 
     /**
-     * @throws \OverflowException if the HTTP request is bigger than the maximum allowed size
+     * @throws MessageTooLarge if the HTTP request is bigger than the maximum allowed size
      */
     public function parse(Connection $connection, string $data): ?RequestInterface;
 }

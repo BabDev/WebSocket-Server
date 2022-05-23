@@ -3,6 +3,7 @@
 namespace BabDev\WebSocket\Server\Http;
 
 use BabDev\WebSocket\Server\Connection;
+use BabDev\WebSocket\Server\Http\Exception\MessageTooLarge;
 use GuzzleHttp\Psr7\Message;
 use Psr\Http\Message\RequestInterface;
 
@@ -18,6 +19,9 @@ final class GuzzleRequestParser implements RequestParser
      */
     public int $maxRequestSize = 4096;
 
+    /**
+     * @throws MessageTooLarge if the HTTP request is bigger than the maximum allowed size
+     */
     public function parse(Connection $connection, string $data): ?RequestInterface
     {
         $buffer = $connection->getAttributeStore()->get('http.buffer', '');
@@ -26,7 +30,7 @@ final class GuzzleRequestParser implements RequestParser
         $connection->getAttributeStore()->set('http.buffer', $buffer);
 
         if (\strlen($buffer) > $this->maxRequestSize) {
-            throw new \OverflowException("Maximum buffer size of {$this->maxRequestSize} exceeded parsing HTTP header");
+            throw new MessageTooLarge("Maximum buffer size of {$this->maxRequestSize} exceeded parsing HTTP header");
         }
 
         if (!$this->isEndOfMessage($buffer)) {
