@@ -64,7 +64,7 @@ final class Topic implements \IteratorAggregate, \Countable, \Stringable
      *
      * @param mixed $msg      Data to send with the broadcast, must be a JSON serializable value
      * @param array $exclude  A list of session IDs the message should be excluded from
-     * @param array $eligible A list of session Ids the message should be sent to
+     * @param array $eligible A list of session IDs the message should be sent to
      *
      * @phpstan-param list<string> $exclude
      * @phpstan-param list<string> $eligible
