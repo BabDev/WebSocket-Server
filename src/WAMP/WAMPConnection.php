@@ -4,6 +4,7 @@ namespace BabDev\WebSocket\Server\WAMP;
 
 use BabDev\WebSocket\Server\Connection;
 use BabDev\WebSocket\Server\Connection\AttributeStore;
+use BabDev\WebSocket\Server\WAMP\Exception\InvalidMessage;
 
 /**
  * The WAMP connection is a connection class decorating another {@see Connection} adding helper methods to
@@ -44,11 +45,15 @@ final class WAMPConnection implements Connection
      * @param string $id     The unique ID given by the client to respond to
      * @param mixed  $result The call result, must be a JSON serializable value
      *
-     * @throws \JsonException if the message cannot be JSON encoded
+     * @throws InvalidMessage if the message cannot be JSON encoded
      */
     public function callResult(string $id, mixed $result = null): void
     {
-        $this->send(json_encode([MessageType::CALL_RESULT, $id, $result], \JSON_THROW_ON_ERROR));
+        try {
+            $this->send(json_encode([MessageType::CALL_RESULT, $id, $result], \JSON_THROW_ON_ERROR));
+        } catch (\JsonException $exception) {
+            throw new InvalidMessage($exception->getMessage(), $exception->getCode(), $exception);
+        }
     }
 
     /**
@@ -59,7 +64,7 @@ final class WAMPConnection implements Connection
      * @param string $errorDescription An optional human-readable description of the error
      * @param string $errorDetails     Used to communicate application error details defined by the error URI; if given, must be a JSON serializable value
      *
-     * @throws \JsonException if the message cannot be JSON encoded
+     * @throws InvalidMessage if the message cannot be JSON encoded
      */
     public function callError(string $id, string $errorUri, string $errorDescription = '', mixed $errorDetails = null): void
     {
@@ -69,7 +74,11 @@ final class WAMPConnection implements Connection
             $data[] = $errorDetails;
         }
 
-        $this->send(json_encode($data, \JSON_THROW_ON_ERROR));
+        try {
+            $this->send(json_encode($data, \JSON_THROW_ON_ERROR));
+        } catch (\JsonException $exception) {
+            throw new InvalidMessage($exception->getMessage(), $exception->getCode(), $exception);
+        }
     }
 
     /**
@@ -78,11 +87,15 @@ final class WAMPConnection implements Connection
      * @param string $topicUri The topic to broadcast to
      * @param mixed  $event    Data to send with the event, must be a JSON serializable value
      *
-     * @throws \JsonException if the message cannot be JSON encoded
+     * @throws InvalidMessage if the message cannot be JSON encoded
      */
     public function event(string $topicUri, mixed $event): void
     {
-        $this->send(json_encode([MessageType::EVENT, $topicUri, $event], \JSON_THROW_ON_ERROR));
+        try {
+            $this->send(json_encode([MessageType::EVENT, $topicUri, $event], \JSON_THROW_ON_ERROR));
+        } catch (\JsonException $exception) {
+            throw new InvalidMessage($exception->getMessage(), $exception->getCode(), $exception);
+        }
     }
 
     /**
@@ -91,7 +104,7 @@ final class WAMPConnection implements Connection
      * @param string $prefix The string to use as the prefix
      * @param string $uri    The URI which will be abbreviated with the given prefix
      *
-     * @throws \JsonException if the message cannot be JSON encoded
+     * @throws InvalidMessage if the message cannot be JSON encoded
      */
     public function prefix(string $prefix, string $uri): void
     {
@@ -101,7 +114,11 @@ final class WAMPConnection implements Connection
 
         $this->getAttributeStore()->set('wamp.prefixes', $prefixes);
 
-        $this->send(json_encode([MessageType::PREFIX, $prefix, $uri], \JSON_THROW_ON_ERROR));
+        try {
+            $this->send(json_encode([MessageType::PREFIX, $prefix, $uri], \JSON_THROW_ON_ERROR));
+        } catch (\JsonException $exception) {
+            throw new InvalidMessage($exception->getMessage(), $exception->getCode(), $exception);
+        }
     }
 
     public function getUri(string $uri): string
