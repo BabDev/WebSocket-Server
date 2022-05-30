@@ -17,7 +17,7 @@
     "require-dev": {
         "ext-sockets": "*",
         "phpstan/extension-installer": "^1.1",
-        "phpstan/phpstan": "1.7.3",
+        "phpstan/phpstan": "1.7.5",
         "phpstan/phpstan-phpunit": "1.1.1",
         "phpunit/phpunit": "^9.5",
         "symfony/phpunit-bridge": "^5.4 || ^6.0"
