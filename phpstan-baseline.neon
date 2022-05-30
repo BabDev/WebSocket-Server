@@ -64,3 +64,8 @@ parameters:
 			message: "#^Property BabDev\\\\WebSocket\\\\Server\\\\Tests\\\\ReactPhpServerTest\\:\\:\\$server is never read, only written\\.$#"
 			count: 1
 			path: tests/ReactPhpServerTest.php
+
+		-
+			message: "#^Method BabDev\\\\WebSocket\\\\Server\\\\Tests\\\\WAMP\\\\Middleware\\\\ParseWAMPMessageTest\\:\\:testOnMessageForCallMessage\\(\\) has parameter \\$args with no type specified\\.$#"
+			count: 1
+			path: tests/WAMP/Middleware/ParseWAMPMessageTest.php
