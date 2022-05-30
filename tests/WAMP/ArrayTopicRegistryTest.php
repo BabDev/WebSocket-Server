@@ -26,6 +26,18 @@ final class ArrayTopicRegistryTest extends TestCase
         $this->assertTrue($this->topicRegistry->has($topic->id));
     }
 
+    public function testProvidesAllTopics(): void
+    {
+        $topic = new Topic('testing/123');
+
+        $this->topicRegistry->add($topic);
+
+        $this->assertSame(
+            [$topic->id => $topic],
+            $this->topicRegistry->all()
+        );
+    }
+
     public function testCanNotAddATopicWhenAnotherHasTheSameId(): void
     {
         $this->expectException(TopicAlreadyRegistered::class);

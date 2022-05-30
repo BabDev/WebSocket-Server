@@ -28,6 +28,14 @@ final class ArrayTopicRegistry implements TopicRegistry
     }
 
     /**
+     * @return iterable<Topic>
+     */
+    public function all(): iterable
+    {
+        return $this->topics;
+    }
+
+    /**
      * @throws TopicNotFound if a topic with the requested ID does not exist
      */
     public function get(string $id): Topic
