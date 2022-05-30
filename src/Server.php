@@ -15,5 +15,12 @@ namespace BabDev\WebSocket\Server;
  */
 interface Server
 {
+    /**
+     * A user agent string including the minor version for this package.
+     *
+     * This is used to identify the server when appropriate (i.e. the WAMP Welcome message).
+     */
+    final public const VERSION = 'BabDev-Websocket-Server/0.1';
+
     public function run(): void;
 }

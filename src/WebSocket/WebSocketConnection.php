@@ -35,7 +35,7 @@ final class WebSocketConnection implements Connection
                 $data = new Frame($data);
             }
 
-            $this->getConnection()->send($data->getContents());
+            $this->connection->send($data->getContents());
         }
     }
 
@@ -51,7 +51,7 @@ final class WebSocketConnection implements Connection
             $this->send(new Frame(pack('n', $data), true, Frame::OP_CLOSE));
         }
 
-        $this->getConnection()->close();
+        $this->connection->close();
 
         $this->getAttributeStore()->set('websocket.closing', true);
     }

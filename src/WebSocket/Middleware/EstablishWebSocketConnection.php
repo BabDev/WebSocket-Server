@@ -9,6 +9,7 @@ use BabDev\WebSocket\Server\ServerMiddleware;
 use BabDev\WebSocket\Server\WebSocket\Exception\InvalidEncoding;
 use BabDev\WebSocket\Server\WebSocket\WebSocketConnection;
 use BabDev\WebSocket\Server\WebSocket\WebSocketConnectionContext;
+use BabDev\WebSocket\Server\WebSocketServerMiddleware;
 use GuzzleHttp\Psr7\Message;
 use Psr\Http\Message\RequestInterface;
 use Ratchet\RFC6455\Handshake\NegotiatorInterface;
@@ -53,11 +54,9 @@ final class EstablishWebSocketConnection implements ServerMiddleware
 
         $this->negotiator->setStrictSubProtocolCheck(true);
 
-        /*
-        if ($this->middleware instanceof WsServerInterface) {
+        if ($this->middleware instanceof WebSocketServerMiddleware) {
             $this->negotiator->setSupportedSubProtocols($this->middleware->getSubProtocols());
         }
-         */
 
         $this->pongReceiver = static function (FrameInterface $frame, Connection $connection): void {};
     }

@@ -68,7 +68,7 @@ final class TopicTest extends TestCase
         $items = 0;
 
         foreach ($this->topic as $connection) {
-            $items++;
+            ++$items;
         }
 
         $this->assertSame(3, $items);
