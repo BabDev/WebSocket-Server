@@ -28,12 +28,11 @@ jobs:
         with:
           php-version: ${{ matrix.php }}
           tools: composer:v2
-          extensions: curl, iconv, mbstring, mongodb, pdo, pdo_sqlite, sqlite, zip
+          extensions: curl, iconv, mbstring, mongodb, pdo, pdo_sqlite, session, sockets, sqlite, zip
           coverage: none
 
       - name: Install dependencies
-        run: |
-          composer update ${{ matrix.composer-flags }} --prefer-dist --no-suggest
+        run: composer update ${{ matrix.composer-flags }} --prefer-dist --no-suggest
 
       - name: Execute tests
         run: vendor/bin/phpunit

@@ -18,7 +18,7 @@
         "ext-session": "*",
         "ext-sockets": "*",
         "phpstan/extension-installer": "^1.1",
-        "phpstan/phpstan": "1.7.5",
+        "phpstan/phpstan": "1.7.10",
         "phpstan/phpstan-phpunit": "1.1.1",
         "phpunit/phpunit": "^9.5",
         "symfony/http-foundation": "^5.4 || ^6.0",
