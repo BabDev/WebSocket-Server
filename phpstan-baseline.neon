@@ -1,6 +1,11 @@
 parameters:
 	ignoreErrors:
 		-
+			message: "#^Parameter \\#2 \\$value of function ini_set expects bool\\|float\\|int\\|string\\|null, mixed given\\.$#"
+			count: 1
+			path: src/IniOptionsHandler.php
+
+		-
 			message: "#^Access to an undefined property React\\\\Socket\\\\ConnectionInterface\\:\\:\\$stream\\.$#"
 			count: 1
 			path: src/ReactPhpServer.php
@@ -19,6 +24,71 @@ parameters:
 			message: "#^Property BabDev\\\\WebSocket\\\\Server\\\\ReactPhpServer\\:\\:\\$socket is never read, only written\\.$#"
 			count: 1
 			path: src/ReactPhpServer.php
+
+		-
+			message: "#^Parameter \\#3 \\$length of function substr expects int\\|null, int\\<0, max\\>\\|false given\\.$#"
+			count: 1
+			path: src/Session/Middleware/InitializeSession.php
+
+		-
+			message: "#^Method BabDev\\\\WebSocket\\\\Server\\\\Session\\\\Reader\\\\PhpSerializeReader\\:\\:read\\(\\) should return array but returns mixed\\.$#"
+			count: 1
+			path: src/Session/Reader/PhpSerializeReader.php
+
+		-
+			message: "#^Property BabDev\\\\WebSocket\\\\Server\\\\Session\\\\Storage\\\\Proxy\\\\ReadOnlySessionHandlerProxy\\:\\:\\$sessionName \\(string\\) does not accept mixed\\.$#"
+			count: 1
+			path: src/Session/Storage/Proxy/ReadOnlySessionHandlerProxy.php
+
+		-
+			message: "#^Property Symfony\\\\Component\\\\HttpFoundation\\\\Session\\\\Storage\\\\Proxy\\\\AbstractProxy\\:\\:\\$saveHandlerName \\(string\\) does not accept mixed\\.$#"
+			count: 1
+			path: src/Session/Storage/Proxy/ReadOnlySessionHandlerProxy.php
+
+		-
+			message: "#^Call to an undefined method SessionHandlerInterface\\|Symfony\\\\Component\\\\HttpFoundation\\\\Session\\\\Storage\\\\Proxy\\\\AbstractProxy\\:\\:getId\\(\\)\\.$#"
+			count: 2
+			path: src/Session/Storage/ReadOnlyNativeSessionStorage.php
+
+		-
+			message: "#^Call to an undefined method SessionHandlerInterface\\|Symfony\\\\Component\\\\HttpFoundation\\\\Session\\\\Storage\\\\Proxy\\\\AbstractProxy\\:\\:getName\\(\\)\\.$#"
+			count: 2
+			path: src/Session/Storage/ReadOnlyNativeSessionStorage.php
+
+		-
+			message: "#^Call to an undefined method SessionHandlerInterface\\|Symfony\\\\Component\\\\HttpFoundation\\\\Session\\\\Storage\\\\Proxy\\\\AbstractProxy\\:\\:isSessionHandlerInterface\\(\\)\\.$#"
+			count: 2
+			path: src/Session/Storage/ReadOnlyNativeSessionStorage.php
+
+		-
+			message: "#^Call to an undefined method SessionHandlerInterface\\|Symfony\\\\Component\\\\HttpFoundation\\\\Session\\\\Storage\\\\Proxy\\\\AbstractProxy\\:\\:isWrapper\\(\\)\\.$#"
+			count: 2
+			path: src/Session/Storage/ReadOnlyNativeSessionStorage.php
+
+		-
+			message: "#^Call to an undefined method SessionHandlerInterface\\|Symfony\\\\Component\\\\HttpFoundation\\\\Session\\\\Storage\\\\Proxy\\\\AbstractProxy\\:\\:open\\(\\)\\.$#"
+			count: 1
+			path: src/Session/Storage/ReadOnlyNativeSessionStorage.php
+
+		-
+			message: "#^Call to an undefined method SessionHandlerInterface\\|Symfony\\\\Component\\\\HttpFoundation\\\\Session\\\\Storage\\\\Proxy\\\\AbstractProxy\\:\\:read\\(\\)\\.$#"
+			count: 1
+			path: src/Session/Storage/ReadOnlyNativeSessionStorage.php
+
+		-
+			message: "#^Call to an undefined method SessionHandlerInterface\\|Symfony\\\\Component\\\\HttpFoundation\\\\Session\\\\Storage\\\\Proxy\\\\AbstractProxy\\:\\:setActive\\(\\)\\.$#"
+			count: 2
+			path: src/Session/Storage/ReadOnlyNativeSessionStorage.php
+
+		-
+			message: "#^Call to an undefined method SessionHandlerInterface\\|Symfony\\\\Component\\\\HttpFoundation\\\\Session\\\\Storage\\\\Proxy\\\\AbstractProxy\\:\\:setId\\(\\)\\.$#"
+			count: 1
+			path: src/Session/Storage/ReadOnlyNativeSessionStorage.php
+
+		-
+			message: "#^Parameter \\#2 \\.\\.\\.\\$values of function sprintf expects bool\\|float\\|int\\|string\\|null, mixed given\\.$#"
+			count: 1
+			path: src/Session/Storage/ReadOnlyNativeSessionStorage.php
 
 		-
 			message: "#^Parameter \\#1 \\$haystack of function str_contains expects string, string\\|null given\\.$#"
