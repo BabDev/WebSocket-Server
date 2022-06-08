@@ -1,6 +1,11 @@
 parameters:
 	ignoreErrors:
 		-
+			message: "#^Parameter \\#1 \\$requestIp of static method Symfony\\\\Component\\\\HttpFoundation\\\\IpUtils\\:\\:checkIp\\(\\) expects string, mixed given\\.$#"
+			count: 1
+			path: src/Http/Middleware/RejectBlockedIpAddress.php
+
+		-
 			message: "#^Parameter \\#2 \\$value of function ini_set expects bool\\|float\\|int\\|string\\|null, mixed given\\.$#"
 			count: 1
 			path: src/IniOptionsHandler.php
@@ -89,6 +94,11 @@ parameters:
 			message: "#^Parameter \\#2 \\.\\.\\.\\$values of function sprintf expects bool\\|float\\|int\\|string\\|null, mixed given\\.$#"
 			count: 1
 			path: src/Session/Storage/ReadOnlyNativeSessionStorage.php
+
+		-
+			message: "#^Parameter \\#2 \\$haystack of function in_array expects array, mixed given\\.$#"
+			count: 3
+			path: tests/Http/Middleware/RejectBlockedIpAddressTest.php
 
 		-
 			message: "#^Parameter \\#1 \\$haystack of function str_contains expects string, string\\|null given\\.$#"
