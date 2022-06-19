@@ -101,6 +101,11 @@ parameters:
 			path: tests/Http/Middleware/RejectBlockedIpAddressTest.php
 
 		-
+			message: "#^Parameter \\#2 \\$haystack of function in_array expects array, mixed given\\.$#"
+			count: 3
+			path: tests/Http/Middleware/RestrictToAllowedOriginsTest.php
+
+		-
 			message: "#^Parameter \\#1 \\$haystack of function str_contains expects string, string\\|null given\\.$#"
 			count: 1
 			path: tests/ReactPhpServerTest.php
@@ -144,6 +149,16 @@ parameters:
 			message: "#^Property BabDev\\\\WebSocket\\\\Server\\\\Tests\\\\ReactPhpServerTest\\:\\:\\$server is never read, only written\\.$#"
 			count: 1
 			path: tests/ReactPhpServerTest.php
+
+		-
+			message: "#^Class UnknownClass not found\\.$#"
+			count: 1
+			path: tests/WAMP/MessageHandler/DefaultMessageHandlerResolverTest.php
+
+		-
+			message: "#^Class UnknownClass not found\\.$#"
+			count: 1
+			path: tests/WAMP/MessageHandler/PsrContainerMessageHandlerResolverTest.php
 
 		-
 			message: "#^Method BabDev\\\\WebSocket\\\\Server\\\\Tests\\\\WAMP\\\\Middleware\\\\ParseWAMPMessageTest\\:\\:testOnMessageForCallMessage\\(\\) has parameter \\$args with no type specified\\.$#"
