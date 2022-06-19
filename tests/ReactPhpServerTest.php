@@ -22,13 +22,21 @@ final class ReactPhpServerTest extends TestCase
 
     private int $port;
 
+    public static function setUpBeforeClass(): void
+    {
+        Loop::set(new StreamSelectLoop());
+    }
+
+    public static function tearDownAfterClass(): void
+    {
+        (new \ReflectionClass(Loop::class))->getProperty('instance')->setValue(null);
+    }
+
     protected function setUp(): void
     {
         $this->middleware = $this->createMock(ServerMiddleware::class);
 
-        Loop::set(new StreamSelectLoop());
-
-        $this->socket = new SocketServer('127.0.0.1:0');
+        $this->socket = new SocketServer('127.0.0.1:0', [], Loop::get());
 
         $uri = $this->socket->getAddress();
 
