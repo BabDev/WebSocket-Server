@@ -42,7 +42,7 @@ final class RestrictToAllowedOrigins implements ServerMiddleware
             throw new MissingRequest(sprintf('The "%s" middleware requires the HTTP request has been processed. Ensure the "%s" middleware (or a custom middleware setting the "http.request" in the attribute store) has been run.', self::class, ParseHttpRequest::class));
         }
 
-        if ($this->allowedOrigins !== []) {
+        if ([] !== $this->allowedOrigins) {
             if (!$request->hasHeader('Origin')) {
                 $this->close($connection, 403);
 
@@ -50,13 +50,13 @@ final class RestrictToAllowedOrigins implements ServerMiddleware
             }
 
             foreach ($request->getHeader('Origin') as $originHeader) {
-                $parsedOriginHeader = parse_url($originHeader, PHP_URL_HOST);
+                $parsedOriginHeader = parse_url($originHeader, \PHP_URL_HOST);
 
                 if (false === $parsedOriginHeader || null === $parsedOriginHeader) {
                     throw new MalformedRequest('The "Origin" header cannot be parsed.');
                 }
 
-                if (!in_array($parsedOriginHeader, $this->allowedOrigins, true)) {
+                if (!\in_array($parsedOriginHeader, $this->allowedOrigins, true)) {
                     $this->close($connection, 403);
 
                     return;

@@ -6,7 +6,7 @@ final class IniOptionsHandler implements OptionsHandler
 {
     public function get(string $option): mixed
     {
-        return ini_get($option);
+        return \ini_get($option);
     }
 
     public function set(string $option, mixed $value): void

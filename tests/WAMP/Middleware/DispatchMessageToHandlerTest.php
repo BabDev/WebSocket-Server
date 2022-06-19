@@ -3,7 +3,6 @@
 namespace BabDev\WebSocket\Server\Tests\WAMP\Middleware;
 
 use BabDev\WebSocket\Server\Connection;
-use BabDev\WebSocket\Server\Connection\ArrayAttributeStore;
 use BabDev\WebSocket\Server\Connection\AttributeStore;
 use BabDev\WebSocket\Server\RPCMessageHandler;
 use BabDev\WebSocket\Server\TopicMessageHandler;
