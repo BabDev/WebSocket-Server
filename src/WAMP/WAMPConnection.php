@@ -62,7 +62,7 @@ final class WAMPConnection implements Connection
      * @param string $id               The unique ID given by the client to respond to
      * @param string $errorUri         The URI given to identify the error
      * @param string $errorDescription An optional human-readable description of the error
-     * @param string $errorDetails     Used to communicate application error details defined by the error URI; if given, must be a JSON serializable value
+     * @param mixed  $errorDetails     Used to communicate application error details defined by the error URI; if given, must be a JSON serializable value
      *
      * @throws InvalidMessage if the message cannot be JSON encoded
      */

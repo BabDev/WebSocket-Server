@@ -4,7 +4,6 @@ namespace BabDev\WebSocket\Server\Http\Middleware;
 
 use BabDev\WebSocket\Server\Connection;
 use BabDev\WebSocket\Server\Connection\ClosesConnectionWithResponse;
-use BabDev\WebSocket\Server\Exception\MissingDependency;
 use BabDev\WebSocket\Server\ServerMiddleware;
 use Symfony\Component\HttpFoundation\IpUtils;
 
@@ -23,15 +22,9 @@ final class RejectBlockedIpAddress implements ServerMiddleware
      */
     private array $blockedAddresses = [];
 
-    /**
-     * @throws MissingDependency if the `symfony/http-foundation` package is not installed
-     */
     public function __construct(
         private readonly ServerMiddleware $middleware,
     ) {
-        if (!class_exists(IpUtils::class)) {
-            throw new MissingDependency('symfony/http-foundation', sprintf('The "%s" class requires the "symfony/http-foundation" package.', self::class));
-        }
     }
 
     /**

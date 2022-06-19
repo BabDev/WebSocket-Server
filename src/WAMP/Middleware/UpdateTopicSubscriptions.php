@@ -3,6 +3,7 @@
 namespace BabDev\WebSocket\Server\WAMP\Middleware;
 
 use BabDev\WebSocket\Server\Connection;
+use BabDev\WebSocket\Server\WAMP\Exception\RouteNotFound;
 use BabDev\WebSocket\Server\WAMP\Topic;
 use BabDev\WebSocket\Server\WAMP\TopicRegistry;
 use BabDev\WebSocket\Server\WAMPServerMiddleware;
@@ -68,7 +69,7 @@ final class UpdateTopicSubscriptions implements WAMPServerMiddleware
     /**
      * Handles an RPC "CALL" WAMP message from the client.
      *
-     * @param string $id the unique ID of the RPC, required to send a "CALLERROR" or "CALLRESULT" message
+     * @param string $id The unique ID of the RPC, required to send a "CALLERROR" or "CALLRESULT" message
      */
     public function onCall(Connection $connection, string $id, Topic $topic, array $params): void
     {
@@ -95,7 +96,13 @@ final class UpdateTopicSubscriptions implements WAMPServerMiddleware
 
         $subscriptions->attach($topic);
 
-        $this->middleware->onSubscribe($connection, $topic);
+        try {
+            $this->middleware->onSubscribe($connection, $topic);
+        } catch (RouteNotFound $exception) {
+            $this->cleanTopic($topic, $connection);
+
+            throw $exception;
+        }
     }
 
     /**
@@ -127,7 +134,13 @@ final class UpdateTopicSubscriptions implements WAMPServerMiddleware
      */
     public function onPublish(Connection $connection, Topic $topic, array|string $event, array $exclude, array $eligible): void
     {
-        $this->middleware->onPublish($connection, $topic, $event, $exclude, $eligible);
+        try {
+            $this->middleware->onPublish($connection, $topic, $event, $exclude, $eligible);
+        } catch (RouteNotFound $exception) {
+            $this->cleanTopic($topic, $connection);
+
+            throw $exception;
+        }
     }
 
     private function cleanTopic(Topic $topic, Connection $connection): void

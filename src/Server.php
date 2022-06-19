@@ -10,8 +10,9 @@ namespace BabDev\WebSocket\Server;
  *
  * - Server middleware, represented by {@see ServerMiddleware} - This middleware is intended
  *   to process the incoming HTTP message and route it; the last middleware in this portion of the stack
- *   *MUST* trigger the appropriate controller for an action and execute its wrapping {@see MessageMiddleware}
- * - Message middleware, represented by {@see MessageMiddleware} - This middleware is intended to wrap a controller
+ *   *MUST* trigger the appropriate {@see MessageHandler} for an action and execute its wrapping {@see MessageMiddleware}
+ * - Message middleware, represented by {@see MessageMiddleware} - This middleware is intended
+ *   to wrap a {@see MessageHandler} and allows acting on incoming WAMP messages on a per-message basis
  */
 interface Server
 {
