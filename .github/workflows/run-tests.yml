@@ -28,7 +28,7 @@ jobs:
         with:
           php-version: ${{ matrix.php }}
           tools: composer:v2
-          extensions: curl, iconv, mbstring, mongodb, pdo, pdo_sqlite, session, sockets, sqlite, zip
+          extensions: curl, iconv, mbstring, session, sockets, sqlite, zip
           coverage: none
 
       - name: Install dependencies
