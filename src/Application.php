@@ -14,8 +14,6 @@ use BabDev\WebSocket\Server\WAMP\Middleware\UpdateTopicSubscriptions;
 use BabDev\WebSocket\Server\WebSocket\Middleware\EstablishWebSocketConnection;
 use React\EventLoop\Loop;
 use React\EventLoop\LoopInterface;
-use React\Socket\SecureServer;
-use React\Socket\ServerInterface;
 use React\Socket\SocketServer;
 use Symfony\Component\HttpFoundation\Session\SessionFactoryInterface;
 use Symfony\Component\Routing\Matcher\UrlMatcher;
@@ -43,10 +41,6 @@ final class Application
 
     private RouteCollection $routeCollection;
 
-    private bool $secure = false;
-
-    private array $secureContext = [];
-
     private ?SessionFactoryInterface $sessionFactory = null;
 
     private ?OptionsHandler $optionsHandler = null;
@@ -61,8 +55,12 @@ final class Application
      */
     private array $blockedAddresses = [];
 
-    public ?ServerInterface $socket = null;
-
+    /**
+     * Creates the application instance.
+     *
+     * This class' constructor arguments are forwarded to the underlying {@see SocketServer} instance which handles
+     * the connections for the server. Please see that class' documentation for more details.
+     */
     public function __construct(
         string $uri,
         array $context = [],
@@ -111,12 +109,6 @@ final class Application
 
         $socket = new SocketServer($this->uri, $this->context, $this->loop);
 
-        if ($this->secure) {
-            $socket = new SecureServer($socket, $this->loop, $this->secureContext);
-        }
-
-        $this->socket = $socket;
-
         (new ReactPhpServer($middleware, $socket, $this->loop))->run();
     }
 
@@ -127,19 +119,6 @@ final class Application
             new Route($path, ['_controller' => $handler]),
             $priority
         );
-
-        return $this;
-    }
-
-    /**
-     * Toggle whether this server should use a secure protocol (i.e. HTTPS or WSS) with TLS enabled.
-     *
-     * @param array $context TLS context options, see {@see SecureServer} for more details
-     */
-    public function secure(array $context = []): self
-    {
-        $this->secure = true;
-        $this->secureContext = $context;
 
         return $this;
     }
