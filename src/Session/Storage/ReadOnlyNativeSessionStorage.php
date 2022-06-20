@@ -52,8 +52,6 @@ final class ReadOnlyNativeSessionStorage implements SessionStorageInterface
             throw new SessionMisconfigured('PHP extension "session" is required.');
         }
 
-        $this->reader = $reader ?? $this->createReader();
-
         $options = array_merge(
             [
                 'auto_start' => 0,
@@ -69,6 +67,8 @@ final class ReadOnlyNativeSessionStorage implements SessionStorageInterface
         $this->setMetadataBag($metaBag);
         $this->setOptions($options);
         $this->setSaveHandler($handler);
+
+        $this->reader = $reader ?? $this->createReader();
     }
 
     public function start(): bool
