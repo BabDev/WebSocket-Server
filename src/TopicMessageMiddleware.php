@@ -3,6 +3,7 @@
 namespace BabDev\WebSocket\Server;
 
 use BabDev\WebSocket\Server\WAMP\Topic;
+use BabDev\WebSocket\Server\WAMP\WAMPConnection;
 use BabDev\WebSocket\Server\WAMP\WAMPMessageRequest;
 
 /**
@@ -13,12 +14,12 @@ interface TopicMessageMiddleware extends MessageMiddleware
     /**
      * Handles a "SUBSCRIBE" WAMP message from the client.
      */
-    public function onSubscribe(Connection $connection, Topic $topic, WAMPMessageRequest $request): void;
+    public function onSubscribe(WAMPConnection $connection, Topic $topic, WAMPMessageRequest $request): void;
 
     /**
      * Handles an "UNSUBSCRIBE" WAMP message from the client.
      */
-    public function onUnsubscribe(Connection $connection, Topic $topic, WAMPMessageRequest $request): void;
+    public function onUnsubscribe(WAMPConnection $connection, Topic $topic, WAMPMessageRequest $request): void;
 
     /**
      * Handles a "PUBLISH" WAMP message from the client.

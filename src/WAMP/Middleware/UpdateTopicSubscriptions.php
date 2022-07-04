@@ -6,6 +6,7 @@ use BabDev\WebSocket\Server\Connection;
 use BabDev\WebSocket\Server\WAMP\Exception\RouteNotFound;
 use BabDev\WebSocket\Server\WAMP\Topic;
 use BabDev\WebSocket\Server\WAMP\TopicRegistry;
+use BabDev\WebSocket\Server\WAMP\WAMPConnection;
 use BabDev\WebSocket\Server\WAMPServerMiddleware;
 
 /**
@@ -71,7 +72,7 @@ final class UpdateTopicSubscriptions implements WAMPServerMiddleware
      *
      * @param string $id The unique ID of the RPC, required to send a "CALLERROR" or "CALLRESULT" message
      */
-    public function onCall(Connection $connection, string $id, Topic $topic, array $params): void
+    public function onCall(WAMPConnection $connection, string $id, Topic $topic, array $params): void
     {
         $this->middleware->onCall($connection, $id, $topic, $params);
     }
@@ -79,7 +80,7 @@ final class UpdateTopicSubscriptions implements WAMPServerMiddleware
     /**
      * Handles a "SUBSCRIBE" WAMP message from the client.
      */
-    public function onSubscribe(Connection $connection, Topic $topic): void
+    public function onSubscribe(WAMPConnection $connection, Topic $topic): void
     {
         /** @var \SplObjectStorage<Topic, null> $subscriptions */
         $subscriptions = $connection->getAttributeStore()->get('wamp.subscriptions', new \SplObjectStorage());
@@ -108,7 +109,7 @@ final class UpdateTopicSubscriptions implements WAMPServerMiddleware
     /**
      * Handles an "UNSUBSCRIBE" WAMP message from the client.
      */
-    public function onUnsubscribe(Connection $connection, Topic $topic): void
+    public function onUnsubscribe(WAMPConnection $connection, Topic $topic): void
     {
         /** @var \SplObjectStorage<Topic, null> $subscriptions */
         $subscriptions = $connection->getAttributeStore()->get('wamp.subscriptions', new \SplObjectStorage());
@@ -132,7 +133,7 @@ final class UpdateTopicSubscriptions implements WAMPServerMiddleware
      * @phpstan-param list<string> $exclude
      * @phpstan-param list<string> $eligible
      */
-    public function onPublish(Connection $connection, Topic $topic, array|string $event, array $exclude, array $eligible): void
+    public function onPublish(WAMPConnection $connection, Topic $topic, array|string $event, array $exclude, array $eligible): void
     {
         try {
             $this->middleware->onPublish($connection, $topic, $event, $exclude, $eligible);

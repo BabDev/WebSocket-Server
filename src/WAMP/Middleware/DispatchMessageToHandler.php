@@ -3,7 +3,6 @@
 namespace BabDev\WebSocket\Server\WAMP\Middleware;
 
 use BabDev\WebSocket\Server\Connection;
-use BabDev\WebSocket\Server\Exception\UnsupportedConnection;
 use BabDev\WebSocket\Server\Http\Exception\MissingRequest;
 use BabDev\WebSocket\Server\Http\Middleware\ParseHttpRequest;
 use BabDev\WebSocket\Server\RPCMessageHandler;
@@ -101,17 +100,12 @@ final class DispatchMessageToHandler implements WAMPServerMiddleware
      * @throws InvalidRequest                  if the request data does not allow a handler to be resolved
      * @throws RouteNotFound                   if there is no route defined for the topic ID
      * @throws UnknownMessageHandler           if the message handler does not exist
-     * @throws UnsupportedConnection           if the connection is not a {@see WAMPConnection} instance
      */
-    public function onCall(Connection $connection, string $id, Topic $topic, array $params): void
+    public function onCall(WAMPConnection $connection, string $id, Topic $topic, array $params): void
     {
         try {
             $request = $this->route($topic);
         } catch (RouteNotFound $exception) {
-            if (!$connection instanceof WAMPConnection) {
-                throw new UnsupportedConnection(sprintf('The "%s" expects the connection to be an instance of "%s", "%s" given.', self::class, WAMPConnection::class, $connection::class), $exception->getCode(), $exception);
-            }
-
             $connection->callError(
                 $id,
                 $topic->id,
@@ -128,10 +122,6 @@ final class DispatchMessageToHandler implements WAMPServerMiddleware
         try {
             $handler = $this->resolver->findMessageHandler($request);
         } catch (WebSocketException $exception) {
-            if (!$connection instanceof WAMPConnection) {
-                throw new UnsupportedConnection(sprintf('The "%s" expects the connection to be an instance of "%s", "%s" given.', self::class, WAMPConnection::class, $connection::class), $exception->getCode(), $exception);
-            }
-
             $connection->callError(
                 $id,
                 $topic->id,
@@ -160,17 +150,12 @@ final class DispatchMessageToHandler implements WAMPServerMiddleware
      * @throws InvalidRequest                  if the request data does not allow a handler to be resolved
      * @throws RouteNotFound                   if there is no route defined for the topic ID
      * @throws UnknownMessageHandler           if the message handler does not exist
-     * @throws UnsupportedConnection           if the connection is not a {@see WAMPConnection} instance
      */
-    public function onSubscribe(Connection $connection, Topic $topic): void
+    public function onSubscribe(WAMPConnection $connection, Topic $topic): void
     {
         try {
             $request = $this->route($topic);
         } catch (RouteNotFound $exception) {
-            if (!$connection instanceof WAMPConnection) {
-                throw new UnsupportedConnection(sprintf('The "%s" expects the connection to be an instance of "%s", "%s" given.', self::class, WAMPConnection::class, $connection::class), $exception->getCode(), $exception);
-            }
-
             $connection->event(
                 $topic->id,
                 [
@@ -187,10 +172,6 @@ final class DispatchMessageToHandler implements WAMPServerMiddleware
         try {
             $handler = $this->resolver->findMessageHandler($request);
         } catch (WebSocketException $exception) {
-            if (!$connection instanceof WAMPConnection) {
-                throw new UnsupportedConnection(sprintf('The "%s" expects the connection to be an instance of "%s", "%s" given.', self::class, WAMPConnection::class, $connection::class), $exception->getCode(), $exception);
-            }
-
             $connection->event(
                 $topic->id,
                 [
@@ -219,17 +200,12 @@ final class DispatchMessageToHandler implements WAMPServerMiddleware
      * @throws InvalidRequest                  if the request data does not allow a handler to be resolved
      * @throws RouteNotFound                   if there is no route defined for the topic ID
      * @throws UnknownMessageHandler           if the message handler does not exist
-     * @throws UnsupportedConnection           if the connection is not a {@see WAMPConnection} instance
      */
-    public function onUnsubscribe(Connection $connection, Topic $topic): void
+    public function onUnsubscribe(WAMPConnection $connection, Topic $topic): void
     {
         try {
             $request = $this->route($topic);
         } catch (RouteNotFound $exception) {
-            if (!$connection instanceof WAMPConnection) {
-                throw new UnsupportedConnection(sprintf('The "%s" expects the connection to be an instance of "%s", "%s" given.', self::class, WAMPConnection::class, $connection::class), $exception->getCode(), $exception);
-            }
-
             $connection->event(
                 $topic->id,
                 [
@@ -246,10 +222,6 @@ final class DispatchMessageToHandler implements WAMPServerMiddleware
         try {
             $handler = $this->resolver->findMessageHandler($request);
         } catch (WebSocketException $exception) {
-            if (!$connection instanceof WAMPConnection) {
-                throw new UnsupportedConnection(sprintf('The "%s" expects the connection to be an instance of "%s", "%s" given.', self::class, WAMPConnection::class, $connection::class), $exception->getCode(), $exception);
-            }
-
             $connection->event(
                 $topic->id,
                 [
@@ -282,20 +254,15 @@ final class DispatchMessageToHandler implements WAMPServerMiddleware
      * @throws InvalidRequest                  if the request data does not allow a handler to be resolved
      * @throws RouteNotFound                   if there is no route defined for the topic ID
      * @throws UnknownMessageHandler           if the message handler does not exist
-     * @throws UnsupportedConnection           if the connection is not a {@see WAMPConnection} instance
      *
      * @phpstan-param list<string> $exclude
      * @phpstan-param list<string> $eligible
      */
-    public function onPublish(Connection $connection, Topic $topic, array|string $event, array $exclude, array $eligible): void
+    public function onPublish(WAMPConnection $connection, Topic $topic, array|string $event, array $exclude, array $eligible): void
     {
         try {
             $request = $this->route($topic);
         } catch (RouteNotFound $exception) {
-            if (!$connection instanceof WAMPConnection) {
-                throw new UnsupportedConnection(sprintf('The "%s" expects the connection to be an instance of "%s", "%s" given.', self::class, WAMPConnection::class, $connection::class), $exception->getCode(), $exception);
-            }
-
             $connection->event(
                 $topic->id,
                 [
@@ -312,10 +279,6 @@ final class DispatchMessageToHandler implements WAMPServerMiddleware
         try {
             $handler = $this->resolver->findMessageHandler($request);
         } catch (WebSocketException $exception) {
-            if (!$connection instanceof WAMPConnection) {
-                throw new UnsupportedConnection(sprintf('The "%s" expects the connection to be an instance of "%s", "%s" given.', self::class, WAMPConnection::class, $connection::class), $exception->getCode(), $exception);
-            }
-
             $connection->event(
                 $topic->id,
                 [

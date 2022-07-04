@@ -3,6 +3,7 @@
 namespace BabDev\WebSocket\Server;
 
 use BabDev\WebSocket\Server\WAMP\Topic;
+use BabDev\WebSocket\Server\WAMP\WAMPConnection;
 use BabDev\WebSocket\Server\WAMP\WAMPMessageRequest;
 
 /**
@@ -15,5 +16,5 @@ interface RPCMessageMiddleware extends MessageMiddleware
      *
      * @param string $id The unique ID of the RPC, required to send a "CALLERROR" or "CALLRESULT" message
      */
-    public function onCall(Connection $connection, string $id, Topic $topic, WAMPMessageRequest $request, array $params): void;
+    public function onCall(WAMPConnection $connection, string $id, Topic $topic, WAMPMessageRequest $request, array $params): void;
 }

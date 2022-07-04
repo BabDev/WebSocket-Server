@@ -4,7 +4,6 @@ namespace BabDev\WebSocket\Server\Tests\WAMP\Middleware;
 
 use BabDev\WebSocket\Server\Connection;
 use BabDev\WebSocket\Server\Connection\ArrayAttributeStore;
-use BabDev\WebSocket\Server\WAMP\DefaultWAMPConnection;
 use BabDev\WebSocket\Server\WAMP\Middleware\UpdateTopicSubscriptions;
 use BabDev\WebSocket\Server\WAMP\Topic;
 use BabDev\WebSocket\Server\WAMP\TopicRegistry;
@@ -159,8 +158,8 @@ final class UpdateTopicSubscriptionsTest extends TestCase
         $topic = new Topic('testing');
         $params = ['foo' => 'bar'];
 
-        /** @var MockObject&Connection $connection */
-        $connection = $this->createMock(Connection::class);
+        /** @var MockObject&WAMPConnection $connection */
+        $connection = $this->createMock(WAMPConnection::class);
 
         $this->decoratedMiddleware->expects($this->once())
             ->method('onCall')
@@ -250,8 +249,8 @@ final class UpdateTopicSubscriptionsTest extends TestCase
         $exclude = [];
         $eligible = [];
 
-        /** @var MockObject&Connection $connection */
-        $connection = $this->createMock(Connection::class);
+        /** @var MockObject&WAMPConnection $connection */
+        $connection = $this->createMock(WAMPConnection::class);
 
         $this->decoratedMiddleware->expects($this->once())
             ->method('onPublish')

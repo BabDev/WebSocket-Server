@@ -98,8 +98,8 @@ final class DispatchMessageToHandlerTest extends TestCase
         $topic = new Topic('testing');
         $params = ['foo' => 'bar'];
 
-        /** @var MockObject&Connection $connection */
-        $connection = $this->createMock(Connection::class);
+        /** @var MockObject&WAMPConnection $connection */
+        $connection = $this->createMock(WAMPConnection::class);
 
         /** @var MockObject&RPCMessageHandler $handler */
         $handler = $this->createMock(RPCMessageHandler::class);
@@ -183,8 +183,8 @@ final class DispatchMessageToHandlerTest extends TestCase
     {
         $topic = new Topic('testing');
 
-        /** @var MockObject&Connection $connection */
-        $connection = $this->createMock(Connection::class);
+        /** @var MockObject&WAMPConnection $connection */
+        $connection = $this->createMock(WAMPConnection::class);
 
         /** @var MockObject&TopicMessageHandler $handler */
         $handler = $this->createMock(TopicMessageHandler::class);
@@ -264,8 +264,8 @@ final class DispatchMessageToHandlerTest extends TestCase
     {
         $topic = new Topic('testing');
 
-        /** @var MockObject&Connection $connection */
-        $connection = $this->createMock(Connection::class);
+        /** @var MockObject&WAMPConnection $connection */
+        $connection = $this->createMock(WAMPConnection::class);
 
         /** @var MockObject&TopicMessageHandler $handler */
         $handler = $this->createMock(TopicMessageHandler::class);
@@ -348,8 +348,8 @@ final class DispatchMessageToHandlerTest extends TestCase
         $exclude = [];
         $eligible = [];
 
-        /** @var MockObject&Connection $connection */
-        $connection = $this->createMock(Connection::class);
+        /** @var MockObject&WAMPConnection $connection */
+        $connection = $this->createMock(WAMPConnection::class);
 
         /** @var MockObject&TopicMessageHandler $handler */
         $handler = $this->createMock(TopicMessageHandler::class);
