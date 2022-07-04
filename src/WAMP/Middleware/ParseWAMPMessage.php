@@ -4,6 +4,7 @@ namespace BabDev\WebSocket\Server\WAMP\Middleware;
 
 use BabDev\WebSocket\Server\Connection;
 use BabDev\WebSocket\Server\Server;
+use BabDev\WebSocket\Server\WAMP\DefaultWAMPConnection;
 use BabDev\WebSocket\Server\WAMP\Exception\InvalidMessage;
 use BabDev\WebSocket\Server\WAMP\Exception\UnsupportedMessageType;
 use BabDev\WebSocket\Server\WAMP\MessageType;
@@ -51,7 +52,7 @@ final class ParseWAMPMessage implements WebSocketServerMiddleware
      */
     public function onOpen(Connection $connection): void
     {
-        $decoratedConnection = new WAMPConnection($connection);
+        $decoratedConnection = new DefaultWAMPConnection($connection);
         $decoratedConnection->getAttributeStore()->set('wamp.session_id', $sessionId = bin2hex(random_bytes(32)));
         $decoratedConnection->getAttributeStore()->set('wamp.prefixes', []);
 

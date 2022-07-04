@@ -131,12 +131,10 @@ final class DispatchMessageToHandlerTest extends TestCase
         $topic = new Topic('testing');
         $params = ['foo' => 'bar'];
 
-        /** @var MockObject&Connection $decoratedConnection */
-        $decoratedConnection = $this->createMock(Connection::class);
-        $decoratedConnection->expects($this->once())
-            ->method('send');
-
-        $connection = new WAMPConnection($decoratedConnection);
+        /** @var MockObject&WAMPConnection $connection */
+        $connection = $this->createMock(WAMPConnection::class);
+        $connection->expects($this->once())
+            ->method('callError');
 
         $this->matcher->expects($this->once())
             ->method('match')
@@ -160,12 +158,10 @@ final class DispatchMessageToHandlerTest extends TestCase
         $topic = new Topic('testing');
         $params = ['foo' => 'bar'];
 
-        /** @var MockObject&Connection $decoratedConnection */
-        $decoratedConnection = $this->createMock(Connection::class);
-        $decoratedConnection->expects($this->once())
-            ->method('send');
-
-        $connection = new WAMPConnection($decoratedConnection);
+        /** @var MockObject&WAMPConnection $connection */
+        $connection = $this->createMock(WAMPConnection::class);
+        $connection->expects($this->once())
+            ->method('callError');
 
         $this->matcher->expects($this->once())
             ->method('match')
@@ -218,12 +214,10 @@ final class DispatchMessageToHandlerTest extends TestCase
 
         $topic = new Topic('testing');
 
-        /** @var MockObject&Connection $decoratedConnection */
-        $decoratedConnection = $this->createMock(Connection::class);
-        $decoratedConnection->expects($this->once())
-            ->method('send');
-
-        $connection = new WAMPConnection($decoratedConnection);
+        /** @var MockObject&WAMPConnection $connection */
+        $connection = $this->createMock(WAMPConnection::class);
+        $connection->expects($this->once())
+            ->method('event');
 
         $this->matcher->expects($this->once())
             ->method('match')
@@ -245,12 +239,10 @@ final class DispatchMessageToHandlerTest extends TestCase
 
         $topic = new Topic('testing');
 
-        /** @var MockObject&Connection $decoratedConnection */
-        $decoratedConnection = $this->createMock(Connection::class);
-        $decoratedConnection->expects($this->once())
-            ->method('send');
-
-        $connection = new WAMPConnection($decoratedConnection);
+        /** @var MockObject&WAMPConnection $connection */
+        $connection = $this->createMock(WAMPConnection::class);
+        $connection->expects($this->once())
+            ->method('event');
 
         $this->matcher->expects($this->once())
             ->method('match')
@@ -303,12 +295,10 @@ final class DispatchMessageToHandlerTest extends TestCase
 
         $topic = new Topic('testing');
 
-        /** @var MockObject&Connection $decoratedConnection */
-        $decoratedConnection = $this->createMock(Connection::class);
-        $decoratedConnection->expects($this->once())
-            ->method('send');
-
-        $connection = new WAMPConnection($decoratedConnection);
+        /** @var MockObject&WAMPConnection $connection */
+        $connection = $this->createMock(WAMPConnection::class);
+        $connection->expects($this->once())
+            ->method('event');
 
         $this->matcher->expects($this->once())
             ->method('match')
@@ -330,12 +320,10 @@ final class DispatchMessageToHandlerTest extends TestCase
 
         $topic = new Topic('testing');
 
-        /** @var MockObject&Connection $decoratedConnection */
-        $decoratedConnection = $this->createMock(Connection::class);
-        $decoratedConnection->expects($this->once())
-            ->method('send');
-
-        $connection = new WAMPConnection($decoratedConnection);
+        /** @var MockObject&WAMPConnection $connection */
+        $connection = $this->createMock(WAMPConnection::class);
+        $connection->expects($this->once())
+            ->method('event');
 
         $this->matcher->expects($this->once())
             ->method('match')
@@ -394,12 +382,10 @@ final class DispatchMessageToHandlerTest extends TestCase
         $exclude = [];
         $eligible = [];
 
-        /** @var MockObject&Connection $decoratedConnection */
-        $decoratedConnection = $this->createMock(Connection::class);
-        $decoratedConnection->expects($this->once())
-            ->method('send');
-
-        $connection = new WAMPConnection($decoratedConnection);
+        /** @var MockObject&WAMPConnection $connection */
+        $connection = $this->createMock(WAMPConnection::class);
+        $connection->expects($this->once())
+            ->method('event');
 
         $this->matcher->expects($this->once())
             ->method('match')
@@ -424,12 +410,10 @@ final class DispatchMessageToHandlerTest extends TestCase
         $exclude = [];
         $eligible = [];
 
-        /** @var MockObject&Connection $decoratedConnection */
-        $decoratedConnection = $this->createMock(Connection::class);
-        $decoratedConnection->expects($this->once())
-            ->method('send');
-
-        $connection = new WAMPConnection($decoratedConnection);
+        /** @var MockObject&WAMPConnection $connection */
+        $connection = $this->createMock(WAMPConnection::class);
+        $connection->expects($this->once())
+            ->method('event');
 
         $this->matcher->expects($this->once())
             ->method('match')

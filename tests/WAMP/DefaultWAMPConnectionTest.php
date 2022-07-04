@@ -5,21 +5,21 @@ namespace BabDev\WebSocket\Server\Tests\WAMP;
 use BabDev\WebSocket\Server\Connection;
 use BabDev\WebSocket\Server\Connection\AttributeStore;
 use BabDev\WebSocket\Server\WAMP\MessageType;
-use BabDev\WebSocket\Server\WAMP\WAMPConnection;
+use BabDev\WebSocket\Server\WAMP\DefaultWAMPConnection;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
-final class WAMPConnectionTest extends TestCase
+final class DefaultWAMPConnectionTest extends TestCase
 {
     private MockObject & Connection $decoratedConnection;
 
-    private WAMPConnection $connection;
+    private DefaultWAMPConnection $connection;
 
     protected function setUp(): void
     {
         $this->decoratedConnection = $this->createMock(Connection::class);
 
-        $this->connection = new WAMPConnection($this->decoratedConnection);
+        $this->connection = new DefaultWAMPConnection($this->decoratedConnection);
     }
 
     public function testProvidesTheAttributeStoreFromTheDecoratedConnection(): void

@@ -6,8 +6,8 @@ use BabDev\WebSocket\Server\Connection;
 use BabDev\WebSocket\Server\Http\Exception\MissingRequest;
 use BabDev\WebSocket\Server\Http\Middleware\ParseHttpRequest;
 use BabDev\WebSocket\Server\ServerMiddleware;
+use BabDev\WebSocket\Server\WebSocket\DefaultWebSocketConnection;
 use BabDev\WebSocket\Server\WebSocket\Exception\InvalidEncoding;
-use BabDev\WebSocket\Server\WebSocket\WebSocketConnection;
 use BabDev\WebSocket\Server\WebSocket\WebSocketConnectionContext;
 use BabDev\WebSocket\Server\WebSocketServerMiddleware;
 use GuzzleHttp\Psr7\Message;
@@ -87,7 +87,7 @@ final class EstablishWebSocketConnection implements ServerMiddleware
             return;
         }
 
-        $decoratedConnection = new WebSocketConnection($connection);
+        $decoratedConnection = new DefaultWebSocketConnection($connection);
 
         $buffer = new MessageBuffer(
             new CloseFrameChecker(),

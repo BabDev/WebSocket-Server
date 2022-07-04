@@ -4,22 +4,22 @@ namespace BabDev\WebSocket\Server\Tests\WebSocket;
 
 use BabDev\WebSocket\Server\Connection;
 use BabDev\WebSocket\Server\Connection\AttributeStore;
-use BabDev\WebSocket\Server\WebSocket\WebSocketConnection;
+use BabDev\WebSocket\Server\WebSocket\DefaultWebSocketConnection;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Ratchet\RFC6455\Messaging\DataInterface;
 
-final class WebSocketConnectionTest extends TestCase
+final class DefaultWebSocketConnectionTest extends TestCase
 {
     private MockObject & Connection $decoratedConnection;
 
-    private WebSocketConnection $connection;
+    private DefaultWebSocketConnection $connection;
 
     protected function setUp(): void
     {
         $this->decoratedConnection = $this->createMock(Connection::class);
 
-        $this->connection = new WebSocketConnection($this->decoratedConnection);
+        $this->connection = new DefaultWebSocketConnection($this->decoratedConnection);
     }
 
     public function testProvidesTheAttributeStoreFromTheDecoratedConnection(): void

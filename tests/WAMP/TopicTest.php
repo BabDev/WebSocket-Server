@@ -5,7 +5,6 @@ namespace BabDev\WebSocket\Server\Tests\WAMP;
 use BabDev\WebSocket\Server\Connection;
 use BabDev\WebSocket\Server\Connection\AttributeStore;
 use BabDev\WebSocket\Server\Exception\UnsupportedConnection;
-use BabDev\WebSocket\Server\WAMP\MessageType;
 use BabDev\WebSocket\Server\WAMP\Topic;
 use BabDev\WebSocket\Server\WAMP\WAMPConnection;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -27,9 +26,14 @@ final class TopicTest extends TestCase
 
     public function testConnectionsCanBeAddedAndRemovedFromATopic(): void
     {
-        $connection1 = new WAMPConnection($this->createMock(Connection::class));
-        $connection2 = new WAMPConnection($this->createMock(Connection::class));
-        $connection3 = new WAMPConnection($this->createMock(Connection::class));
+        /** @var MockObject&WAMPConnection $connection1 */
+        $connection1 = $this->createMock(WAMPConnection::class);
+
+        /** @var MockObject&WAMPConnection $connection2 */
+        $connection2 = $this->createMock(WAMPConnection::class);
+
+        /** @var MockObject&WAMPConnection $connection3 */
+        $connection3 = $this->createMock(WAMPConnection::class);
 
         $this->topic->add($connection1);
         $this->topic->add($connection2);
@@ -57,9 +61,14 @@ final class TopicTest extends TestCase
 
     public function testCanBeIterated(): void
     {
-        $connection1 = new WAMPConnection($this->createMock(Connection::class));
-        $connection2 = new WAMPConnection($this->createMock(Connection::class));
-        $connection3 = new WAMPConnection($this->createMock(Connection::class));
+        /** @var MockObject&WAMPConnection $connection1 */
+        $connection1 = $this->createMock(WAMPConnection::class);
+
+        /** @var MockObject&WAMPConnection $connection2 */
+        $connection2 = $this->createMock(WAMPConnection::class);
+
+        /** @var MockObject&WAMPConnection $connection3 */
+        $connection3 = $this->createMock(WAMPConnection::class);
 
         $this->topic->add($connection1);
         $this->topic->add($connection2);
@@ -85,19 +94,35 @@ final class TopicTest extends TestCase
             ->with('wamp.session_id')
             ->willReturnOnConsecutiveCalls(bin2hex(random_bytes(32)), bin2hex(random_bytes(32)), bin2hex(random_bytes(32)));
 
-        /** @var MockObject&Connection $decoratedConnection */
-        $decoratedConnection = $this->createMock(Connection::class);
-        $decoratedConnection->expects($this->exactly(3))
+        /** @var MockObject&WAMPConnection $connection1 */
+        $connection1 = $this->createMock(WAMPConnection::class);
+        $connection1->expects($this->atLeastOnce())
             ->method('getAttributeStore')
             ->willReturn($attributeStore);
 
-        $decoratedConnection->expects($this->exactly(3))
-            ->method('send')
-            ->with(json_encode([MessageType::EVENT, (string) $this->topic, $data]));
+        $connection1->expects($this->once())
+            ->method('event')
+            ->with($this->topic->id, $data);
 
-        $connection1 = new WAMPConnection($decoratedConnection);
-        $connection2 = new WAMPConnection($decoratedConnection);
-        $connection3 = new WAMPConnection($decoratedConnection);
+        /** @var MockObject&WAMPConnection $connection2 */
+        $connection2 = $this->createMock(WAMPConnection::class);
+        $connection2->expects($this->atLeastOnce())
+            ->method('getAttributeStore')
+            ->willReturn($attributeStore);
+
+        $connection2->expects($this->once())
+            ->method('event')
+            ->with($this->topic->id, $data);
+
+        /** @var MockObject&WAMPConnection $connection3 */
+        $connection3 = $this->createMock(WAMPConnection::class);
+        $connection3->expects($this->atLeastOnce())
+            ->method('getAttributeStore')
+            ->willReturn($attributeStore);
+
+        $connection3->expects($this->once())
+            ->method('event')
+            ->with($this->topic->id, $data);
 
         $this->topic->add($connection1);
         $this->topic->add($connection2);
@@ -121,19 +146,34 @@ final class TopicTest extends TestCase
             ->with('wamp.session_id')
             ->willReturnOnConsecutiveCalls($connection1SessionId, $connection2SessionId, $connection3SessionId);
 
-        /** @var MockObject&Connection $decoratedConnection */
-        $decoratedConnection = $this->createMock(Connection::class);
-        $decoratedConnection->expects($this->exactly(3))
+        /** @var MockObject&WAMPConnection $connection1 */
+        $connection1 = $this->createMock(WAMPConnection::class);
+        $connection1->expects($this->atLeastOnce())
             ->method('getAttributeStore')
             ->willReturn($attributeStore);
 
-        $decoratedConnection->expects($this->exactly(2))
-            ->method('send')
-            ->with(json_encode([MessageType::EVENT, (string) $this->topic, $data]));
+        $connection1->expects($this->once())
+            ->method('event')
+            ->with($this->topic->id, $data);
 
-        $connection1 = new WAMPConnection($decoratedConnection);
-        $connection2 = new WAMPConnection($decoratedConnection);
-        $connection3 = new WAMPConnection($decoratedConnection);
+        /** @var MockObject&WAMPConnection $connection2 */
+        $connection2 = $this->createMock(WAMPConnection::class);
+        $connection2->expects($this->atLeastOnce())
+            ->method('getAttributeStore')
+            ->willReturn($attributeStore);
+
+        $connection2->expects($this->never())
+            ->method('event');
+
+        /** @var MockObject&WAMPConnection $connection3 */
+        $connection3 = $this->createMock(WAMPConnection::class);
+        $connection3->expects($this->atLeastOnce())
+            ->method('getAttributeStore')
+            ->willReturn($attributeStore);
+
+        $connection3->expects($this->once())
+            ->method('event')
+            ->with($this->topic->id, $data);
 
         $this->topic->add($connection1);
         $this->topic->add($connection2);
@@ -157,19 +197,34 @@ final class TopicTest extends TestCase
             ->with('wamp.session_id')
             ->willReturnOnConsecutiveCalls($connection1SessionId, $connection2SessionId, $connection3SessionId);
 
-        /** @var MockObject&Connection $decoratedConnection */
-        $decoratedConnection = $this->createMock(Connection::class);
-        $decoratedConnection->expects($this->exactly(3))
+        /** @var MockObject&WAMPConnection $connection1 */
+        $connection1 = $this->createMock(WAMPConnection::class);
+        $connection1->expects($this->atLeastOnce())
             ->method('getAttributeStore')
             ->willReturn($attributeStore);
 
-        $decoratedConnection->expects($this->exactly(2))
-            ->method('send')
-            ->with(json_encode([MessageType::EVENT, (string) $this->topic, $data]));
+        $connection1->expects($this->once())
+            ->method('event')
+            ->with($this->topic->id, $data);
 
-        $connection1 = new WAMPConnection($decoratedConnection);
-        $connection2 = new WAMPConnection($decoratedConnection);
-        $connection3 = new WAMPConnection($decoratedConnection);
+        /** @var MockObject&WAMPConnection $connection2 */
+        $connection2 = $this->createMock(WAMPConnection::class);
+        $connection2->expects($this->atLeastOnce())
+            ->method('getAttributeStore')
+            ->willReturn($attributeStore);
+
+        $connection2->expects($this->never())
+            ->method('event');
+
+        /** @var MockObject&WAMPConnection $connection3 */
+        $connection3 = $this->createMock(WAMPConnection::class);
+        $connection3->expects($this->atLeastOnce())
+            ->method('getAttributeStore')
+            ->willReturn($attributeStore);
+
+        $connection3->expects($this->once())
+            ->method('event')
+            ->with($this->topic->id, $data);
 
         $this->topic->add($connection1);
         $this->topic->add($connection2);
@@ -193,19 +248,33 @@ final class TopicTest extends TestCase
             ->with('wamp.session_id')
             ->willReturnOnConsecutiveCalls($connection1SessionId, $connection2SessionId, $connection3SessionId);
 
-        /** @var MockObject&Connection $decoratedConnection */
-        $decoratedConnection = $this->createMock(Connection::class);
-        $decoratedConnection->expects($this->exactly(3))
+        /** @var MockObject&WAMPConnection $connection1 */
+        $connection1 = $this->createMock(WAMPConnection::class);
+        $connection1->expects($this->atLeastOnce())
             ->method('getAttributeStore')
             ->willReturn($attributeStore);
 
-        $decoratedConnection->expects($this->once())
-            ->method('send')
-            ->with(json_encode([MessageType::EVENT, (string) $this->topic, $data]));
+        $connection1->expects($this->once())
+            ->method('event')
+            ->with($this->topic->id, $data);
 
-        $connection1 = new WAMPConnection($decoratedConnection);
-        $connection2 = new WAMPConnection($decoratedConnection);
-        $connection3 = new WAMPConnection($decoratedConnection);
+        /** @var MockObject&WAMPConnection $connection2 */
+        $connection2 = $this->createMock(WAMPConnection::class);
+        $connection2->expects($this->atLeastOnce())
+            ->method('getAttributeStore')
+            ->willReturn($attributeStore);
+
+        $connection2->expects($this->never())
+            ->method('event');
+
+        /** @var MockObject&WAMPConnection $connection3 */
+        $connection3 = $this->createMock(WAMPConnection::class);
+        $connection3->expects($this->atLeastOnce())
+            ->method('getAttributeStore')
+            ->willReturn($attributeStore);
+
+        $connection3->expects($this->never())
+            ->method('event');
 
         $this->topic->add($connection1);
         $this->topic->add($connection2);

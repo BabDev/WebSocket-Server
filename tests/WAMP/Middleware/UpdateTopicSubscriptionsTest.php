@@ -4,6 +4,7 @@ namespace BabDev\WebSocket\Server\Tests\WAMP\Middleware;
 
 use BabDev\WebSocket\Server\Connection;
 use BabDev\WebSocket\Server\Connection\ArrayAttributeStore;
+use BabDev\WebSocket\Server\WAMP\DefaultWAMPConnection;
 use BabDev\WebSocket\Server\WAMP\Middleware\UpdateTopicSubscriptions;
 use BabDev\WebSocket\Server\WAMP\Topic;
 use BabDev\WebSocket\Server\WAMP\TopicRegistry;
@@ -98,14 +99,16 @@ final class UpdateTopicSubscriptionsTest extends TestCase
 
         $attributeStore->set('wamp.subscriptions', $subscriptions);
 
-        /** @var MockObject&Connection $decoratedConnection */
-        $decoratedConnection = $this->createMock(Connection::class);
-        $decoratedConnection->expects($this->atLeastOnce())
+        /** @var MockObject&WAMPConnection $connection */
+        $connection = $this->createMock(WAMPConnection::class);
+        $connection->expects($this->atLeastOnce())
             ->method('getAttributeStore')
             ->willReturn($attributeStore);
 
-        $connection = new WAMPConnection($decoratedConnection);
-        $connection2 = new WAMPConnection($decoratedConnection);
+        /** @var MockObject&WAMPConnection $connection2 */
+        $connection2 = $this->createMock(WAMPConnection::class);
+        $connection2->expects($this->never())
+            ->method('getAttributeStore');
 
         $topic1->add($connection);
         $topic2->add($connection);
@@ -180,13 +183,11 @@ final class UpdateTopicSubscriptionsTest extends TestCase
 
         $attributeStore->set('wamp.subscriptions', $subscriptions);
 
-        /** @var MockObject&Connection $decoratedConnection */
-        $decoratedConnection = $this->createMock(Connection::class);
-        $decoratedConnection->expects($this->atLeastOnce())
+        /** @var MockObject&WAMPConnection $connection */
+        $connection = $this->createMock(WAMPConnection::class);
+        $connection->expects($this->atLeastOnce())
             ->method('getAttributeStore')
             ->willReturn($attributeStore);
-
-        $connection = new WAMPConnection($decoratedConnection);
 
         $this->topicRegistry->expects($this->once())
             ->method('has')
@@ -218,13 +219,11 @@ final class UpdateTopicSubscriptionsTest extends TestCase
 
         $attributeStore->set('wamp.subscriptions', $subscriptions);
 
-        /** @var MockObject&Connection $decoratedConnection */
-        $decoratedConnection = $this->createMock(Connection::class);
-        $decoratedConnection->expects($this->atLeastOnce())
+        /** @var MockObject&WAMPConnection $connection */
+        $connection = $this->createMock(WAMPConnection::class);
+        $connection->expects($this->atLeastOnce())
             ->method('getAttributeStore')
             ->willReturn($attributeStore);
-
-        $connection = new WAMPConnection($decoratedConnection);
 
         $topic->add($connection);
 

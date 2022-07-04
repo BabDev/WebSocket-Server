@@ -3,41 +3,16 @@
 namespace BabDev\WebSocket\Server\WAMP;
 
 use BabDev\WebSocket\Server\Connection;
-use BabDev\WebSocket\Server\Connection\AttributeStore;
 use BabDev\WebSocket\Server\WAMP\Exception\InvalidMessage;
+use BabDev\WebSocket\Server\WebSocket\WebSocketConnection;
 
 /**
  * The WAMP connection is a connection class decorating another {@see Connection} adding helper methods to
  * send WAMP messages to the connected client.
  */
-final class WAMPConnection implements Connection
+interface WAMPConnection extends WebSocketConnection
 {
-    private const CURIE_SEPARATOR = ':';
-
-    public function __construct(
-        private readonly Connection $connection,
-    ) {
-    }
-
-    public function getAttributeStore(): AttributeStore
-    {
-        return $this->connection->getAttributeStore();
-    }
-
-    public function getConnection(): Connection
-    {
-        return $this->connection;
-    }
-
-    public function send(string $data): void
-    {
-        $this->connection->send($data);
-    }
-
-    public function close(mixed $data = null): void
-    {
-        $this->connection->close($data);
-    }
+    final const CURIE_SEPARATOR = ':';
 
     /**
      * Sends a "CALLRESULT" WAMP message to the client.
@@ -47,14 +22,7 @@ final class WAMPConnection implements Connection
      *
      * @throws InvalidMessage if the message cannot be JSON encoded
      */
-    public function callResult(string $id, mixed $result = null): void
-    {
-        try {
-            $this->send(json_encode([MessageType::CALL_RESULT, $id, $result], \JSON_THROW_ON_ERROR));
-        } catch (\JsonException $exception) {
-            throw new InvalidMessage($exception->getMessage(), $exception->getCode(), $exception);
-        }
-    }
+    public function callResult(string $id, mixed $result = null): void;
 
     /**
      * Sends a "CALLERROR" WAMP message to the client.
@@ -66,20 +34,7 @@ final class WAMPConnection implements Connection
      *
      * @throws InvalidMessage if the message cannot be JSON encoded
      */
-    public function callError(string $id, string $errorUri, string $errorDescription = '', mixed $errorDetails = null): void
-    {
-        $data = [MessageType::CALL_ERROR, $id, $errorUri, $errorDescription];
-
-        if (null !== $errorDetails) {
-            $data[] = $errorDetails;
-        }
-
-        try {
-            $this->send(json_encode($data, \JSON_THROW_ON_ERROR));
-        } catch (\JsonException $exception) {
-            throw new InvalidMessage($exception->getMessage(), $exception->getCode(), $exception);
-        }
-    }
+    public function callError(string $id, string $errorUri, string $errorDescription = '', mixed $errorDetails = null): void;
 
     /**
      * Sends a "EVENT" WAMP message to the client.
@@ -89,14 +44,7 @@ final class WAMPConnection implements Connection
      *
      * @throws InvalidMessage if the message cannot be JSON encoded
      */
-    public function event(string $topicUri, mixed $event): void
-    {
-        try {
-            $this->send(json_encode([MessageType::EVENT, $topicUri, $event], \JSON_THROW_ON_ERROR));
-        } catch (\JsonException $exception) {
-            throw new InvalidMessage($exception->getMessage(), $exception->getCode(), $exception);
-        }
-    }
+    public function event(string $topicUri, mixed $event): void;
 
     /**
      * Sends a "PREFIX" WAMP message to the client.
@@ -106,42 +54,7 @@ final class WAMPConnection implements Connection
      *
      * @throws InvalidMessage if the message cannot be JSON encoded
      */
-    public function prefix(string $prefix, string $uri): void
-    {
-        /** @var array<string, string> $prefixes */
-        $prefixes = $this->getAttributeStore()->get('wamp.prefixes', []);
-        $prefixes[$prefix] = $uri;
+    public function prefix(string $prefix, string $uri): void;
 
-        $this->getAttributeStore()->set('wamp.prefixes', $prefixes);
-
-        try {
-            $this->send(json_encode([MessageType::PREFIX, $prefix, $uri], \JSON_THROW_ON_ERROR));
-        } catch (\JsonException $exception) {
-            throw new InvalidMessage($exception->getMessage(), $exception->getCode(), $exception);
-        }
-    }
-
-    public function getUri(string $uri): string
-    {
-        $hasHttpProtocol = preg_match('/http(s*)\:\/\//', $uri);
-
-        if (false !== $hasHttpProtocol && 0 !== $hasHttpProtocol) {
-            return $uri;
-        }
-
-        if (!str_contains($uri, self::CURIE_SEPARATOR)) {
-            return $uri;
-        }
-
-        [$prefix, $action] = explode(self::CURIE_SEPARATOR, $uri);
-
-        /** @var array<string, string> $prefixes */
-        $prefixes = $this->getAttributeStore()->get('wamp.prefixes', []);
-
-        if (isset($prefixes[$prefix])) {
-            return $prefixes[$prefix].'#'.$action;
-        }
-
-        return $uri;
-    }
+    public function getUri(string $uri): string;
 }
