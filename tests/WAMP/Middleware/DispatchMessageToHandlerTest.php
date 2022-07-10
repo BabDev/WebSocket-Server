@@ -2,8 +2,6 @@
 
 namespace BabDev\WebSocket\Server\Tests\WAMP\Middleware;
 
-use BabDev\WebSocket\Server\Connection;
-use BabDev\WebSocket\Server\Connection\AttributeStore;
 use BabDev\WebSocket\Server\RPCMessageHandler;
 use BabDev\WebSocket\Server\TopicMessageHandler;
 use BabDev\WebSocket\Server\WAMP\Exception\RouteNotFound;
@@ -15,11 +13,8 @@ use BabDev\WebSocket\Server\WAMP\WAMPConnection;
 use BabDev\WebSocket\Server\WAMP\WAMPMessageRequest;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\UriInterface;
 use Symfony\Component\Routing\Exception\ResourceNotFoundException;
 use Symfony\Component\Routing\Matcher\UrlMatcherInterface;
-use Symfony\Component\Routing\RequestContext;
 
 final class DispatchMessageToHandlerTest extends TestCase
 {
@@ -43,50 +38,6 @@ final class DispatchMessageToHandlerTest extends TestCase
             [],
             $this->middleware->getSubProtocols(),
         );
-    }
-
-    /**
-     * @testdox Handles a new connection being opened
-     */
-    public function testOnOpen(): void
-    {
-        /** @var MockObject&UriInterface $uri */
-        $uri = $this->createMock(UriInterface::class);
-        $uri->expects($this->once())
-            ->method('getHost')
-            ->willReturn('localhost');
-
-        /** @var MockObject&RequestInterface $request */
-        $request = $this->createMock(RequestInterface::class);
-        $request->expects($this->once())
-            ->method('getUri')
-            ->willReturn($uri);
-
-        /** @var MockObject&AttributeStore $attributeStore */
-        $attributeStore = $this->createMock(AttributeStore::class);
-        $attributeStore->expects($this->once())
-            ->method('get')
-            ->with('http.request')
-            ->willReturn($request);
-
-        /** @var MockObject&Connection $connection */
-        $connection = $this->createMock(Connection::class);
-        $connection->expects($this->once())
-            ->method('getAttributeStore')
-            ->willReturn($attributeStore);
-
-        /** @var MockObject&RequestContext $context */
-        $context = $this->createMock(RequestContext::class);
-        $context->expects($this->once())
-            ->method('setHost')
-            ->with('localhost')
-            ->willReturnSelf();
-
-        $this->matcher->expects($this->once())
-            ->method('getContext')
-            ->willReturn($context);
-
-        $this->middleware->onOpen($connection);
     }
 
     /**

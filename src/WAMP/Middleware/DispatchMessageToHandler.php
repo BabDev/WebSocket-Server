@@ -4,7 +4,6 @@ namespace BabDev\WebSocket\Server\WAMP\Middleware;
 
 use BabDev\WebSocket\Server\Connection;
 use BabDev\WebSocket\Server\Http\Exception\MissingRequest;
-use BabDev\WebSocket\Server\Http\Middleware\ParseHttpRequest;
 use BabDev\WebSocket\Server\RPCMessageHandler;
 use BabDev\WebSocket\Server\RPCMessageMiddleware;
 use BabDev\WebSocket\Server\TopicMessageHandler;
@@ -20,7 +19,6 @@ use BabDev\WebSocket\Server\WAMP\WAMPConnection;
 use BabDev\WebSocket\Server\WAMP\WAMPMessageRequest;
 use BabDev\WebSocket\Server\WAMPServerMiddleware;
 use BabDev\WebSocket\Server\WebSocketException;
-use Psr\Http\Message\RequestInterface;
 use Symfony\Component\HttpFoundation\ParameterBag;
 use Symfony\Component\Routing\Exception\ResourceNotFoundException;
 use Symfony\Component\Routing\Matcher\UrlMatcherInterface;
@@ -55,15 +53,7 @@ final class DispatchMessageToHandler implements WAMPServerMiddleware
      */
     public function onOpen(Connection $connection): void
     {
-        /** @var RequestInterface|null $request */
-        $request = $connection->getAttributeStore()->get('http.request');
-
-        if (!$request instanceof RequestInterface) {
-            throw new MissingRequest(sprintf('The "%s" middleware requires the HTTP request has been processed. Ensure the "%s" middleware (or a custom middleware setting the "http.request" in the attribute store) has been run.', self::class, ParseHttpRequest::class));
-        }
-
-        $this->matcher->getContext()
-            ->setHost($request->getUri()->getHost());
+        // No decorated middleware to call
     }
 
     /**
