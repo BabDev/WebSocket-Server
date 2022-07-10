@@ -2,6 +2,10 @@
 
 namespace BabDev\WebSocket\Server\Tests\WAMP\Middleware;
 
+use BabDev\WebSocket\Server\Connection;
+use BabDev\WebSocket\Server\Connection\Event\ConnectionClosed;
+use BabDev\WebSocket\Server\Connection\Event\ConnectionError;
+use BabDev\WebSocket\Server\Connection\Event\ConnectionOpened;
 use BabDev\WebSocket\Server\RPCMessageHandler;
 use BabDev\WebSocket\Server\TopicMessageHandler;
 use BabDev\WebSocket\Server\WAMP\Exception\RouteNotFound;
@@ -13,6 +17,7 @@ use BabDev\WebSocket\Server\WAMP\WAMPConnection;
 use BabDev\WebSocket\Server\WAMP\WAMPMessageRequest;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Routing\Exception\ResourceNotFoundException;
 use Symfony\Component\Routing\Matcher\UrlMatcherInterface;
 
@@ -22,14 +27,17 @@ final class DispatchMessageToHandlerTest extends TestCase
 
     private MockObject & MessageHandlerResolver $resolver;
 
+    private MockObject & EventDispatcherInterface $dispatcher;
+
     private DispatchMessageToHandler $middleware;
 
     protected function setUp(): void
     {
         $this->matcher = $this->createMock(UrlMatcherInterface::class);
         $this->resolver = $this->createMock(MessageHandlerResolver::class);
+        $this->dispatcher = $this->createMock(EventDispatcherInterface::class);
 
-        $this->middleware = new DispatchMessageToHandler($this->matcher, $this->resolver);
+        $this->middleware = new DispatchMessageToHandler($this->matcher, $this->resolver, $this->dispatcher);
     }
 
     public function testGetSubProtocols(): void
@@ -38,6 +46,53 @@ final class DispatchMessageToHandlerTest extends TestCase
             [],
             $this->middleware->getSubProtocols(),
         );
+    }
+
+    /**
+     * @testdox Handles a new connection being opened
+     */
+    public function testOnOpen(): void
+    {
+        $this->dispatcher->expects($this->once())
+            ->method('dispatch')
+            ->with($this->isInstanceOf(ConnectionOpened::class));
+
+        /** @var MockObject&Connection $connection */
+        $connection = $this->createMock(Connection::class);
+
+        $this->middleware->onOpen($connection);
+    }
+
+    /**
+     * @testdox Closes the connection
+     */
+    public function testOnClose(): void
+    {
+        $this->dispatcher->expects($this->once())
+            ->method('dispatch')
+            ->with($this->isInstanceOf(ConnectionClosed::class));
+
+        /** @var MockObject&Connection $connection */
+        $connection = $this->createMock(Connection::class);
+
+        $this->middleware->onClose($connection);
+    }
+
+    /**
+     * @testdox Handles an error
+     */
+    public function testOnError(): void
+    {
+        $exception = new \RuntimeException('Testing');
+
+        $this->dispatcher->expects($this->once())
+            ->method('dispatch')
+            ->with($this->isInstanceOf(ConnectionError::class));
+
+        /** @var MockObject&Connection $connection */
+        $connection = $this->createMock(Connection::class);
+
+        $this->middleware->onError($connection, $exception);
     }
 
     /**

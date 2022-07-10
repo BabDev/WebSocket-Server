@@ -3,6 +3,9 @@
 namespace BabDev\WebSocket\Server\WAMP\Middleware;
 
 use BabDev\WebSocket\Server\Connection;
+use BabDev\WebSocket\Server\Connection\Event\ConnectionClosed;
+use BabDev\WebSocket\Server\Connection\Event\ConnectionError;
+use BabDev\WebSocket\Server\Connection\Event\ConnectionOpened;
 use BabDev\WebSocket\Server\Http\Exception\MissingRequest;
 use BabDev\WebSocket\Server\RPCMessageHandler;
 use BabDev\WebSocket\Server\RPCMessageMiddleware;
@@ -19,6 +22,7 @@ use BabDev\WebSocket\Server\WAMP\WAMPConnection;
 use BabDev\WebSocket\Server\WAMP\WAMPMessageRequest;
 use BabDev\WebSocket\Server\WAMPServerMiddleware;
 use BabDev\WebSocket\Server\WebSocketException;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\ParameterBag;
 use Symfony\Component\Routing\Exception\ResourceNotFoundException;
 use Symfony\Component\Routing\Matcher\UrlMatcherInterface;
@@ -26,6 +30,13 @@ use Symfony\Component\Routing\Matcher\UrlMatcherInterface;
 /**
  * The dispatch message to server middleware routes an incoming WAMP message using the topic identifier to its
  * message handler.
+ *
+ * This middleware supports emitting events when provided a PSR-14 compatible event dispatcher, allowing listeners
+ * to take actions after a client connection has been opened, closed, or when the server middleware catches an unhandled
+ * {@see \Throwable}. As this middleware is intended to be the last middleware executed in the server middleware stack,
+ * these events are provided for downstream consumers to react after the server middleware stack has handled an action,
+ * however it is preferred that consumers implement their own middleware (especially those who wish to monitor one of
+ * these events at a higher point in the stack).
  *
  * This middleware uses Symfony's Routing component to create a router for the server application. Applications
  * choosing to use another router service will need their own middleware component.
@@ -35,6 +46,7 @@ final class DispatchMessageToHandler implements WAMPServerMiddleware
     public function __construct(
         private readonly UrlMatcherInterface $matcher,
         private readonly MessageHandlerResolver $resolver,
+        private readonly ?EventDispatcherInterface $dispatcher = null,
     ) {
     }
 
@@ -53,7 +65,7 @@ final class DispatchMessageToHandler implements WAMPServerMiddleware
      */
     public function onOpen(Connection $connection): void
     {
-        // No decorated middleware to call
+        $this->dispatcher?->dispatch(new ConnectionOpened($connection));
     }
 
     /**
@@ -69,7 +81,7 @@ final class DispatchMessageToHandler implements WAMPServerMiddleware
      */
     public function onClose(Connection $connection): void
     {
-        // No decorated middleware to call
+        $this->dispatcher?->dispatch(new ConnectionClosed($connection));
     }
 
     /**
@@ -77,7 +89,7 @@ final class DispatchMessageToHandler implements WAMPServerMiddleware
      */
     public function onError(Connection $connection, \Throwable $throwable): void
     {
-        // No decorated middleware to call
+        $this->dispatcher?->dispatch(new ConnectionError($connection, $throwable));
     }
 
     /**
