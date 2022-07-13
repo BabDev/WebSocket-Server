@@ -83,11 +83,11 @@ final class Application
         $middleware = new UpdateTopicSubscriptions($middleware, $topicRegistry);
         $middleware = new ParseWAMPMessage($middleware, $topicRegistry);
 
+        $middleware = new EstablishWebSocketConnection($middleware);
+
         if (null !== $this->sessionFactory) {
             $middleware = new InitializeSession($middleware, $this->sessionFactory, $this->optionsHandler ?? new IniOptionsHandler());
         }
-
-        $middleware = new EstablishWebSocketConnection($middleware);
 
         if ([] !== $this->allowedOrigins) {
             $middleware = new RestrictToAllowedOrigins($middleware);
