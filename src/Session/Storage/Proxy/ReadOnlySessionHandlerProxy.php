@@ -23,16 +23,9 @@ final class ReadOnlySessionHandlerProxy extends AbstractProxy implements \Sessio
         $this->sessionName = $this->optionsHandler->get('session.name');
     }
 
-    /**
-     * @throws SessionMisconfigured
-     */
     public function getId(): string
     {
-        if (null === $this->sessionId) {
-            throw new SessionMisconfigured(sprintf('The session ID must be set in "%s" before calling %s(), make sure "%s::setId()" has been called.', self::class, __METHOD__, self::class));
-        }
-
-        return $this->sessionId;
+        return $this->sessionId ?? parent::getId();
     }
 
     /**

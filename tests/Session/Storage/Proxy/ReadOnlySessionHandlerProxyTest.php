@@ -39,13 +39,6 @@ final class ReadOnlySessionHandlerProxyTest extends TestCase
         $this->assertSame($sessionId, $this->proxy->getId());
     }
 
-    public function testRaisesAnErrorIfTryingToRetrieveTheSessionIdBeforeBeingSet(): void
-    {
-        $this->expectException(SessionMisconfigured::class);
-
-        $this->proxy->getId();
-    }
-
     public function testRetrievesSessionName(): void
     {
         $this->assertSame(self::SESSION_NAME, $this->proxy->getName());
