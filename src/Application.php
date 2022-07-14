@@ -8,6 +8,7 @@ use BabDev\WebSocket\Server\Http\Middleware\RestrictToAllowedOrigins;
 use BabDev\WebSocket\Server\Session\Middleware\InitializeSession;
 use BabDev\WebSocket\Server\WAMP\ArrayTopicRegistry;
 use BabDev\WebSocket\Server\WAMP\MessageHandler\DefaultMessageHandlerResolver;
+use BabDev\WebSocket\Server\WAMP\MessageHandler\MessageHandlerResolver;
 use BabDev\WebSocket\Server\WAMP\Middleware\DispatchMessageToHandler;
 use BabDev\WebSocket\Server\WAMP\Middleware\ParseWAMPMessage;
 use BabDev\WebSocket\Server\WAMP\Middleware\UpdateTopicSubscriptions;
@@ -41,6 +42,8 @@ final class Application
     private UrlMatcherInterface $matcher;
 
     private RouteCollection $routeCollection;
+
+    private MessageHandlerResolver $messageHandlerResolver;
 
     private ?EventDispatcherInterface $dispatcher = null;
 
@@ -76,13 +79,14 @@ final class Application
             $this->routeCollection = new RouteCollection(),
             new RequestContext(),
         );
+        $this->messageHandlerResolver = new DefaultMessageHandlerResolver();
     }
 
     public function run(): void
     {
         $topicRegistry = new ArrayTopicRegistry();
 
-        $middleware = new DispatchMessageToHandler($this->matcher, new DefaultMessageHandlerResolver(), $this->dispatcher);
+        $middleware = new DispatchMessageToHandler($this->matcher, $this->messageHandlerResolver, $this->dispatcher);
         $middleware = new UpdateTopicSubscriptions($middleware, $topicRegistry);
         $middleware = new ParseWAMPMessage($middleware, $topicRegistry);
 
@@ -132,6 +136,16 @@ final class Application
     public function withEventDispatcher(EventDispatcherInterface $eventDispatcher): self
     {
         $this->dispatcher = $eventDispatcher;
+
+        return $this;
+    }
+
+    /**
+     * Replaces the {@see MessageHandlerResolver} implementation to be used by the application.
+     */
+    public function withMessageHandlerResolver(MessageHandlerResolver $messageHandlerResolver): self
+    {
+        $this->messageHandlerResolver = $messageHandlerResolver;
 
         return $this;
     }
