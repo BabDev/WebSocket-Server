@@ -12,6 +12,7 @@ use BabDev\WebSocket\Server\WAMP\Middleware\DispatchMessageToHandler;
 use BabDev\WebSocket\Server\WAMP\Middleware\ParseWAMPMessage;
 use BabDev\WebSocket\Server\WAMP\Middleware\UpdateTopicSubscriptions;
 use BabDev\WebSocket\Server\WebSocket\Middleware\EstablishWebSocketConnection;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use React\EventLoop\Loop;
 use React\EventLoop\LoopInterface;
 use React\Socket\SocketServer;
@@ -40,6 +41,8 @@ final class Application
     private UrlMatcherInterface $matcher;
 
     private RouteCollection $routeCollection;
+
+    private ?EventDispatcherInterface $dispatcher = null;
 
     private ?SessionFactoryInterface $sessionFactory = null;
 
@@ -79,7 +82,7 @@ final class Application
     {
         $topicRegistry = new ArrayTopicRegistry();
 
-        $middleware = new DispatchMessageToHandler($this->matcher, new DefaultMessageHandlerResolver());
+        $middleware = new DispatchMessageToHandler($this->matcher, new DefaultMessageHandlerResolver(), $this->dispatcher);
         $middleware = new UpdateTopicSubscriptions($middleware, $topicRegistry);
         $middleware = new ParseWAMPMessage($middleware, $topicRegistry);
 
@@ -119,6 +122,16 @@ final class Application
             new Route($path, ['_controller' => $handler]),
             $priority
         );
+
+        return $this;
+    }
+
+    /**
+     * Registers an event dispatcher for use with middleware that emit events.
+     */
+    public function withEventDispatcher(EventDispatcherInterface $eventDispatcher): self
+    {
+        $this->dispatcher = $eventDispatcher;
 
         return $this;
     }
