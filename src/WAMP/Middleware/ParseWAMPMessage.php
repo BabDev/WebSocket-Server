@@ -111,41 +111,17 @@ final class ParseWAMPMessage implements WebSocketServerMiddleware
                     $message = $message[0];
                 }
 
-                $resolvedUri = $decoratedConnection->getUri($procURI);
-
-                if ($this->topicRegistry->has($resolvedUri)) {
-                    $topic = $this->topicRegistry->get($resolvedUri);
-                } else {
-                    $this->topicRegistry->add($topic = new Topic($resolvedUri));
-                }
-
-                $this->middleware->onCall($decoratedConnection, $callID, $topic, $message);
+                $this->middleware->onCall($decoratedConnection, $callID, $this->getTopic($decoratedConnection, $procURI), $message);
 
                 break;
 
             case MessageType::SUBSCRIBE:
-                $resolvedUri = $decoratedConnection->getUri($message[1]);
-
-                if ($this->topicRegistry->has($resolvedUri)) {
-                    $topic = $this->topicRegistry->get($resolvedUri);
-                } else {
-                    $this->topicRegistry->add($topic = new Topic($resolvedUri));
-                }
-
-                $this->middleware->onSubscribe($decoratedConnection, $topic);
+                $this->middleware->onSubscribe($decoratedConnection, $this->getTopic($decoratedConnection, $message[1]));
 
                 break;
 
             case MessageType::UNSUBSCRIBE:
-                $resolvedUri = $decoratedConnection->getUri($message[1]);
-
-                if ($this->topicRegistry->has($resolvedUri)) {
-                    $topic = $this->topicRegistry->get($resolvedUri);
-                } else {
-                    $this->topicRegistry->add($topic = new Topic($resolvedUri));
-                }
-
-                $this->middleware->onUnsubscribe($decoratedConnection, $topic);
+                $this->middleware->onUnsubscribe($decoratedConnection, $this->getTopic($decoratedConnection, $message[1]));
 
                 break;
 
@@ -163,15 +139,7 @@ final class ParseWAMPMessage implements WebSocketServerMiddleware
 
                 $eligible = $message[4] ?? [];
 
-                $resolvedUri = $decoratedConnection->getUri($message[1]);
-
-                if ($this->topicRegistry->has($resolvedUri)) {
-                    $topic = $this->topicRegistry->get($resolvedUri);
-                } else {
-                    $this->topicRegistry->add($topic = new Topic($resolvedUri));
-                }
-
-                $this->middleware->onPublish($decoratedConnection, $topic, $message[2], $exclude, $eligible);
+                $this->middleware->onPublish($decoratedConnection, $this->getTopic($decoratedConnection, $message[1]), $message[2], $exclude, $eligible);
 
                 break;
 
@@ -197,5 +165,18 @@ final class ParseWAMPMessage implements WebSocketServerMiddleware
     public function onError(Connection $connection, \Throwable $throwable): void
     {
         $this->middleware->onError($this->connections[$connection], $throwable);
+    }
+
+    private function getTopic(WAMPConnection $connection, string $uri): Topic
+    {
+        $resolvedUri = $connection->getUri($uri);
+
+        if ($this->topicRegistry->has($resolvedUri)) {
+            $topic = $this->topicRegistry->get($resolvedUri);
+        } else {
+            $this->topicRegistry->add($topic = new Topic($resolvedUri));
+        }
+
+        return $topic;
     }
 }
