@@ -92,12 +92,20 @@ final class Container implements ContainerInterface
 {
     private array $services = [];
 
-    public function get(string $id)
+    /**
+     * @param string $id
+     *
+     * @return mixed
+     */
+    public function get($id)
     {
         return $this->services[$id] ?? throw new ServiceNotFound(sprintf('Service "%s" does not exist.', $id));
     }
 
-    public function has(string $id): bool
+    /**
+     * @param string $id
+     */
+    public function has($id): bool
     {
         return \array_key_exists($id, $this->services);
     }
