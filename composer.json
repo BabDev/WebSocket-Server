@@ -30,7 +30,7 @@
         "symfony/phpunit-bridge": "^5.4 || ^6.0"
     },
     "conflict": {
-        "psr/container": "<2.0, >=3.0",
+        "psr/container": "<2.0 || >=3.0",
         "psr/event-dispatcher": ">=2.0"
     },
     "autoload": {
