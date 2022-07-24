@@ -11,7 +11,7 @@ use Symfony\Component\HttpFoundation\IpUtils;
  * The reject blocked IP address server middleware checks the remote IP address against a list of blocked addresses and
  * closes the connection if blocked.
  *
- * The middleware allows rejecting IP addresses using a single address or a CIDR range.
+ * The middleware allows rejecting IP addresses using a single address or a subnet range.
  */
 final class RejectBlockedIpAddress implements ServerMiddleware
 {
