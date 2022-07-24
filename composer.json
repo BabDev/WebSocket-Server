@@ -22,7 +22,7 @@
         "ext-session": "*",
         "ext-sockets": "*",
         "phpstan/extension-installer": "^1.1",
-        "phpstan/phpstan": "1.8.0",
+        "phpstan/phpstan": "1.8.2",
         "phpstan/phpstan-phpunit": "1.1.1",
         "phpunit/phpunit": "9.5.21",
         "psr/container": "^1.0 || ^2.0",
