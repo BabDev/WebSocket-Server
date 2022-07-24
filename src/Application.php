@@ -119,7 +119,7 @@ final class Application
         (new ReactPhpServer($middleware, $socket, $this->loop))->run();
     }
 
-    public function route(string $path, MessageHandler|MessageMiddleware $handler, int $priority = 0): self
+    public function route(string $path, MessageHandler|MessageMiddleware|string $handler, int $priority = 0): self
     {
         $this->routeCollection->add(
             'handler-'.$this->routeCollection->count(),
