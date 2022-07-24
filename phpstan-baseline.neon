@@ -96,11 +96,6 @@ parameters:
 			path: src/Session/Storage/ReadOnlyNativeSessionStorage.php
 
 		-
-			message: "#^Parameter \\#1 \\$data of method BabDev\\\\WebSocket\\\\Server\\\\Connection\\:\\:send\\(\\) expects string, Ratchet\\\\RFC6455\\\\Messaging\\\\DataInterface\\|string given\\.$#"
-			count: 1
-			path: src/WAMP/DefaultWAMPConnection.php
-
-		-
 			message: "#^Parameter \\#2 \\$haystack of function in_array expects array, mixed given\\.$#"
 			count: 2
 			path: tests/Http/Middleware/RejectBlockedIpAddressTest.php
