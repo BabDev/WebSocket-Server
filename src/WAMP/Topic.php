@@ -62,12 +62,9 @@ final class Topic implements \IteratorAggregate, \Countable, \Stringable
     /**
      * Send a message to all connections subscribed to this topic.
      *
-     * @param mixed $msg      Data to send with the broadcast, must be a JSON serializable value
-     * @param array $exclude  A list of session IDs the message should be excluded from
-     * @param array $eligible A list of session IDs the message should be sent to
-     *
-     * @phpstan-param list<string> $exclude
-     * @phpstan-param list<string> $eligible
+     * @param mixed        $msg      Data to send with the broadcast, must be a JSON serializable value
+     * @param list<string> $exclude  A list of session IDs the message should be excluded from
+     * @param list<string> $eligible A list of session IDs the message should be sent to
      */
     public function broadcast(mixed $msg, array $exclude = [], array $eligible = []): void
     {

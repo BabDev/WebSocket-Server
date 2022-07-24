@@ -248,17 +248,14 @@ final class DispatchMessageToHandler implements WAMPServerMiddleware
      * Handles a "PUBLISH" WAMP message from the client.
      *
      * @param array|string $event    The event payload for the message
-     * @param array        $exclude  A list of session IDs the message should be excluded from
-     * @param array        $eligible A list of session IDs the message should be sent to
+     * @param list<string> $exclude  A list of session IDs the message should be excluded from
+     * @param list<string> $eligible A list of session IDs the message should be sent to
      *
      * @throws CannotInstantiateMessageHandler if the message handler cannot be instantiated by the resolver
      * @throws InvalidMessageHandler           if the resolved object is not a valid message handler
      * @throws InvalidRequest                  if the request data does not allow a handler to be resolved
      * @throws RouteNotFound                   if there is no route defined for the topic ID
      * @throws UnknownMessageHandler           if the message handler does not exist
-     *
-     * @phpstan-param list<string> $exclude
-     * @phpstan-param list<string> $eligible
      */
     public function onPublish(WAMPConnection $connection, Topic $topic, array|string $event, array $exclude, array $eligible): void
     {
