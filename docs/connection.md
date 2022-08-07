@@ -30,7 +30,7 @@ Each connection has a `BabDev\WebSocket\Server\Connection\AttributeStore` attach
 
 The connection object exposes two methods to communicate with a connected client: `send()` and `close()`
 
-The `BabDev\WebSocket\Server\Connection::send()` method can send any data string to the connected client. Generally, this should be an [RFC6455](https://datatracker.ietf.org/doc/html/rfc6455) compliant message with a `[WAMP v1](https://web.archive.org/web/20150419051041/http://wamp.ws/spec/wamp1/)` compliant payload.
+The `BabDev\WebSocket\Server\Connection::send()` method can send any data string to the connected client. Generally, this should be an [RFC6455](https://datatracker.ietf.org/doc/html/rfc6455) compliant message with a [WAMP v1](https://web.archive.org/web/20150419051041/http://wamp.ws/spec/wamp1/) compliant payload.
 
 The `BabDev\WebSocket\Server\Connection::close()` method is used to close a client connection, optionally sending a final message. Generally, the close message should be an RFC6455 compliant close control frame.
 
