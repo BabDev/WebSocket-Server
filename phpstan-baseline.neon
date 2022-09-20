@@ -141,7 +141,7 @@ parameters:
 			path: tests/ReactPhpServerTest.php
 
 		-
-			message: "#^Property BabDev\\\\WebSocket\\\\Server\\\\Tests\\\\ReactPhpServerTest\\:\\:\\$port \\(int\\) does not accept int\\|false\\|null\\.$#"
+			message: "#^Property BabDev\\\\WebSocket\\\\Server\\\\Tests\\\\ReactPhpServerTest\\:\\:\\$port \\(int\\) does not accept int\\<0, 65535\\>\\|false\\|null\\.$#"
 			count: 1
 			path: tests/ReactPhpServerTest.php
 
