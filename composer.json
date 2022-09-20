@@ -22,9 +22,9 @@
         "ext-session": "*",
         "ext-sockets": "*",
         "phpstan/extension-installer": "^1.1",
-        "phpstan/phpstan": "1.8.2",
+        "phpstan/phpstan": "1.8.5",
         "phpstan/phpstan-phpunit": "1.1.1",
-        "phpunit/phpunit": "9.5.21",
+        "phpunit/phpunit": "9.5.24",
         "psr/container": "^1.0 || ^2.0",
         "psr/event-dispatcher": "^1.0",
         "symfony/phpunit-bridge": "^5.4 || ^6.0"
