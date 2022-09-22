@@ -155,7 +155,7 @@ final class UpdateTopicSubscriptionsTest extends TestCase
     public function testOnCall(): void
     {
         $id = uniqid();
-        $topic = new Topic('testing');
+        $resolvedUri = '/testing';
         $params = ['foo' => 'bar'];
 
         /** @var MockObject&WAMPConnection $connection */
@@ -163,9 +163,9 @@ final class UpdateTopicSubscriptionsTest extends TestCase
 
         $this->decoratedMiddleware->expects($this->once())
             ->method('onCall')
-            ->with($connection, $id, $topic, $params);
+            ->with($connection, $id, $resolvedUri, $params);
 
-        $this->middleware->onCall($connection, $id, $topic, $params);
+        $this->middleware->onCall($connection, $id, $resolvedUri, $params);
     }
 
     /**

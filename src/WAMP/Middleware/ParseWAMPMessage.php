@@ -111,7 +111,7 @@ final class ParseWAMPMessage implements WebSocketServerMiddleware
                     $message = $message[0];
                 }
 
-                $this->middleware->onCall($decoratedConnection, $callID, $this->getTopic($decoratedConnection, $procURI), $message);
+                $this->middleware->onCall($decoratedConnection, $callID, $decoratedConnection->getUri($procURI), $message);
 
                 break;
 

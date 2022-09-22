@@ -13,9 +13,10 @@ interface WAMPServerMiddleware extends WebSocketServerMiddleware
     /**
      * Handles an RPC "CALL" WAMP message from the client.
      *
-     * @param string $id The unique ID of the RPC, required to send a "CALLERROR" or "CALLRESULT" message
+     * @param string $id          The unique ID of the RPC, required to send a "CALLERROR" or "CALLRESULT" message
+     * @param string $resolvedUri The URI that identifies the remote procedure, after resolving any CURIE prefixed URIs
      */
-    public function onCall(WAMPConnection $connection, string $id, Topic $topic, array $params): void;
+    public function onCall(WAMPConnection $connection, string $id, string $resolvedUri, array $params): void;
 
     /**
      * Handles a "SUBSCRIBE" WAMP message from the client.

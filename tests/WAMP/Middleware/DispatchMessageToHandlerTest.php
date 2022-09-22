@@ -101,7 +101,7 @@ final class DispatchMessageToHandlerTest extends TestCase
     public function testOnCall(): void
     {
         $id = uniqid();
-        $topic = new Topic('testing');
+        $resolvedUri = '/testing';
         $params = ['foo' => 'bar'];
 
         /** @var MockObject&WAMPConnection $connection */
@@ -111,11 +111,11 @@ final class DispatchMessageToHandlerTest extends TestCase
         $handler = $this->createMock(RPCMessageHandler::class);
         $handler->expects($this->once())
             ->method('onCall')
-            ->with($connection, $id, $topic, $this->isInstanceOf(WAMPMessageRequest::class), $params);
+            ->with($connection, $id, $this->isInstanceOf(WAMPMessageRequest::class), $params);
 
         $this->matcher->expects($this->once())
             ->method('match')
-            ->with($topic->id)
+            ->with($resolvedUri)
             ->willReturn(['_controller' => 'rpc.handler']);
 
         $this->resolver->expects($this->once())
@@ -123,7 +123,7 @@ final class DispatchMessageToHandlerTest extends TestCase
             ->with($this->isInstanceOf(WAMPMessageRequest::class))
             ->willReturn($handler);
 
-        $this->middleware->onCall($connection, $id, $topic, $params);
+        $this->middleware->onCall($connection, $id, $resolvedUri, $params);
     }
 
     /**
@@ -134,7 +134,7 @@ final class DispatchMessageToHandlerTest extends TestCase
         $this->expectException(RouteNotFound::class);
 
         $id = uniqid();
-        $topic = new Topic('testing');
+        $resolvedUri = '/testing';
         $params = ['foo' => 'bar'];
 
         /** @var MockObject&WAMPConnection $connection */
@@ -144,13 +144,13 @@ final class DispatchMessageToHandlerTest extends TestCase
 
         $this->matcher->expects($this->once())
             ->method('match')
-            ->with($topic->id)
+            ->with($resolvedUri)
             ->willThrowException(new ResourceNotFoundException('Testing'));
 
         $this->resolver->expects($this->never())
             ->method('findMessageHandler');
 
-        $this->middleware->onCall($connection, $id, $topic, $params);
+        $this->middleware->onCall($connection, $id, $resolvedUri, $params);
     }
 
     /**
@@ -161,7 +161,7 @@ final class DispatchMessageToHandlerTest extends TestCase
         $this->expectException(UnknownMessageHandler::class);
 
         $id = uniqid();
-        $topic = new Topic('testing');
+        $resolvedUri = '/testing';
         $params = ['foo' => 'bar'];
 
         /** @var MockObject&WAMPConnection $connection */
@@ -171,7 +171,7 @@ final class DispatchMessageToHandlerTest extends TestCase
 
         $this->matcher->expects($this->once())
             ->method('match')
-            ->with($topic->id)
+            ->with($resolvedUri)
             ->willReturn(['_controller' => 'rpc.handler']);
 
         $this->resolver->expects($this->once())
@@ -179,7 +179,7 @@ final class DispatchMessageToHandlerTest extends TestCase
             ->with($this->isInstanceOf(WAMPMessageRequest::class))
             ->willThrowException(new UnknownMessageHandler('Testing'));
 
-        $this->middleware->onCall($connection, $id, $topic, $params);
+        $this->middleware->onCall($connection, $id, $resolvedUri, $params);
     }
 
     /**
