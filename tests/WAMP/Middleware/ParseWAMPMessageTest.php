@@ -145,19 +145,10 @@ final class ParseWAMPMessageTest extends TestCase
         $connection->expects($this->once())
             ->method('send');
 
-        $this->topicRegistry->expects($this->once())
-            ->method('has')
-            ->with($uri)
-            ->willReturn(false);
-
-        $this->topicRegistry->expects($this->once())
-            ->method('add')
-            ->with($this->isInstanceOf(Topic::class));
-
         $this->decoratedMiddleware->expects($this->once())
             ->method('onCall')
-            ->with($this->isInstanceOf(WAMPConnection::class), $callId, $this->isInstanceOf(Topic::class), $this->isType('array'))
-            ->willReturnCallback(static function (Connection $connection, string $id, Topic $topic, array $params) use ($paramCount): void {
+            ->with($this->isInstanceOf(WAMPConnection::class), $callId, $uri, $this->isType('array'))
+            ->willReturnCallback(static function (Connection $connection, string $id, string $resolvedUri, array $params) use ($paramCount): void {
                 self::assertCount($paramCount, $params);
             });
 

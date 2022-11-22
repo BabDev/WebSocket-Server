@@ -95,7 +95,8 @@ final class DispatchMessageToHandler implements WAMPServerMiddleware
     /**
      * Handles an RPC "CALL" WAMP message from the client.
      *
-     * @param string $id The unique ID of the RPC, required to send a "CALLERROR" or "CALLRESULT" message
+     * @param string $id          The unique ID of the RPC, required to send a "CALLERROR" or "CALLRESULT" message
+     * @param string $resolvedUri The URI that identifies the remote procedure, after resolving any CURIE prefixed URIs
      *
      * @throws CannotInstantiateMessageHandler if the message handler cannot be instantiated by the resolver
      * @throws InvalidMessageHandler           if the resolved object is not a valid message handler
@@ -103,18 +104,18 @@ final class DispatchMessageToHandler implements WAMPServerMiddleware
      * @throws RouteNotFound                   if there is no route defined for the topic ID
      * @throws UnknownMessageHandler           if the message handler does not exist
      */
-    public function onCall(WAMPConnection $connection, string $id, Topic $topic, array $params): void
+    public function onCall(WAMPConnection $connection, string $id, string $resolvedUri, array $params): void
     {
         try {
-            $request = $this->route($topic);
+            $request = $this->route($resolvedUri);
         } catch (RouteNotFound $exception) {
             $connection->callError(
                 $id,
-                $topic->id,
-                sprintf('Could not find a message handler for URI "%s".', $topic->id),
+                'https://example.com/error#not-found', // TODO - Make the error URI customizable
+                sprintf('Could not find a message handler for URI "%s".', $resolvedUri),
                 [
                     'code' => 404,
-                    'uri' => $topic->id,
+                    'uri' => $resolvedUri,
                 ]
             );
 
@@ -126,11 +127,11 @@ final class DispatchMessageToHandler implements WAMPServerMiddleware
         } catch (WebSocketException $exception) {
             $connection->callError(
                 $id,
-                $topic->id,
-                sprintf('Could not find a message handler for URI "%s".', $topic->id),
+                'https://example.com/error#not-found', // TODO - Make the error URI customizable
+                sprintf('Could not find a message handler for URI "%s".', $resolvedUri),
                 [
                     'code' => 404,
-                    'uri' => $topic->id,
+                    'uri' => $resolvedUri,
                 ]
             );
 
@@ -141,7 +142,7 @@ final class DispatchMessageToHandler implements WAMPServerMiddleware
             throw new InvalidMessageHandler(sprintf('The message handler for a "CALL" message must be an instance of "%s" or "%s", ensure "%s" implements the right interface.', RPCMessageHandler::class, RPCMessageMiddleware::class, $handler::class));
         }
 
-        $handler->onCall($connection, $id, $topic, $request, $params);
+        $handler->onCall($connection, $id, $request, $params);
     }
 
     /**
@@ -156,7 +157,7 @@ final class DispatchMessageToHandler implements WAMPServerMiddleware
     public function onSubscribe(WAMPConnection $connection, Topic $topic): void
     {
         try {
-            $request = $this->route($topic);
+            $request = $this->route($topic->id);
         } catch (RouteNotFound $exception) {
             $connection->event(
                 $topic->id,
@@ -206,7 +207,7 @@ final class DispatchMessageToHandler implements WAMPServerMiddleware
     public function onUnsubscribe(WAMPConnection $connection, Topic $topic): void
     {
         try {
-            $request = $this->route($topic);
+            $request = $this->route($topic->id);
         } catch (RouteNotFound $exception) {
             $connection->event(
                 $topic->id,
@@ -260,7 +261,7 @@ final class DispatchMessageToHandler implements WAMPServerMiddleware
     public function onPublish(WAMPConnection $connection, Topic $topic, array|string $event, array $exclude, array $eligible): void
     {
         try {
-            $request = $this->route($topic);
+            $request = $this->route($topic->id);
         } catch (RouteNotFound $exception) {
             $connection->event(
                 $topic->id,
@@ -301,12 +302,12 @@ final class DispatchMessageToHandler implements WAMPServerMiddleware
     /**
      * @throws RouteNotFound if there is no route defined for the topic ID
      */
-    private function route(Topic $topic): WAMPMessageRequest
+    private function route(string $uri): WAMPMessageRequest
     {
         try {
-            $parameters = $this->matcher->match($topic->id);
+            $parameters = $this->matcher->match($uri);
         } catch (ResourceNotFoundException $exception) {
-            throw new RouteNotFound(sprintf('Could not find a message handler for URI "%s".', $topic->id), $exception->getCode(), $exception);
+            throw new RouteNotFound(sprintf('Could not find a message handler for URI "%s".', $uri), $exception->getCode(), $exception);
         }
 
         // This snippet emulates the HttpKernel's RouterListener behavior for setting route attributes to the request
