@@ -612,4 +612,18 @@ final class ParseWAMPMessageTest extends TestCase
         $this->middleware->onOpen($connection);
         $this->middleware->onError($connection, $error);
     }
+
+    /**
+     * @testdox The server identity can be managed
+     */
+    public function testServerIdentity(): void
+    {
+        $newIdentity = 'Test-Identity/4.2';
+
+        $this->assertSame(Server::VERSION, $this->middleware->getServerIdentity());
+
+        $this->middleware->setServerIdentity($newIdentity);
+
+        $this->assertSame($newIdentity, $this->middleware->getServerIdentity());
+    }
 }

@@ -28,7 +28,7 @@ final class ParseWAMPMessage implements WebSocketServerMiddleware
      */
     private readonly \SplObjectStorage $connections;
 
-    public string $serverIdentity = Server::VERSION;
+    private string $serverIdentity = Server::VERSION;
 
     public function __construct(
         private readonly WAMPServerMiddleware $middleware,
@@ -165,6 +165,16 @@ final class ParseWAMPMessage implements WebSocketServerMiddleware
     public function onError(Connection $connection, \Throwable $throwable): void
     {
         $this->middleware->onError($this->connections[$connection], $throwable);
+    }
+
+    public function getServerIdentity(): string
+    {
+        return $this->serverIdentity;
+    }
+
+    public function setServerIdentity(string $serverIdentity): void
+    {
+        $this->serverIdentity = $serverIdentity;
     }
 
     private function getTopic(WAMPConnection $connection, string $uri): Topic
