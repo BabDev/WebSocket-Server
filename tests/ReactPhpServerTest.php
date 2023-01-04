@@ -14,7 +14,7 @@ use React\Socket\SocketServer;
 
 final class ReactPhpServerTest extends TestCase
 {
-    private MockObject & ServerMiddleware $middleware;
+    private MockObject&ServerMiddleware $middleware;
 
     private SocketServer $socket;
 

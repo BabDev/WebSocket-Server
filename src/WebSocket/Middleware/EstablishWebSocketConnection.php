@@ -34,10 +34,9 @@ final class EstablishWebSocketConnection implements ServerMiddleware
     private readonly \SplObjectStorage $connections;
 
     /**
-     * @var callable
-     * @phpstan-var callable(FrameInterface $frame, Connection $connection): void
+     * @phpstan-var \Closure(FrameInterface $frame, Connection $connection): void
      */
-    private $pongReceiver;
+    private \Closure $pongReceiver;
 
     /**
      * @throws InvalidEncoding if UTF-8 support is not available

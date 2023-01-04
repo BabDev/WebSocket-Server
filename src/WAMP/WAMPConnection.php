@@ -12,7 +12,7 @@ use BabDev\WebSocket\Server\WebSocket\WebSocketConnection;
  */
 interface WAMPConnection extends WebSocketConnection
 {
-    final const CURIE_SEPARATOR = ':';
+    final public const CURIE_SEPARATOR = ':';
 
     /**
      * Sends a "CALLRESULT" WAMP message to the client.

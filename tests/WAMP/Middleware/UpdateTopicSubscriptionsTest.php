@@ -14,9 +14,9 @@ use PHPUnit\Framework\TestCase;
 
 final class UpdateTopicSubscriptionsTest extends TestCase
 {
-    private MockObject & WAMPServerMiddleware $decoratedMiddleware;
+    private MockObject&WAMPServerMiddleware $decoratedMiddleware;
 
-    private MockObject & TopicRegistry $topicRegistry;
+    private MockObject&TopicRegistry $topicRegistry;
 
     private UpdateTopicSubscriptions $middleware;
 

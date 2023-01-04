@@ -5,7 +5,6 @@ namespace BabDev\WebSocket\Server\Session\Storage\Proxy;
 use BabDev\WebSocket\Server\IniOptionsHandler;
 use BabDev\WebSocket\Server\OptionsHandler;
 use BabDev\WebSocket\Server\Session\Exception\ReadOnlySession;
-use BabDev\WebSocket\Server\Session\Exception\SessionMisconfigured;
 use Symfony\Component\HttpFoundation\Session\Storage\Proxy\AbstractProxy;
 
 final class ReadOnlySessionHandlerProxy extends AbstractProxy implements \SessionHandlerInterface, \SessionUpdateTimestampHandlerInterface

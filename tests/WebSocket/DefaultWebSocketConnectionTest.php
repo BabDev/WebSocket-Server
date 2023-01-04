@@ -11,7 +11,7 @@ use Ratchet\RFC6455\Messaging\DataInterface;
 
 final class DefaultWebSocketConnectionTest extends TestCase
 {
-    private MockObject & Connection $decoratedConnection;
+    private MockObject&Connection $decoratedConnection;
 
     private DefaultWebSocketConnection $connection;
 

@@ -14,8 +14,8 @@ use Psr\Http\Message\RequestInterface;
 
 final class ParseHttpRequestTest extends TestCase
 {
-    private MockObject & ServerMiddleware $decoratedMiddleware;
-    private MockObject & RequestParser $requestParser;
+    private MockObject&ServerMiddleware $decoratedMiddleware;
+    private MockObject&RequestParser $requestParser;
     private ParseHttpRequest $middleware;
 
     protected function setUp(): void

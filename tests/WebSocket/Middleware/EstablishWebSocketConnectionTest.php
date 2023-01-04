@@ -18,9 +18,9 @@ use React\EventLoop\TimerInterface;
 
 final class EstablishWebSocketConnectionTest extends TestCase
 {
-    private MockObject & ServerMiddleware $decoratedMiddleware;
+    private MockObject&ServerMiddleware $decoratedMiddleware;
 
-    private MockObject & NegotiatorInterface $negotiator;
+    private MockObject&NegotiatorInterface $negotiator;
 
     private EstablishWebSocketConnection $middleware;
 

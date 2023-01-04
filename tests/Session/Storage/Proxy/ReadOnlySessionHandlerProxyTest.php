@@ -4,7 +4,6 @@ namespace BabDev\WebSocket\Server\Tests\Session\Storage\Proxy;
 
 use BabDev\WebSocket\Server\OptionsHandler;
 use BabDev\WebSocket\Server\Session\Exception\ReadOnlySession;
-use BabDev\WebSocket\Server\Session\Exception\SessionMisconfigured;
 use BabDev\WebSocket\Server\Session\Storage\Proxy\ReadOnlySessionHandlerProxy;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -13,7 +12,7 @@ final class ReadOnlySessionHandlerProxyTest extends TestCase
 {
     private const SESSION_NAME = 'TestSession';
 
-    private MockObject & \SessionHandlerInterface $handler;
+    private MockObject&\SessionHandlerInterface $handler;
 
     private OptionsHandler $optionsHandler;
 

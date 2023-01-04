@@ -94,8 +94,6 @@ final class Container implements ContainerInterface
 
     /**
      * @param string $id
-     *
-     * @return mixed
      */
     public function get($id)
     {

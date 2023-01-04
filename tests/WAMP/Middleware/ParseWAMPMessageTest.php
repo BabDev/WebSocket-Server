@@ -18,9 +18,9 @@ use PHPUnit\Framework\TestCase;
 
 final class ParseWAMPMessageTest extends TestCase
 {
-    private MockObject & WAMPServerMiddleware $decoratedMiddleware;
+    private MockObject&WAMPServerMiddleware $decoratedMiddleware;
 
-    private MockObject & TopicRegistry $topicRegistry;
+    private MockObject&TopicRegistry $topicRegistry;
 
     private ParseWAMPMessage $middleware;
 

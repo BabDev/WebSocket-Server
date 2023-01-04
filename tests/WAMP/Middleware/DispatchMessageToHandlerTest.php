@@ -23,11 +23,11 @@ use Symfony\Component\Routing\Matcher\UrlMatcherInterface;
 
 final class DispatchMessageToHandlerTest extends TestCase
 {
-    private MockObject & UrlMatcherInterface $matcher;
+    private MockObject&UrlMatcherInterface $matcher;
 
-    private MockObject & MessageHandlerResolver $resolver;
+    private MockObject&MessageHandlerResolver $resolver;
 
-    private MockObject & EventDispatcherInterface $dispatcher;
+    private MockObject&EventDispatcherInterface $dispatcher;
 
     private DispatchMessageToHandler $middleware;
 

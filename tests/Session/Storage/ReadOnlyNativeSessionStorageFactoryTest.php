@@ -20,9 +20,9 @@ final class ReadOnlyNativeSessionStorageFactoryTest extends TestCase
 
     private OptionsHandler $optionsHandler;
 
-    private MockObject & Reader $reader;
+    private MockObject&Reader $reader;
 
-    private MockObject & \SessionHandlerInterface $handler;
+    private MockObject&\SessionHandlerInterface $handler;
 
     private ReadOnlyNativeSessionStorageFactory $factory;
 

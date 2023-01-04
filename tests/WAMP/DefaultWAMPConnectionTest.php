@@ -4,14 +4,14 @@ namespace BabDev\WebSocket\Server\Tests\WAMP;
 
 use BabDev\WebSocket\Server\Connection;
 use BabDev\WebSocket\Server\Connection\AttributeStore;
-use BabDev\WebSocket\Server\WAMP\MessageType;
 use BabDev\WebSocket\Server\WAMP\DefaultWAMPConnection;
+use BabDev\WebSocket\Server\WAMP\MessageType;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 final class DefaultWAMPConnectionTest extends TestCase
 {
-    private MockObject & Connection $decoratedConnection;
+    private MockObject&Connection $decoratedConnection;
 
     private DefaultWAMPConnection $connection;
 

@@ -16,9 +16,9 @@ use Symfony\Component\HttpFoundation\Session\SessionInterface;
 
 final class InitializeSessionTest extends TestCase
 {
-    private MockObject & ServerMiddleware $decoratedMiddleware;
+    private MockObject&ServerMiddleware $decoratedMiddleware;
 
-    private MockObject & SessionFactoryInterface $sessionFactory;
+    private MockObject&SessionFactoryInterface $sessionFactory;
 
     private OptionsHandler $optionsHandler;
 
