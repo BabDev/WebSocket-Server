@@ -3,6 +3,7 @@
 namespace BabDev\WebSocket\Server\Tests\WebSocket\Middleware;
 
 use BabDev\WebSocket\Server\Connection;
+use BabDev\WebSocket\Server\Connection\ArrayAttributeStore;
 use BabDev\WebSocket\Server\Connection\AttributeStore;
 use BabDev\WebSocket\Server\Http\Exception\MissingRequest;
 use BabDev\WebSocket\Server\ServerMiddleware;
@@ -40,19 +41,8 @@ final class EstablishWebSocketConnectionTest extends TestCase
         /** @var MockObject&RequestInterface $request */
         $request = $this->createMock(RequestInterface::class);
 
-        /** @var MockObject&AttributeStore $attributeStore */
-        $attributeStore = $this->createMock(AttributeStore::class);
-        $attributeStore->expects($this->exactly(2))
-            ->method('get')
-            ->withConsecutive(
-                ['http.request', null],
-                ['websocket.closing', false],
-            )
-            ->willReturnOnConsecutiveCalls($request, false);
-
-        $attributeStore->expects($this->once())
-            ->method('set')
-            ->with('websocket.closing', false);
+        $attributeStore = new ArrayAttributeStore();
+        $attributeStore->set('http.request', $request);
 
         /** @var MockObject&ResponseInterface $response */
         $response = $this->createMock(ResponseInterface::class);

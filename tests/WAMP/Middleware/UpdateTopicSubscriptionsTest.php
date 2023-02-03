@@ -4,9 +4,9 @@ namespace BabDev\WebSocket\Server\Tests\WAMP\Middleware;
 
 use BabDev\WebSocket\Server\Connection;
 use BabDev\WebSocket\Server\Connection\ArrayAttributeStore;
+use BabDev\WebSocket\Server\WAMP\ArrayTopicRegistry;
 use BabDev\WebSocket\Server\WAMP\Middleware\UpdateTopicSubscriptions;
 use BabDev\WebSocket\Server\WAMP\Topic;
-use BabDev\WebSocket\Server\WAMP\TopicRegistry;
 use BabDev\WebSocket\Server\WAMP\WAMPConnection;
 use BabDev\WebSocket\Server\WAMPServerMiddleware;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -16,14 +16,14 @@ final class UpdateTopicSubscriptionsTest extends TestCase
 {
     private MockObject&WAMPServerMiddleware $decoratedMiddleware;
 
-    private MockObject&TopicRegistry $topicRegistry;
+    private ArrayTopicRegistry $topicRegistry;
 
     private UpdateTopicSubscriptions $middleware;
 
     protected function setUp(): void
     {
         $this->decoratedMiddleware = $this->createMock(WAMPServerMiddleware::class);
-        $this->topicRegistry = $this->createMock(TopicRegistry::class);
+        $this->topicRegistry = new ArrayTopicRegistry();
 
         $this->middleware = new UpdateTopicSubscriptions($this->decoratedMiddleware, $this->topicRegistry);
     }
@@ -114,22 +114,19 @@ final class UpdateTopicSubscriptionsTest extends TestCase
         $topic3->add($connection);
         $topic3->add($connection2);
 
+        $this->topicRegistry->add($topic1);
+        $this->topicRegistry->add($topic2);
+        $this->topicRegistry->add($topic3);
+
         $this->decoratedMiddleware->expects($this->once())
             ->method('onClose')
             ->with($connection);
 
-        $this->topicRegistry->expects($this->once())
-            ->method('all')
-            ->willReturn([$topic1, $topic2, $topic3]);
-
-        $this->topicRegistry->expects($this->exactly(2))
-            ->method('remove')
-            ->withConsecutive(
-                [$topic1],
-                [$topic2],
-            );
-
         $this->middleware->onClose($connection);
+
+        $this->assertFalse($this->topicRegistry->has($topic1->id));
+        $this->assertFalse($this->topicRegistry->has($topic2->id));
+        $this->assertTrue($this->topicRegistry->has($topic3->id));
     }
 
     /**
@@ -175,6 +172,8 @@ final class UpdateTopicSubscriptionsTest extends TestCase
     {
         $topic = new Topic('testing');
 
+        $this->topicRegistry->add($topic);
+
         $attributeStore = new ArrayAttributeStore();
 
         /** @var \SplObjectStorage<Topic, null> $subscriptions */
@@ -187,11 +186,6 @@ final class UpdateTopicSubscriptionsTest extends TestCase
         $connection->expects($this->atLeastOnce())
             ->method('getAttributeStore')
             ->willReturn($attributeStore);
-
-        $this->topicRegistry->expects($this->once())
-            ->method('has')
-            ->with($topic->id)
-            ->willReturn(true);
 
         $this->decoratedMiddleware->expects($this->once())
             ->method('onSubscribe')
@@ -210,6 +204,8 @@ final class UpdateTopicSubscriptionsTest extends TestCase
     {
         $topic = new Topic('testing');
 
+        $this->topicRegistry->add($topic);
+
         $attributeStore = new ArrayAttributeStore();
 
         /** @var \SplObjectStorage<Topic, null> $subscriptions */
@@ -226,10 +222,6 @@ final class UpdateTopicSubscriptionsTest extends TestCase
 
         $topic->add($connection);
 
-        $this->topicRegistry->expects($this->once())
-            ->method('remove')
-            ->with($topic);
-
         $this->decoratedMiddleware->expects($this->once())
             ->method('onUnsubscribe')
             ->with($connection, $topic);
@@ -237,6 +229,7 @@ final class UpdateTopicSubscriptionsTest extends TestCase
         $this->middleware->onUnsubscribe($connection, $topic);
 
         $this->assertFalse($subscriptions->contains($topic));
+        $this->assertFalse($this->topicRegistry->has($topic->id));
     }
 
     /**
