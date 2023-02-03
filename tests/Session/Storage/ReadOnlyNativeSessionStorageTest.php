@@ -101,14 +101,14 @@ final class ReadOnlyNativeSessionStorageTest extends TestCase
         $this->assertSame(self::SESSION_NAME, $this->storage->getName());
     }
 
-    public function testForbidsSettingTheSessionName(): void
+    public function testForbidsSettingTheSessionName(): never
     {
         $this->expectException(ReadOnlySession::class);
 
         $this->storage->setName('invalid');
     }
 
-    public function testForbidsRegeneratingTheSession(): void
+    public function testForbidsRegeneratingTheSession(): never
     {
         $this->expectException(ReadOnlySession::class);
 

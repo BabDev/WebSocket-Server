@@ -50,7 +50,7 @@ final class ReactPhpServer implements Server
         $decoratedConnection->getAttributeStore()->set(
             'remote_address',
             trim(
-                parse_url((!str_contains($uri, '://') ? 'tcp://' : '').$uri, \PHP_URL_HOST),
+                parse_url((str_contains($uri, '://') ? '' : 'tcp://').$uri, \PHP_URL_HOST),
                 '[]'
             )
         );

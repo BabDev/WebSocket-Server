@@ -43,7 +43,7 @@ final class ReadOnlySessionHandlerProxyTest extends TestCase
         $this->assertSame(self::SESSION_NAME, $this->proxy->getName());
     }
 
-    public function testRaisesAnErrorIfTryingToChangeTheSessionName(): void
+    public function testRaisesAnErrorIfTryingToChangeTheSessionName(): never
     {
         $this->expectException(ReadOnlySession::class);
 
@@ -85,7 +85,7 @@ final class ReadOnlySessionHandlerProxyTest extends TestCase
         $this->assertSame($data, $this->proxy->read($id));
     }
 
-    public function testForbidsWritingSessionData(): void
+    public function testForbidsWritingSessionData(): never
     {
         $this->expectException(ReadOnlySession::class);
 
@@ -126,7 +126,7 @@ final class ReadOnlySessionHandlerProxyTest extends TestCase
         $this->assertTrue($this->proxy->validateId($id));
     }
 
-    public function testForbidsUpdatingTheSessionTimestamp(): void
+    public function testForbidsUpdatingTheSessionTimestamp(): never
     {
         $this->expectException(ReadOnlySession::class);
 

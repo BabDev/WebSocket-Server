@@ -41,12 +41,10 @@ final class DefaultWAMPConnection implements WAMPConnection
 
         if ($this->connection instanceof WebSocketConnection) {
             $this->connection->send($data);
+        } elseif ($data instanceof DataInterface) {
+            $this->connection->send($data->getContents());
         } else {
-            if ($data instanceof DataInterface) {
-                $this->connection->send($data->getContents());
-            } else {
-                $this->connection->send($data);
-            }
+            $this->connection->send($data);
         }
     }
 

@@ -40,7 +40,7 @@ final class ReactPhpServerTest extends TestCase
 
         $uri = $this->socket->getAddress();
 
-        $this->port = parse_url((!str_contains($uri, '://') ? 'tcp://' : '').$uri, \PHP_URL_PORT);
+        $this->port = parse_url((str_contains($uri, '://') ? '' : 'tcp://').$uri, \PHP_URL_PORT);
 
         $this->server = new ReactPhpServer($this->middleware, $this->socket, Loop::get());
     }

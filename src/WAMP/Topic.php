@@ -68,7 +68,7 @@ final class Topic implements \IteratorAggregate, \Countable, \Stringable
      */
     public function broadcast(mixed $msg, array $exclude = [], array $eligible = []): void
     {
-        $useEligible = \count($eligible) > 0;
+        $useEligible = $eligible !== [];
 
         /** @var WAMPConnection $subscriber */
         foreach ($this->subscribers as $subscriber) {

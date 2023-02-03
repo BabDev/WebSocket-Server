@@ -42,7 +42,7 @@ final class ParseWAMPMessage implements WebSocketServerMiddleware
      */
     public function getSubProtocols(): array
     {
-        return array_merge($this->middleware->getSubProtocols(), ['wamp']);
+        return [...$this->middleware->getSubProtocols(), ...['wamp']];
     }
 
     /**
@@ -88,7 +88,7 @@ final class ParseWAMPMessage implements WebSocketServerMiddleware
             throw new InvalidMessage('Invalid WAMP message format.');
         }
 
-        if (isset($message[1]) && !(\is_string($message[1]) || is_numeric($message[1]))) {
+        if (isset($message[1]) && (!\is_string($message[1]) && !is_numeric($message[1]))) {
             throw new InvalidMessage('Invalid Topic, must be a string.');
         }
 

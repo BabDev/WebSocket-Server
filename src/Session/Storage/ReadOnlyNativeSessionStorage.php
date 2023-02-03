@@ -240,7 +240,7 @@ final class ReadOnlyNativeSessionStorage implements SessionStorageInterface
 
     private function loadSession(array $session): void
     {
-        $bags = array_merge($this->bags, [$this->metadataBag]);
+        $bags = [...$this->bags, ...[$this->metadataBag]];
 
         foreach ($bags as $bag) {
             $key = $bag->getStorageKey();

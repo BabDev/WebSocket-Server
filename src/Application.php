@@ -33,13 +33,9 @@ use Symfony\Component\Routing\RouteCollection;
  */
 final class Application
 {
-    private readonly string $uri;
-
-    private readonly array $context;
-
     private readonly LoopInterface $loop;
 
-    private UrlMatcherInterface $matcher;
+    private readonly UrlMatcherInterface $matcher;
 
     private RouteCollection $routeCollection;
 
@@ -68,12 +64,10 @@ final class Application
      * the connections for the server. Please see that class' documentation for more details.
      */
     public function __construct(
-        string $uri,
-        array $context = [],
-        ?LoopInterface $loop = null
+        private readonly string $uri,
+        private readonly array $context = [],
+        ?LoopInterface $loop = null,
     ) {
-        $this->uri = $uri;
-        $this->context = $context;
         $this->loop = $loop ?? Loop::get();
         $this->matcher = new UrlMatcher(
             $this->routeCollection = new RouteCollection(),
