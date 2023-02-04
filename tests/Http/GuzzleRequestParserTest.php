@@ -15,7 +15,7 @@ final class GuzzleRequestParserTest extends TestCase
     /**
      * @return \Generator<string, array>
      */
-    public function dataRequestProvider(): \Generator
+    public static function dataRequestProvider(): \Generator
     {
         yield 'Invalid when the end of message marker is missing' => [false, "GET / HTTP/1.1\r\nHost: example.com\r\n"];
         yield 'Valid when the end of message marker is present' => [true, "GET / HTTP/1.1\r\nHost: example.com\r\n\r\n"];
