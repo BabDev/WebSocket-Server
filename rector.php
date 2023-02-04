@@ -19,6 +19,11 @@ return static function (RectorConfig $rectorConfig): void {
          * Skip selected rules
          */
         AddSeeTestAnnotationRector::class,
+
+        /*
+         * Skip selected files
+         */
+        __DIR__.'/tests/Session/Storage/ReadOnlyNativeSessionStorageTest.php', // Rector ends up recursing on this file
     ]);
 
     // AddSeeTestAnnotationRector
@@ -29,8 +34,7 @@ return static function (RectorConfig $rectorConfig): void {
     $rectorConfig->sets([
         LevelSetList::UP_TO_PHP_81,
         SetList::CODE_QUALITY,
-        PHPUnitLevelSetList::UP_TO_PHPUNIT_90,
-        PHPUnitSetList::PHPUNIT_91,
+        PHPUnitLevelSetList::UP_TO_PHPUNIT_100,
         PHPUnitSetList::PHPUNIT_CODE_QUALITY,
         PHPUnitSetList::PHPUNIT_EXCEPTION,
         PHPUnitSetList::PHPUNIT_YIELD_DATA_PROVIDER,

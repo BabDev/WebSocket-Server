@@ -129,7 +129,7 @@ final class ParseWAMPMessage implements WebSocketServerMiddleware
                 $exclude = $message[3] ?? null;
 
                 if (!\is_array($exclude)) {
-                    if (true === (bool) $exclude) {
+                    if ((bool) $exclude) {
                         $sessionId = $decoratedConnection->getAttributeStore()->get('wamp.session_id');
                         $exclude = [$sessionId];
                     } else {

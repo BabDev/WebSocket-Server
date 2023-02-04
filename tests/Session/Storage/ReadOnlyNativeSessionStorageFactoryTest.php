@@ -6,12 +6,11 @@ use BabDev\WebSocket\Server\OptionsHandler;
 use BabDev\WebSocket\Server\Session\Reader\Reader;
 use BabDev\WebSocket\Server\Session\Storage\ReadOnlyNativeSessionStorage;
 use BabDev\WebSocket\Server\Session\Storage\ReadOnlyNativeSessionStorageFactory;
+use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @requires extension session
- */
+#[RequiresPhpExtension('session')]
 final class ReadOnlyNativeSessionStorageFactoryTest extends TestCase
 {
     private const SESSION_NAME = 'TestSession';

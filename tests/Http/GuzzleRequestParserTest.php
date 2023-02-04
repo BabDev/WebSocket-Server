@@ -5,6 +5,7 @@ namespace BabDev\WebSocket\Server\Tests\Http;
 use BabDev\WebSocket\Server\Connection;
 use BabDev\WebSocket\Server\Connection\AttributeStore;
 use BabDev\WebSocket\Server\Http\GuzzleRequestParser;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
@@ -24,9 +25,7 @@ final class GuzzleRequestParserTest extends TestCase
         yield 'Valid when the end of message marker is present and a body exists with line breaks after the body' => [true, "GET / HTTP/1.1\r\nHost: example.com\r\n\r\nHixie\r\n"];
     }
 
-    /**
-     * @dataProvider dataRequestProvider
-     */
+    #[DataProvider('dataRequestProvider')]
     public function testConvertsToRequest(bool $valid, string $message): void
     {
         /** @var MockObject&AttributeStore $attributeStore */

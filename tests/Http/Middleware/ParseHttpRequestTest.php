@@ -8,6 +8,7 @@ use BabDev\WebSocket\Server\Http\Exception\MessageTooLarge;
 use BabDev\WebSocket\Server\Http\Middleware\ParseHttpRequest;
 use BabDev\WebSocket\Server\Http\RequestParser;
 use BabDev\WebSocket\Server\ServerMiddleware;
+use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
@@ -26,9 +27,7 @@ final class ParseHttpRequestTest extends TestCase
         $this->middleware = new ParseHttpRequest($this->decoratedMiddleware, $this->requestParser);
     }
 
-    /**
-     * @testdox Handles a new connection being opened
-     */
+    #[TestDox('Handles a new connection being opened')]
     public function testOnOpen(): void
     {
         $attributeStore = new ArrayAttributeStore();
@@ -44,9 +43,7 @@ final class ParseHttpRequestTest extends TestCase
         $this->assertFalse($attributeStore->get('http.headers_received'));
     }
 
-    /**
-     * @testdox Handles incoming data on the connection when the HTTP message has not yet been parsed
-     */
+    #[TestDox('Handles incoming data on the connection when the HTTP message has not yet been parsed')]
     public function testOnMessageWhenHttpMessageNotYetParsed(): void
     {
         $message = 'Testing';
@@ -78,9 +75,7 @@ final class ParseHttpRequestTest extends TestCase
         $this->assertSame($request, $attributeStore->get('http.request'));
     }
 
-    /**
-     * @testdox Handles incoming data on the connection when the HTTP message has been parsed
-     */
+    #[TestDox('Handles incoming data on the connection when the HTTP message has been parsed')]
     public function testOnMessageWhenHttpMessageHasBeenParsed(): void
     {
         $message = 'Testing';
@@ -104,9 +99,7 @@ final class ParseHttpRequestTest extends TestCase
         $this->middleware->onMessage($connection, $message);
     }
 
-    /**
-     * @testdox Closes the connection when processing incoming data and it causes a buffer overflow
-     */
+    #[TestDox('Closes the connection when a buffer overflow is reached while processing incoming data')]
     public function testOnMessageWhenHttpMessageOverflows(): void
     {
         $message = 'Testing';
@@ -137,9 +130,7 @@ final class ParseHttpRequestTest extends TestCase
         $this->middleware->onMessage($connection, $message);
     }
 
-    /**
-     * @testdox Closes the connection when the request has been parsed
-     */
+    #[TestDox('Closes the connection when the request has been parsed')]
     public function testOnCloseWhenRequestParsed(): void
     {
         $attributeStore = new ArrayAttributeStore();
@@ -158,9 +149,7 @@ final class ParseHttpRequestTest extends TestCase
         $this->middleware->onClose($connection);
     }
 
-    /**
-     * @testdox Handles an error when the request has been parsed
-     */
+    #[TestDox('Handles an error when the request has been parsed')]
     public function testOnErrorWhenRequestParsed(): void
     {
         $exception = new \RuntimeException('Testing');
@@ -181,9 +170,7 @@ final class ParseHttpRequestTest extends TestCase
         $this->middleware->onError($connection, $exception);
     }
 
-    /**
-     * @testdox Handles an error when the request has not been parsed
-     */
+    #[TestDox('Handles an error when the request has not been parsed')]
     public function testOnErrorWhenRequestNotParsed(): void
     {
         $exception = new \RuntimeException('Testing');

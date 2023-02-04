@@ -6,14 +6,14 @@ use BabDev\WebSocket\Server\OptionsHandler;
 use BabDev\WebSocket\Server\Session\Exception\ReadOnlySession;
 use BabDev\WebSocket\Server\Session\Reader\Reader;
 use BabDev\WebSocket\Server\Session\Storage\ReadOnlyNativeSessionStorage;
+use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
+use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Session\Attribute\AttributeBag;
 use Symfony\Component\HttpFoundation\Session\SessionBagInterface;
 
-/**
- * @requires extension session
- */
+#[RequiresPhpExtension('session')]
 final class ReadOnlyNativeSessionStorageTest extends TestCase
 {
     private const SESSION_NAME = 'TestSession';
@@ -115,17 +115,13 @@ final class ReadOnlyNativeSessionStorageTest extends TestCase
         $this->storage->regenerate();
     }
 
-    /**
-     * @doesNotPerformAssertions
-     */
+    #[DoesNotPerformAssertions]
     public function testSavesTheSession(): void
     {
         $this->storage->save();
     }
 
-    /**
-     * @doesNotPerformAssertions
-     */
+    #[DoesNotPerformAssertions]
     public function testCanRegisterBagsBeforeStartingTheSession(): void
     {
         $bag = new class() implements SessionBagInterface {

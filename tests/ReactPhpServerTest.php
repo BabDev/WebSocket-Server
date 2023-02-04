@@ -5,6 +5,7 @@ namespace BabDev\WebSocket\Server\Tests;
 use BabDev\WebSocket\Server\Connection;
 use BabDev\WebSocket\Server\ReactPhpServer;
 use BabDev\WebSocket\Server\ServerMiddleware;
+use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use React\EventLoop\Loop;
@@ -54,9 +55,7 @@ final class ReactPhpServerTest extends TestCase
         $loop->run();
     }
 
-    /**
-     * @testdox Handles a new connection being opened
-     */
+    #[TestDox('Handles a new connection being opened')]
     public function testOnOpen(): void
     {
         $this->middleware->expects($this->once())
@@ -68,9 +67,7 @@ final class ReactPhpServerTest extends TestCase
         $this->tickLoop(Loop::get());
     }
 
-    /**
-     * @testdox Handles incoming data on the connection
-     */
+    #[TestDox('Handles incoming data on the connection')]
     public function testOnData(): void
     {
         $message = 'Hello World!';
@@ -98,9 +95,7 @@ final class ReactPhpServerTest extends TestCase
         $this->tickLoop(Loop::get());
     }
 
-    /**
-     * @testdox Handles a connection being closed
-     */
+    #[TestDox('Handles a connection being closed')]
     public function testOnEnd(): void
     {
         $this->middleware->expects($this->once())
@@ -122,9 +117,7 @@ final class ReactPhpServerTest extends TestCase
         $this->tickLoop(Loop::get());
     }
 
-    /**
-     * @testdox Handles an uncaught Throwable while processing incoming data on the connection
-     */
+    #[TestDox('Handles an uncaught Throwable while processing incoming data on the connection')]
     public function testOnError(): void
     {
         $exception = new \RuntimeException('Testing');
