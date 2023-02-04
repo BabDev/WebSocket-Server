@@ -17,7 +17,7 @@
         </include>
     </coverage>
 
-    <listeners>
+    <!-- <listeners>
         <listener class="Symfony\Bridge\PhpUnit\SymfonyTestsListener"/>
-    </listeners>
+    </listeners> -->
 </phpunit>
