@@ -76,7 +76,8 @@ final class EstablishWebSocketConnection implements ServerMiddleware
 
         $connection->getAttributeStore()->set('websocket.closing', false);
 
-        $response = $this->negotiator->handshake($request);
+        $response = $this->negotiator->handshake($request)
+            ->withoutHeader('X-Powered-By');
 
         $connection->send(Message::toString($response));
 

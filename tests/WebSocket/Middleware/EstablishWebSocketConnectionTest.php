@@ -47,6 +47,11 @@ final class EstablishWebSocketConnectionTest extends TestCase
         /** @var MockObject&ResponseInterface $response */
         $response = $this->createMock(ResponseInterface::class);
         $response->expects($this->once())
+            ->method('withoutHeader')
+            ->with('X-Powered-By')
+            ->willReturnSelf();
+
+        $response->expects($this->once())
             ->method('getProtocolVersion')
             ->willReturn('1.1');
 
@@ -150,6 +155,11 @@ final class EstablishWebSocketConnectionTest extends TestCase
 
         /** @var MockObject&ResponseInterface $response */
         $response = $this->createMock(ResponseInterface::class);
+        $response->expects($this->once())
+            ->method('withoutHeader')
+            ->with('X-Powered-By')
+            ->willReturnSelf();
+
         $response->expects($this->once())
             ->method('getProtocolVersion')
             ->willReturn('1.1');
