@@ -68,7 +68,7 @@ final class DefaultWAMPConnectionTest extends TestCase
 
         $this->decoratedConnection->expects($this->once())
             ->method('send')
-            ->with(json_encode([MessageType::CALL_RESULT, $callId, $data], JSON_THROW_ON_ERROR));
+            ->with(json_encode([MessageType::CALL_RESULT, $callId, $data], \JSON_THROW_ON_ERROR));
 
         $this->connection->callResult($callId, $data);
     }
@@ -80,7 +80,7 @@ final class DefaultWAMPConnectionTest extends TestCase
 
         $this->decoratedConnection->expects($this->once())
             ->method('send')
-            ->with(json_encode([MessageType::CALL_ERROR, $callId, $uri, 'Testing Error'], JSON_THROW_ON_ERROR));
+            ->with(json_encode([MessageType::CALL_ERROR, $callId, $uri, 'Testing Error'], \JSON_THROW_ON_ERROR));
 
         $this->connection->callError($callId, $uri, 'Testing Error');
     }
@@ -93,7 +93,7 @@ final class DefaultWAMPConnectionTest extends TestCase
 
         $this->decoratedConnection->expects($this->once())
             ->method('send')
-            ->with(json_encode([MessageType::CALL_ERROR, $callId, $uri, 'Testing Error', $details], JSON_THROW_ON_ERROR));
+            ->with(json_encode([MessageType::CALL_ERROR, $callId, $uri, 'Testing Error', $details], \JSON_THROW_ON_ERROR));
 
         $this->connection->callError($callId, $uri, 'Testing Error', $details);
     }
