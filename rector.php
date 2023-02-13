@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 
 use Rector\Config\RectorConfig;
-use Rector\Doctrine\Set\DoctrineSetList;
+use Rector\Php74\Rector\LNumber\AddLiteralSeparatorToNumberRector;
 use Rector\PHPUnit\Rector\Class_\AddSeeTestAnnotationRector;
 use Rector\PHPUnit\Set\PHPUnitLevelSetList;
 use Rector\PHPUnit\Set\PHPUnitSetList;
@@ -18,18 +18,19 @@ return static function (RectorConfig $rectorConfig): void {
         /*
          * Skip selected rules
          */
+        AddLiteralSeparatorToNumberRector::class,
         AddSeeTestAnnotationRector::class,
 
         /*
          * Skip selected files
          */
-        __DIR__.'/tests/Session/Storage/ReadOnlyNativeSessionStorageTest.php', // Rector ends up recursing on this file
+        __DIR__ . '/tests/Session/Storage/ReadOnlyNativeSessionStorageTest.php', // Rector ends up recursing on this file
     ]);
 
     // AddSeeTestAnnotationRector
     $rectorConfig->importNames();
     $rectorConfig->importShortClasses(false);
-    $rectorConfig->phpstanConfig(__DIR__.'/phpstan.neon');
+    $rectorConfig->phpstanConfig(__DIR__ . '/phpstan.neon');
 
     $rectorConfig->sets([
         LevelSetList::UP_TO_PHP_81,
