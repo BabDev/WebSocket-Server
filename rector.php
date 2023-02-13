@@ -20,11 +20,6 @@ return static function (RectorConfig $rectorConfig): void {
          */
         AddLiteralSeparatorToNumberRector::class,
         AddSeeTestAnnotationRector::class,
-
-        /*
-         * Skip selected files
-         */
-        __DIR__ . '/tests/Session/Storage/ReadOnlyNativeSessionStorageTest.php', // Rector ends up recursing on this file
     ]);
 
     // AddSeeTestAnnotationRector
