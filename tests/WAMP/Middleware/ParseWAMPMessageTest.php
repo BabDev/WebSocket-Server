@@ -14,6 +14,7 @@ use BabDev\WebSocket\Server\WAMP\TopicRegistry;
 use BabDev\WebSocket\Server\WAMP\WAMPConnection;
 use BabDev\WebSocket\Server\WAMPServerMiddleware;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
@@ -45,9 +46,7 @@ final class ParseWAMPMessageTest extends TestCase
         );
     }
 
-    /**
-     * @testdox Handles a new connection being opened
-     */
+    #[TestDox('Handles a new connection being opened')]
     public function testOnOpen(): void
     {
         $attributeStore = new ArrayAttributeStore();
@@ -79,9 +78,7 @@ final class ParseWAMPMessageTest extends TestCase
         $this->assertSame(Server::VERSION, $data[3], 'The server identity should be provided by default.');
     }
 
-    /**
-     * @testdox Handles incoming data on the connection for a WAMP "PREFIX" message
-     */
+    #[TestDox('Handles incoming data on the connection for a WAMP "PREFIX" message')]
     public function testOnMessageForPrefixMessage(): void
     {
         $attributeStore = new ArrayAttributeStore();
@@ -121,10 +118,8 @@ final class ParseWAMPMessageTest extends TestCase
         yield 'Parameters with multiple types when an array is the first parameter' => [2, ['hello', 'world'], 'hi'];
     }
 
-    /**
-     * @testdox Handles incoming data on the connection for a WAMP "CALL" message
-     */
     #[DataProvider('dataCallMessage')]
+    #[TestDox('Handles incoming data on the connection for a WAMP "CALL" message')]
     public function testOnMessageForCallMessage(...$args): void
     {
         $paramCount = array_shift($args);
@@ -156,9 +151,7 @@ final class ParseWAMPMessageTest extends TestCase
         $this->middleware->onMessage($connection, json_encode($message, \JSON_THROW_ON_ERROR));
     }
 
-    /**
-     * @testdox Handles incoming data on the connection for a WAMP "SUBSCRIBE" message
-     */
+    #[TestDox('Handles incoming data on the connection for a WAMP "SUBSCRIBE" message')]
     public function testOnMessageForSubscribeMessage(): void
     {
         $uri = 'https://example.com/testing/'.random_int(1, 1000);
@@ -191,9 +184,7 @@ final class ParseWAMPMessageTest extends TestCase
         $this->middleware->onMessage($connection, json_encode([MessageType::SUBSCRIBE, $uri], \JSON_THROW_ON_ERROR));
     }
 
-    /**
-     * @testdox Handles incoming data on the connection for a WAMP "UNSUBSCRIBE" message
-     */
+    #[TestDox('Handles incoming data on the connection for a WAMP "UNSUBSCRIBE" message')]
     public function testOnMessageForUnsubscribeMessage(): void
     {
         $uri = 'https://example.com/testing/'.random_int(1, 1000);
@@ -226,9 +217,7 @@ final class ParseWAMPMessageTest extends TestCase
         $this->middleware->onMessage($connection, json_encode([MessageType::UNSUBSCRIBE, $uri], \JSON_THROW_ON_ERROR));
     }
 
-    /**
-     * @testdox Handles incoming data on the connection for a WAMP "PUBLISH" message with string payload and no extra params
-     */
+    #[TestDox('Handles incoming data on the connection for a WAMP "PUBLISH" message with string payload and no extra params')]
     public function testOnMessageForPublishMessageWithStringPayloadNoExtraParams(): void
     {
         $uri = 'https://example.com/testing/'.random_int(1, 1000);
@@ -263,9 +252,7 @@ final class ParseWAMPMessageTest extends TestCase
         $this->middleware->onMessage($connection, json_encode([MessageType::PUBLISH, $uri, $event], \JSON_THROW_ON_ERROR));
     }
 
-    /**
-     * @testdox Handles incoming data on the connection for a WAMP "PUBLISH" message with array payload and no extra params
-     */
+    #[TestDox('Handles incoming data on the connection for a WAMP "PUBLISH" message with array payload and no extra params')]
     public function testOnMessageForPublishMessageWithArrayPayloadNoExtraParams(): void
     {
         $uri = 'https://example.com/testing/'.random_int(1, 1000);
@@ -300,9 +287,7 @@ final class ParseWAMPMessageTest extends TestCase
         $this->middleware->onMessage($connection, json_encode([MessageType::PUBLISH, $uri, $event], \JSON_THROW_ON_ERROR));
     }
 
-    /**
-     * @testdox Handles incoming data on the connection for a WAMP "PUBLISH" message with the "excludeMe" param
-     */
+    #[TestDox('Handles incoming data on the connection for a WAMP "PUBLISH" message with the "excludeMe" param')]
     public function testOnMessageForPublishMessageWithExcludeMeParam(): void
     {
         $uri = 'https://example.com/testing/'.random_int(1, 1000);
@@ -347,9 +332,7 @@ final class ParseWAMPMessageTest extends TestCase
         );
     }
 
-    /**
-     * @testdox Handles incoming data on the connection for a WAMP "PUBLISH" message with a list of excluded sessions
-     */
+    #[TestDox('Handles incoming data on the connection for a WAMP "PUBLISH" message with a list of excluded sessions')]
     public function testOnMessageForPublishMessageWithListOfExcludedSessions(): void
     {
         $uri = 'https://example.com/testing/'.random_int(1, 1000);
@@ -395,9 +378,7 @@ final class ParseWAMPMessageTest extends TestCase
         );
     }
 
-    /**
-     * @testdox Handles incoming data on the connection for a WAMP "PUBLISH" message with a list of eligible sessions
-     */
+    #[TestDox('Handles incoming data on the connection for a WAMP "PUBLISH" message with a list of eligible sessions')]
     public function testOnMessageForPublishMessageWithListOfEligibleSessions(): void
     {
         $uri = 'https://example.com/testing/'.random_int(1, 1000);
@@ -443,9 +424,7 @@ final class ParseWAMPMessageTest extends TestCase
         );
     }
 
-    /**
-     * @testdox Handles incoming data on the connection for an unsupported WAMP message type
-     */
+    #[TestDox('Handles incoming data on the connection for an unsupported WAMP message type')]
     public function testOnMessageForUnsupportedMessageType(): void
     {
         $this->expectException(UnsupportedMessageType::class);
@@ -469,9 +448,7 @@ final class ParseWAMPMessageTest extends TestCase
         $this->middleware->onMessage($connection, json_encode([MessageType::EVENT, $uri, $event], \JSON_THROW_ON_ERROR));
     }
 
-    /**
-     * @testdox Handles incoming data on the connection with a message body that does not decode into an array
-     */
+    #[TestDox('Handles incoming data on the connection with a message body that does not decode into an array')]
     public function testOnMessageWithNonArrayMessageType(): void
     {
         $this->expectException(InvalidMessage::class);
@@ -493,9 +470,7 @@ final class ParseWAMPMessageTest extends TestCase
         $this->middleware->onMessage($connection, json_encode($uri, \JSON_THROW_ON_ERROR));
     }
 
-    /**
-     * @testdox Handles incoming data on the connection with a message body that decodes into an associative array
-     */
+    #[TestDox('Handles incoming data on the connection with a message body that decodes into an associative array')]
     public function testOnMessageWithAssociativeArrayMessageType(): void
     {
         $this->expectException(InvalidMessage::class);
@@ -517,9 +492,7 @@ final class ParseWAMPMessageTest extends TestCase
         $this->middleware->onMessage($connection, json_encode(['uri' => $uri], \JSON_THROW_ON_ERROR));
     }
 
-    /**
-     * @testdox Handles incoming data on the connection with a message body that includes a topic URI that is not a string
-     */
+    #[TestDox('Handles incoming data on the connection with a message body that includes a topic URI that is not a string')]
     public function testOnMessageWithNonStringTopicUri(): void
     {
         $this->expectException(InvalidMessage::class);
@@ -541,9 +514,7 @@ final class ParseWAMPMessageTest extends TestCase
         $this->middleware->onMessage($connection, json_encode([MessageType::PUBLISH, [$uri], 'Testing'], \JSON_THROW_ON_ERROR));
     }
 
-    /**
-     * @testdox Handles incoming data on the connection with invalid JSON
-     */
+    #[TestDox('Handles incoming data on the connection with invalid JSON')]
     public function testOnMessageWithInvalidJson(): void
     {
         $this->expectException(InvalidMessage::class);
@@ -563,9 +534,7 @@ final class ParseWAMPMessageTest extends TestCase
         $this->middleware->onMessage($connection, '"[7,["https:\/\/example.com\/testing\/255"],"Testing]"');
     }
 
-    /**
-     * @testdox Closes the connection
-     */
+    #[TestDox('Closes the connection')]
     public function testOnClose(): void
     {
         $attributeStore = new ArrayAttributeStore();
@@ -587,9 +556,7 @@ final class ParseWAMPMessageTest extends TestCase
         $this->middleware->onClose($connection);
     }
 
-    /**
-     * @testdox Handles an error
-     */
+    #[TestDox('Handles an error')]
     public function testOnError(): void
     {
         $attributeStore = new ArrayAttributeStore();
@@ -613,9 +580,7 @@ final class ParseWAMPMessageTest extends TestCase
         $this->middleware->onError($connection, $error);
     }
 
-    /**
-     * @testdox The server identity can be managed
-     */
+    #[TestDox('The server identity can be managed')]
     public function testServerIdentity(): void
     {
         $newIdentity = 'Test-Identity/4.2';

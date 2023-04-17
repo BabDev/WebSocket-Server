@@ -9,6 +9,7 @@ use BabDev\WebSocket\Server\Http\Exception\MissingRequest;
 use BabDev\WebSocket\Server\ServerMiddleware;
 use BabDev\WebSocket\Server\WebSocket\Middleware\EstablishWebSocketConnection;
 use BabDev\WebSocket\Server\WebSocket\WebSocketConnection;
+use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
@@ -33,9 +34,7 @@ final class EstablishWebSocketConnectionTest extends TestCase
         $this->middleware = new EstablishWebSocketConnection($this->decoratedMiddleware, $this->negotiator);
     }
 
-    /**
-     * @testdox Handles activity during the lifecycle of a connection
-     */
+    #[TestDox('Handles activity during the lifecycle of a connection')]
     public function testConnectionLifecycle(): void
     {
         /** @var MockObject&RequestInterface $request */
@@ -105,9 +104,7 @@ final class EstablishWebSocketConnectionTest extends TestCase
         $this->middleware->onClose($connection);
     }
 
-    /**
-     * @testdox Handles a new connection being opened when required middleware have not run before this middleware
-     */
+    #[TestDox('Handles a new connection being opened when required middleware have not run before this middleware')]
     public function testOnOpenWithoutRequest(): void
     {
         $this->expectException(MissingRequest::class);
@@ -134,9 +131,7 @@ final class EstablishWebSocketConnectionTest extends TestCase
         $this->middleware->onOpen($connection);
     }
 
-    /**
-     * @testdox Handles a new connection being opened with an invalid request
-     */
+    #[TestDox('Handles a new connection being opened with an invalid request')]
     public function testOnOpenWithInvalidRequest(): void
     {
         /** @var MockObject&RequestInterface $request */

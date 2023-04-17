@@ -86,7 +86,7 @@ final class Application
 
         $middleware = new EstablishWebSocketConnection($middleware);
 
-        if (null !== $this->sessionFactory) {
+        if ($this->sessionFactory instanceof SessionFactoryInterface) {
             $middleware = new InitializeSession($middleware, $this->sessionFactory, $this->optionsHandler ?? new IniOptionsHandler());
         }
 

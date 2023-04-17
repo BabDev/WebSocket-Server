@@ -8,6 +8,7 @@ use BabDev\WebSocket\Server\Http\Exception\MissingRequest;
 use BabDev\WebSocket\Server\OptionsHandler;
 use BabDev\WebSocket\Server\ServerMiddleware;
 use BabDev\WebSocket\Server\Session\Middleware\InitializeSession;
+use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
@@ -33,9 +34,7 @@ final class InitializeSessionTest extends TestCase
         $this->middleware = new InitializeSession($this->decoratedMiddleware, $this->sessionFactory, $this->optionsHandler);
     }
 
-    /**
-     * @testdox Handles a new connection being opened without any cookies
-     */
+    #[TestDox('Handles a new connection being opened without any cookies')]
     public function testOnOpenWithoutRequestCookies(): void
     {
         /** @var MockObject&RequestInterface $request */
@@ -76,9 +75,7 @@ final class InitializeSessionTest extends TestCase
         $this->middleware->onOpen($connection);
     }
 
-    /**
-     * @testdox Handles a new connection being opened with a session cookie
-     */
+    #[TestDox('Handles a new connection being opened with a session cookie')]
     public function testOnOpenWithRequestCookies(): void
     {
         /** @var MockObject&RequestInterface $request */
@@ -136,9 +133,7 @@ final class InitializeSessionTest extends TestCase
         $this->middleware->onOpen($connection);
     }
 
-    /**
-     * @testdox Handles a new connection being opened with an invalid cookie header
-     */
+    #[TestDox('Handles a new connection being opened with an invalid cookie header')]
     public function testOnOpenWithInvalidCookieHeader(): void
     {
         $this->expectException(\RuntimeException::class);
@@ -190,9 +185,7 @@ final class InitializeSessionTest extends TestCase
         $this->middleware->onOpen($connection);
     }
 
-    /**
-     * @testdox Handles a new connection being opened when required middleware have not run before this middleware
-     */
+    #[TestDox('Handles a new connection being opened when required middleware have not run before this middleware')]
     public function testOnOpenWithoutRequest(): void
     {
         $this->expectException(MissingRequest::class);
@@ -219,9 +212,7 @@ final class InitializeSessionTest extends TestCase
         $this->middleware->onOpen($connection);
     }
 
-    /**
-     * @testdox Handles incoming data on the connection
-     */
+    #[TestDox('Handles incoming data on the connection')]
     public function testOnMessage(): void
     {
         $data = 'Testing';
@@ -236,9 +227,7 @@ final class InitializeSessionTest extends TestCase
         $this->middleware->onMessage($connection, $data);
     }
 
-    /**
-     * @testdox Closes the connection
-     */
+    #[TestDox('Closes the connection')]
     public function testOnClose(): void
     {
         /** @var MockObject&Connection $connection */
@@ -251,9 +240,7 @@ final class InitializeSessionTest extends TestCase
         $this->middleware->onClose($connection);
     }
 
-    /**
-     * @testdox Handles an error
-     */
+    #[TestDox('Handles an error')]
     public function testOnError(): void
     {
         /** @var MockObject&Connection $connection */

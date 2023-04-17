@@ -9,6 +9,7 @@ use BabDev\WebSocket\Server\WAMP\Middleware\UpdateTopicSubscriptions;
 use BabDev\WebSocket\Server\WAMP\Topic;
 use BabDev\WebSocket\Server\WAMP\WAMPConnection;
 use BabDev\WebSocket\Server\WAMPServerMiddleware;
+use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
@@ -40,9 +41,7 @@ final class UpdateTopicSubscriptionsTest extends TestCase
         );
     }
 
-    /**
-     * @testdox Handles a new connection being opened
-     */
+    #[TestDox('Handles a new connection being opened')]
     public function testOnOpen(): void
     {
         $attributeStore = new ArrayAttributeStore();
@@ -62,9 +61,7 @@ final class UpdateTopicSubscriptionsTest extends TestCase
         $this->assertInstanceOf(\SplObjectStorage::class, $attributeStore->get('wamp.subscriptions'));
     }
 
-    /**
-     * @testdox Handles incoming data on the connection
-     */
+    #[TestDox('Handles incoming data on the connection')]
     public function testOnMessage(): void
     {
         $data = 'Testing';
@@ -79,9 +76,7 @@ final class UpdateTopicSubscriptionsTest extends TestCase
         $this->middleware->onMessage($connection, $data);
     }
 
-    /**
-     * @testdox Closes the connection
-     */
+    #[TestDox('Closes the connection')]
     public function testOnClose(): void
     {
         $topic1 = new Topic('testing/1');
@@ -129,9 +124,7 @@ final class UpdateTopicSubscriptionsTest extends TestCase
         $this->assertTrue($this->topicRegistry->has($topic3->id));
     }
 
-    /**
-     * @testdox Handles an error
-     */
+    #[TestDox('Handles an error')]
     public function testOnError(): void
     {
         /** @var MockObject&Connection $connection */
@@ -146,9 +139,7 @@ final class UpdateTopicSubscriptionsTest extends TestCase
         $this->middleware->onError($connection, $error);
     }
 
-    /**
-     * @testdox Handles an RPC "CALL" WAMP message
-     */
+    #[TestDox('Handles an RPC "CALL" WAMP message')]
     public function testOnCall(): void
     {
         $id = uniqid();
@@ -165,9 +156,7 @@ final class UpdateTopicSubscriptionsTest extends TestCase
         $this->middleware->onCall($connection, $id, $resolvedUri, $params);
     }
 
-    /**
-     * @testdox Handles a "SUBSCRIBE" WAMP message
-     */
+    #[TestDox('Handles a "SUBSCRIBE" WAMP message')]
     public function testOnSubscribe(): void
     {
         $topic = new Topic('testing');
@@ -197,9 +186,7 @@ final class UpdateTopicSubscriptionsTest extends TestCase
         $this->assertTrue($topic->has($connection));
     }
 
-    /**
-     * @testdox Handles an "UNSUBSCRIBE" WAMP message
-     */
+    #[TestDox('Handles an "UNSUBSCRIBE" WAMP message')]
     public function testOnUnsubscribe(): void
     {
         $topic = new Topic('testing');
@@ -232,9 +219,7 @@ final class UpdateTopicSubscriptionsTest extends TestCase
         $this->assertFalse($this->topicRegistry->has($topic->id));
     }
 
-    /**
-     * @testdox Handles a "PUBLISH" WAMP message
-     */
+    #[TestDox('Handles a "PUBLISH" WAMP message')]
     public function testOnPublish(): void
     {
         $topic = new Topic('testing');

@@ -15,6 +15,7 @@ use BabDev\WebSocket\Server\WAMP\Middleware\DispatchMessageToHandler;
 use BabDev\WebSocket\Server\WAMP\Topic;
 use BabDev\WebSocket\Server\WAMP\WAMPConnection;
 use BabDev\WebSocket\Server\WAMP\WAMPMessageRequest;
+use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\EventDispatcher\EventDispatcherInterface;
@@ -48,9 +49,7 @@ final class DispatchMessageToHandlerTest extends TestCase
         );
     }
 
-    /**
-     * @testdox Handles a new connection being opened
-     */
+    #[TestDox('Handles a new connection being opened')]
     public function testOnOpen(): void
     {
         $this->dispatcher->expects($this->once())
@@ -63,9 +62,7 @@ final class DispatchMessageToHandlerTest extends TestCase
         $this->middleware->onOpen($connection);
     }
 
-    /**
-     * @testdox Closes the connection
-     */
+    #[TestDox('Closes the connection')]
     public function testOnClose(): void
     {
         $this->dispatcher->expects($this->once())
@@ -78,9 +75,7 @@ final class DispatchMessageToHandlerTest extends TestCase
         $this->middleware->onClose($connection);
     }
 
-    /**
-     * @testdox Handles an error
-     */
+    #[TestDox('Handles an error')]
     public function testOnError(): void
     {
         $exception = new \RuntimeException('Testing');
@@ -95,9 +90,7 @@ final class DispatchMessageToHandlerTest extends TestCase
         $this->middleware->onError($connection, $exception);
     }
 
-    /**
-     * @testdox Handles an RPC "CALL" WAMP message
-     */
+    #[TestDox('Handles an RPC "CALL" WAMP message')]
     public function testOnCall(): void
     {
         $id = uniqid();
@@ -126,9 +119,7 @@ final class DispatchMessageToHandlerTest extends TestCase
         $this->middleware->onCall($connection, $id, $resolvedUri, $params);
     }
 
-    /**
-     * @testdox Handles an RPC "CALL" WAMP message when there is no handler for a URI
-     */
+    #[TestDox('Handles an RPC "CALL" WAMP message when there is no handler for a URI')]
     public function testOnCallWithUndefinedHandler(): void
     {
         $this->expectException(RouteNotFound::class);
@@ -153,9 +144,7 @@ final class DispatchMessageToHandlerTest extends TestCase
         $this->middleware->onCall($connection, $id, $resolvedUri, $params);
     }
 
-    /**
-     * @testdox Handles an RPC "CALL" WAMP message when the handler is invalid
-     */
+    #[TestDox('Handles an RPC "CALL" WAMP message when the handler is invalid')]
     public function testOnCallWithInvalidHandler(): void
     {
         $this->expectException(UnknownMessageHandler::class);
@@ -182,9 +171,7 @@ final class DispatchMessageToHandlerTest extends TestCase
         $this->middleware->onCall($connection, $id, $resolvedUri, $params);
     }
 
-    /**
-     * @testdox Handles a "SUBSCRIBE" WAMP message
-     */
+    #[TestDox('Handles a "SUBSCRIBE" WAMP message')]
     public function testOnSubscribe(): void
     {
         $topic = new Topic('testing');
@@ -211,9 +198,7 @@ final class DispatchMessageToHandlerTest extends TestCase
         $this->middleware->onSubscribe($connection, $topic);
     }
 
-    /**
-     * @testdox Handles a "SUBSCRIBE" WAMP message when there is no handler for a URI
-     */
+    #[TestDox('Handles a "SUBSCRIBE" WAMP message when there is no handler for a URI')]
     public function testOnSubscribeWithUndefinedHandler(): void
     {
         $this->expectException(RouteNotFound::class);
@@ -236,9 +221,7 @@ final class DispatchMessageToHandlerTest extends TestCase
         $this->middleware->onSubscribe($connection, $topic);
     }
 
-    /**
-     * @testdox Handles a "SUBSCRIBE" WAMP message when the handler is invalid
-     */
+    #[TestDox('Handles a "SUBSCRIBE" WAMP message when the handler is invalid')]
     public function testOnSubscribeWithInvalidHandler(): void
     {
         $this->expectException(UnknownMessageHandler::class);
@@ -263,9 +246,7 @@ final class DispatchMessageToHandlerTest extends TestCase
         $this->middleware->onSubscribe($connection, $topic);
     }
 
-    /**
-     * @testdox Handles an "UNSUBSCRIBE" WAMP message
-     */
+    #[TestDox('Handles an "UNSUBSCRIBE" WAMP message')]
     public function testOnUnsubscribe(): void
     {
         $topic = new Topic('testing');
@@ -292,9 +273,7 @@ final class DispatchMessageToHandlerTest extends TestCase
         $this->middleware->onUnsubscribe($connection, $topic);
     }
 
-    /**
-     * @testdox Handles an "UNSUBSCRIBE" WAMP message when there is no handler for a URI
-     */
+    #[TestDox('Handles an "UNSUBSCRIBE" WAMP message when there is no handler for a URI')]
     public function testOnUnsubscribeWithUndefinedHandler(): void
     {
         $this->expectException(RouteNotFound::class);
@@ -317,9 +296,7 @@ final class DispatchMessageToHandlerTest extends TestCase
         $this->middleware->onUnsubscribe($connection, $topic);
     }
 
-    /**
-     * @testdox Handles an "UNSUBSCRIBE" WAMP message when the handler is invalid
-     */
+    #[TestDox('Handles an "UNSUBSCRIBE" WAMP message when the handler is invalid')]
     public function testOnUnSubscribeWithInvalidHandler(): void
     {
         $this->expectException(UnknownMessageHandler::class);
@@ -344,9 +321,7 @@ final class DispatchMessageToHandlerTest extends TestCase
         $this->middleware->onUnsubscribe($connection, $topic);
     }
 
-    /**
-     * @testdox Handles a "PUBLISH" WAMP message
-     */
+    #[TestDox('Handles a "PUBLISH" WAMP message')]
     public function testOnPublish(): void
     {
         $topic = new Topic('testing');
@@ -376,9 +351,7 @@ final class DispatchMessageToHandlerTest extends TestCase
         $this->middleware->onPublish($connection, $topic, $event, $exclude, $eligible);
     }
 
-    /**
-     * @testdox Handles a "PUBLISH" WAMP message when there is no handler for a URI
-     */
+    #[TestDox('Handles a "PUBLISH" WAMP message when there is no handler for a URI')]
     public function testOnPublishWithUndefinedHandler(): void
     {
         $this->expectException(RouteNotFound::class);
@@ -404,9 +377,7 @@ final class DispatchMessageToHandlerTest extends TestCase
         $this->middleware->onPublish($connection, $topic, $event, $exclude, $eligible);
     }
 
-    /**
-     * @testdox Handles a "PUBLISH" WAMP message when the handler is invalid
-     */
+    #[TestDox('Handles a "PUBLISH" WAMP message when the handler is invalid')]
     public function testOnPublishWithInvalidHandler(): void
     {
         $this->expectException(UnknownMessageHandler::class);

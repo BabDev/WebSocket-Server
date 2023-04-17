@@ -8,6 +8,7 @@ use BabDev\WebSocket\Server\Http\Exception\MalformedRequest;
 use BabDev\WebSocket\Server\Http\Exception\MissingRequest;
 use BabDev\WebSocket\Server\Http\Middleware\RestrictToAllowedOrigins;
 use BabDev\WebSocket\Server\ServerMiddleware;
+use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
@@ -24,9 +25,7 @@ final class RestrictToAllowedOriginsTest extends TestCase
         $this->middleware = new RestrictToAllowedOrigins($this->decoratedMiddleware);
     }
 
-    /**
-     * @testdox Handles a new connection being opened with no origin restrictions
-     */
+    #[TestDox('Handles a new connection being opened with no origin restrictions')]
     public function testOnOpenWithNoOriginRestrictions(): void
     {
         /** @var MockObject&RequestInterface $request */
@@ -52,9 +51,7 @@ final class RestrictToAllowedOriginsTest extends TestCase
         $this->middleware->onOpen($connection);
     }
 
-    /**
-     * @testdox Handles a new connection being opened with restricted origins and no Origin header
-     */
+    #[TestDox('Handles a new connection being opened with restricted origins and no Origin header')]
     public function testOnOpenWithRestrictedOriginsAndNoOriginHeader(): void
     {
         /** @var MockObject&RequestInterface $request */
@@ -91,9 +88,7 @@ final class RestrictToAllowedOriginsTest extends TestCase
         $this->middleware->onOpen($connection);
     }
 
-    /**
-     * @testdox Handles a new connection being opened with restricted origins and a Origin header with an allowed origin
-     */
+    #[TestDox('Handles a new connection being opened with restricted origins and a Origin header with an allowed origin')]
     public function testOnOpenWithRestrictedOriginsAndOriginHeaderWithAllowedOrigin(): void
     {
         /** @var MockObject&RequestInterface $request */
@@ -130,9 +125,7 @@ final class RestrictToAllowedOriginsTest extends TestCase
         $this->middleware->onOpen($connection);
     }
 
-    /**
-     * @testdox Handles a new connection being opened with restricted origins and a Origin header with a disallowed origin
-     */
+    #[TestDox('Handles a new connection being opened with restricted origins and a Origin header with a disallowed origin')]
     public function testOnOpenWithRestrictedOriginsAndOriginHeaderWithDisallowedOrigin(): void
     {
         /** @var MockObject&RequestInterface $request */
@@ -174,9 +167,7 @@ final class RestrictToAllowedOriginsTest extends TestCase
         $this->middleware->onOpen($connection);
     }
 
-    /**
-     * @testdox Handles a new connection being opened with restricted origins and a malformed Origin header
-     */
+    #[TestDox('Handles a new connection being opened with restricted origins and a malformed Origin header')]
     public function testOnOpenWithRestrictedOriginsAndMalformedOriginHeader(): void
     {
         $this->expectException(MalformedRequest::class);
@@ -214,9 +205,7 @@ final class RestrictToAllowedOriginsTest extends TestCase
         $this->middleware->onOpen($connection);
     }
 
-    /**
-     * @testdox Handles a new connection being opened when required middleware have not run before this middleware
-     */
+    #[TestDox('Handles a new connection being opened when required middleware have not run before this middleware')]
     public function testOnOpenWithoutRequest(): void
     {
         $this->expectException(MissingRequest::class);
@@ -240,9 +229,7 @@ final class RestrictToAllowedOriginsTest extends TestCase
         $this->middleware->onOpen($connection);
     }
 
-    /**
-     * @testdox Handles incoming data on the connection
-     */
+    #[TestDox('Handles incoming data on the connection')]
     public function testOnMessage(): void
     {
         $message = 'Testing';
@@ -257,9 +244,7 @@ final class RestrictToAllowedOriginsTest extends TestCase
         $this->middleware->onMessage($connection, $message);
     }
 
-    /**
-     * @testdox Closes the connection
-     */
+    #[TestDox('Closes the connection')]
     public function testOnClose(): void
     {
         /** @var MockObject&Connection $connection */
@@ -272,9 +257,7 @@ final class RestrictToAllowedOriginsTest extends TestCase
         $this->middleware->onClose($connection);
     }
 
-    /**
-     * @testdox Handles an error
-     */
+    #[TestDox('Handles an error')]
     public function testOnError(): void
     {
         $exception = new \RuntimeException('Testing');

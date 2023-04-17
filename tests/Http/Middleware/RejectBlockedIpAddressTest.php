@@ -6,6 +6,7 @@ use BabDev\WebSocket\Server\Connection;
 use BabDev\WebSocket\Server\Connection\AttributeStore;
 use BabDev\WebSocket\Server\Http\Middleware\RejectBlockedIpAddress;
 use BabDev\WebSocket\Server\ServerMiddleware;
+use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
@@ -21,9 +22,7 @@ final class RejectBlockedIpAddressTest extends TestCase
         $this->middleware = new RejectBlockedIpAddress($this->decoratedMiddleware);
     }
 
-    /**
-     * @testdox Handles a new connection being opened with no remote address
-     */
+    #[TestDox('Handles a new connection being opened with no remote address')]
     public function testOnOpenWithNoRemoteAddress(): void
     {
         /** @var MockObject&AttributeStore $attributeStore */
@@ -46,9 +45,7 @@ final class RejectBlockedIpAddressTest extends TestCase
         $this->middleware->onOpen($connection);
     }
 
-    /**
-     * @testdox Handles a new connection being opened with no blocked addresses
-     */
+    #[TestDox('Handles a new connection being opened with no blocked addresses')]
     public function testOnOpenWithNoBlockedAddresses(): void
     {
         /** @var MockObject&AttributeStore $attributeStore */
@@ -71,9 +68,7 @@ final class RejectBlockedIpAddressTest extends TestCase
         $this->middleware->onOpen($connection);
     }
 
-    /**
-     * @testdox Handles a new connection being opened with blocked addresses
-     */
+    #[TestDox('Handles a new connection being opened with blocked addresses')]
     public function testOnOpenWithBlockedAddresses(): void
     {
         /** @var MockObject&AttributeStore $attributeStore */
@@ -98,9 +93,7 @@ final class RejectBlockedIpAddressTest extends TestCase
         $this->middleware->onOpen($connection);
     }
 
-    /**
-     * @testdox Handles a new connection being opened when the remote address is blocked
-     */
+    #[TestDox('Handles a new connection being opened when the remote address is blocked')]
     public function testOnOpenWithBlockedRemoteAddress(): void
     {
         /** @var MockObject&AttributeStore $attributeStore */
@@ -130,9 +123,7 @@ final class RejectBlockedIpAddressTest extends TestCase
         $this->middleware->onOpen($connection);
     }
 
-    /**
-     * @testdox Handles incoming data on the connection
-     */
+    #[TestDox('Handles incoming data on the connection')]
     public function testOnMessage(): void
     {
         $message = 'Testing';
@@ -157,9 +148,7 @@ final class RejectBlockedIpAddressTest extends TestCase
         $this->middleware->onMessage($connection, $message);
     }
 
-    /**
-     * @testdox Closes the connection
-     */
+    #[TestDox('Closes the connection')]
     public function testOnClose(): void
     {
         /** @var MockObject&AttributeStore $attributeStore */
@@ -182,9 +171,7 @@ final class RejectBlockedIpAddressTest extends TestCase
         $this->middleware->onClose($connection);
     }
 
-    /**
-     * @testdox Handles an error
-     */
+    #[TestDox('Handles an error')]
     public function testOnError(): void
     {
         $exception = new \RuntimeException('Testing');
