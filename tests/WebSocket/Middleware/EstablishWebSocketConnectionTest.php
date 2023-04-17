@@ -14,6 +14,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\StreamInterface;
 use Ratchet\RFC6455\Handshake\NegotiatorInterface;
 use React\EventLoop\LoopInterface;
 use React\EventLoop\TimerInterface;
@@ -43,6 +44,12 @@ final class EstablishWebSocketConnectionTest extends TestCase
         $attributeStore = new ArrayAttributeStore();
         $attributeStore->set('http.request', $request);
 
+        /** @var MockObject&StreamInterface $stream */
+        $stream = $this->createMock(StreamInterface::class);
+        $stream->expects($this->once())
+            ->method('__toString')
+            ->willReturn('');
+
         /** @var MockObject&ResponseInterface $response */
         $response = $this->createMock(ResponseInterface::class);
         $response->expects($this->once())
@@ -68,7 +75,7 @@ final class EstablishWebSocketConnectionTest extends TestCase
 
         $response->expects($this->once())
             ->method('getBody')
-            ->willReturn('');
+            ->willReturn($stream);
 
         $this->negotiator->expects($this->once())
             ->method('handshake')
@@ -148,6 +155,12 @@ final class EstablishWebSocketConnectionTest extends TestCase
             ->method('set')
             ->with('websocket.closing', false);
 
+        /** @var MockObject&StreamInterface $stream */
+        $stream = $this->createMock(StreamInterface::class);
+        $stream->expects($this->once())
+            ->method('__toString')
+            ->willReturn('');
+
         /** @var MockObject&ResponseInterface $response */
         $response = $this->createMock(ResponseInterface::class);
         $response->expects($this->once())
@@ -173,7 +186,7 @@ final class EstablishWebSocketConnectionTest extends TestCase
 
         $response->expects($this->once())
             ->method('getBody')
-            ->willReturn('');
+            ->willReturn($stream);
 
         $this->negotiator->expects($this->once())
             ->method('handshake')
