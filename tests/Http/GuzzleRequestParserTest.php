@@ -4,6 +4,8 @@ namespace BabDev\WebSocket\Server\Tests\Http;
 
 use BabDev\WebSocket\Server\Connection;
 use BabDev\WebSocket\Server\Connection\AttributeStore;
+use BabDev\WebSocket\Server\Http\Exception\MalformedRequest;
+use BabDev\WebSocket\Server\Http\Exception\MessageTooLarge;
 use BabDev\WebSocket\Server\Http\GuzzleRequestParser;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -60,7 +62,7 @@ final class GuzzleRequestParserTest extends TestCase
 
     public function testRejectsARequestWhichIsTooBig(): void
     {
-        $this->expectException(\OverflowException::class);
+        $this->expectException(MessageTooLarge::class);
 
         $message = 'Header-Is: Too Big';
 
@@ -75,6 +77,10 @@ final class GuzzleRequestParserTest extends TestCase
             ->method('set')
             ->with('http.buffer', $message);
 
+        $attributeStore->expects($this->once())
+            ->method('remove')
+            ->with('http.buffer');
+
         /** @var MockObject&Connection $connection */
         $connection = $this->createMock(Connection::class);
         $connection->expects($this->atLeastOnce())
@@ -85,5 +91,35 @@ final class GuzzleRequestParserTest extends TestCase
         $parser->maxRequestSize = 10;
 
         $parser->parse($connection, $message);
+    }
+
+    public function testRejectsARequestWhichCannotBeParsed(): void
+    {
+        $this->expectException(MalformedRequest::class);
+
+        $message = "\r\nHost: example.com\r\n\r\nHixie✖";
+
+        /** @var MockObject&AttributeStore $attributeStore */
+        $attributeStore = $this->createMock(AttributeStore::class);
+        $attributeStore->expects($this->once())
+            ->method('get')
+            ->with('http.buffer', '')
+            ->willReturn('');
+
+        $attributeStore->expects($this->once())
+            ->method('set')
+            ->with('http.buffer', $message);
+
+        $attributeStore->expects($this->once())
+            ->method('remove')
+            ->with('http.buffer');
+
+        /** @var MockObject&Connection $connection */
+        $connection = $this->createMock(Connection::class);
+        $connection->expects($this->atLeastOnce())
+            ->method('getAttributeStore')
+            ->willReturn($attributeStore);
+
+        (new GuzzleRequestParser())->parse($connection, $message);
     }
 }

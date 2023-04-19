@@ -4,6 +4,7 @@ namespace BabDev\WebSocket\Server\Tests\Http\Middleware;
 
 use BabDev\WebSocket\Server\Connection;
 use BabDev\WebSocket\Server\Connection\ArrayAttributeStore;
+use BabDev\WebSocket\Server\Http\Exception\MalformedRequest;
 use BabDev\WebSocket\Server\Http\Exception\MessageTooLarge;
 use BabDev\WebSocket\Server\Http\Middleware\ParseHttpRequest;
 use BabDev\WebSocket\Server\Http\RequestParser;
@@ -95,6 +96,37 @@ final class ParseHttpRequestTest extends TestCase
         $this->decoratedMiddleware->expects($this->once())
             ->method('onMessage')
             ->with($connection, $message);
+
+        $this->middleware->onMessage($connection, $message);
+    }
+
+    #[TestDox('Closes the connection when a malformed request body is received')]
+    public function testOnMessageWhenHttpMessageIsInvalid(): void
+    {
+        $message = 'Testing';
+
+        $attributeStore = new ArrayAttributeStore();
+        $attributeStore->set('http.headers_received', false);
+
+        /** @var MockObject&Connection $connection */
+        $connection = $this->createMock(Connection::class);
+        $connection->expects($this->once())
+            ->method('getAttributeStore')
+            ->willReturn($attributeStore);
+
+        $connection->expects($this->once())
+            ->method('send');
+
+        $connection->expects($this->once())
+            ->method('close');
+
+        $this->requestParser->expects($this->once())
+            ->method('parse')
+            ->with($connection, $message)
+            ->willThrowException(new MalformedRequest('Testing'));
+
+        $this->decoratedMiddleware->expects($this->never())
+            ->method('onOpen');
 
         $this->middleware->onMessage($connection, $message);
     }

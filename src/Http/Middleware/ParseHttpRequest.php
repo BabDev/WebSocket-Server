@@ -4,6 +4,8 @@ namespace BabDev\WebSocket\Server\Http\Middleware;
 
 use BabDev\WebSocket\Server\Connection;
 use BabDev\WebSocket\Server\Connection\ClosesConnectionWithResponse;
+use BabDev\WebSocket\Server\Http\Exception\MalformedRequest;
+use BabDev\WebSocket\Server\Http\Exception\MessageTooLarge;
 use BabDev\WebSocket\Server\Http\GuzzleRequestParser;
 use BabDev\WebSocket\Server\Http\RequestParser;
 use BabDev\WebSocket\Server\ServerMiddleware;
@@ -45,7 +47,11 @@ final class ParseHttpRequest implements ServerMiddleware
             if (null === ($request = $this->requestParser->parse($connection, $data))) {
                 return;
             }
-        } catch (\OverflowException) {
+        } catch (MalformedRequest) {
+            $this->close($connection, 400);
+
+            return;
+        } catch (MessageTooLarge) {
             $this->close($connection, 413);
 
             return;
