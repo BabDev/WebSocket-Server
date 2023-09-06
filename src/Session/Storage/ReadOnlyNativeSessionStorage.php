@@ -120,7 +120,7 @@ final class ReadOnlyNativeSessionStorage implements SessionStorageInterface
     /**
      * @throws ReadOnlySession
      */
-    public function regenerate(bool $destroy = false, int $lifetime = null): never
+    public function regenerate(bool $destroy = false, ?int $lifetime = null): never
     {
         throw new ReadOnlySession(sprintf('The session cannot be regenerated in "%s".', self::class));
     }

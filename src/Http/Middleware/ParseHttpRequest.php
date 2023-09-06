@@ -44,7 +44,7 @@ final class ParseHttpRequest implements ServerMiddleware
         }
 
         try {
-            if (null === ($request = $this->requestParser->parse($connection, $data))) {
+            if (!($request = $this->requestParser->parse($connection, $data)) instanceof RequestInterface) {
                 return;
             }
         } catch (MalformedRequest) {
