@@ -47,13 +47,14 @@ final class ReactPhpServer implements Server
 
         $decoratedConnection = new ReactSocketConnection($connection, new ArrayAttributeStore());
         $decoratedConnection->getAttributeStore()->set('resource_id', (int) $connection->stream);
-        $decoratedConnection->getAttributeStore()->set(
-            'remote_address',
-            trim(
-                parse_url((str_contains($uri, '://') ? '' : 'tcp://').$uri, \PHP_URL_HOST),
-                '[]'
-            )
-        );
+
+        if (null !== $uri) {
+            $parsedHost = parse_url((str_contains($uri, '://') ? '' : 'tcp://').$uri, \PHP_URL_HOST);
+
+            if ($parsedHost) {
+                $decoratedConnection->getAttributeStore()->set('remote_address', $parsedHost);
+            }
+        }
 
         $this->middleware->onOpen($decoratedConnection);
 

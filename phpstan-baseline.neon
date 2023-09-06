@@ -16,16 +16,6 @@ parameters:
 			path: src/ReactPhpServer.php
 
 		-
-			message: "#^Parameter \\#1 \\$haystack of function str_contains expects string, string\\|null given\\.$#"
-			count: 1
-			path: src/ReactPhpServer.php
-
-		-
-			message: "#^Parameter \\#1 \\$string of function trim expects string, string\\|false\\|null given\\.$#"
-			count: 1
-			path: src/ReactPhpServer.php
-
-		-
 			message: "#^Property BabDev\\\\WebSocket\\\\Server\\\\ReactPhpServer\\:\\:\\$socket is never read, only written\\.$#"
 			count: 1
 			path: src/ReactPhpServer.php
