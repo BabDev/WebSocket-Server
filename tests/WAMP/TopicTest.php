@@ -87,18 +87,10 @@ final class TopicTest extends TestCase
     {
         $data = ['hello' => 'world'];
 
-        /** @var MockObject&AttributeStore $attributeStore */
-        $attributeStore = $this->createMock(AttributeStore::class);
-        $attributeStore->expects($this->exactly(3))
-            ->method('get')
-            ->with('wamp.session_id')
-            ->willReturnOnConsecutiveCalls(bin2hex(random_bytes(32)), bin2hex(random_bytes(32)), bin2hex(random_bytes(32)));
-
         /** @var MockObject&WAMPConnection $connection1 */
         $connection1 = $this->createMock(WAMPConnection::class);
-        $connection1->expects($this->atLeastOnce())
-            ->method('getAttributeStore')
-            ->willReturn($attributeStore);
+        $connection1->expects($this->never())
+            ->method('getAttributeStore');
 
         $connection1->expects($this->once())
             ->method('event')
@@ -106,9 +98,8 @@ final class TopicTest extends TestCase
 
         /** @var MockObject&WAMPConnection $connection2 */
         $connection2 = $this->createMock(WAMPConnection::class);
-        $connection2->expects($this->atLeastOnce())
-            ->method('getAttributeStore')
-            ->willReturn($attributeStore);
+        $connection2->expects($this->never())
+            ->method('getAttributeStore');
 
         $connection2->expects($this->once())
             ->method('event')
@@ -116,9 +107,8 @@ final class TopicTest extends TestCase
 
         /** @var MockObject&WAMPConnection $connection3 */
         $connection3 = $this->createMock(WAMPConnection::class);
-        $connection3->expects($this->atLeastOnce())
-            ->method('getAttributeStore')
-            ->willReturn($attributeStore);
+        $connection3->expects($this->never())
+            ->method('getAttributeStore');
 
         $connection3->expects($this->once())
             ->method('event')

@@ -68,6 +68,16 @@ final class Topic implements \IteratorAggregate, \Countable, \Stringable
      */
     public function broadcast(mixed $msg, array $exclude = [], array $eligible = []): void
     {
+        // If we have no session IDs to filter, let's skip a few unnecessary calls
+        if ([] === $exclude && [] === $eligible) {
+            /** @var WAMPConnection $subscriber */
+            foreach ($this->subscribers as $subscriber) {
+                $subscriber->event($this->id, $msg);
+            }
+
+            return;
+        }
+
         $useEligible = [] !== $eligible;
 
         /** @var WAMPConnection $subscriber */
