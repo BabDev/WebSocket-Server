@@ -4,6 +4,4 @@ namespace BabDev\WebSocket\Server\Http\Exception;
 
 use BabDev\WebSocket\Server\WebSocketException;
 
-class MalformedRequest extends \UnexpectedValueException implements WebSocketException
-{
-}
+class MalformedRequest extends \UnexpectedValueException implements WebSocketException {}

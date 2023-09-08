@@ -18,8 +18,7 @@ final class UpdateTopicSubscriptions implements WAMPServerMiddleware
     public function __construct(
         private readonly WAMPServerMiddleware $middleware,
         private readonly TopicRegistry $topicRegistry,
-    ) {
-    }
+    ) {}
 
     /**
      * @return list<string>

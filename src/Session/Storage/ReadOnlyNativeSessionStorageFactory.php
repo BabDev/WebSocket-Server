@@ -19,8 +19,7 @@ final class ReadOnlyNativeSessionStorageFactory implements SessionStorageFactory
         private readonly array $options = [],
         private readonly AbstractProxy|\SessionHandlerInterface|null $handler = null,
         private readonly ?MetadataBag $metaBag = null
-    ) {
-    }
+    ) {}
 
     public function createStorage(?Request $request): SessionStorageInterface
     {

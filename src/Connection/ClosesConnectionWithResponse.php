@@ -13,7 +13,8 @@ use GuzzleHttp\Psr7\Response;
 trait ClosesConnectionWithResponse
 {
     /**
-     * @param int $code HTTP status code
+     * @param int $code Status code
+     * @param array<string, string|string[]> $headers Response headers
      */
     private function close(Connection $connection, int $code = 400, array $headers = []): void
     {

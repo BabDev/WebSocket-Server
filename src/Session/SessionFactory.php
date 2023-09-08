@@ -9,10 +9,7 @@ use Symfony\Component\HttpFoundation\Session\Storage\SessionStorageFactoryInterf
 
 final class SessionFactory implements SessionFactoryInterface
 {
-    public function __construct(
-        private readonly SessionStorageFactoryInterface $storageFactory,
-    ) {
-    }
+    public function __construct(private readonly SessionStorageFactoryInterface $storageFactory) {}
 
     public function createSession(): SessionInterface
     {

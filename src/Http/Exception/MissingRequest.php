@@ -4,6 +4,4 @@ namespace BabDev\WebSocket\Server\Http\Exception;
 
 use BabDev\WebSocket\Server\WebSocketException;
 
-class MissingRequest extends \UnexpectedValueException implements WebSocketException
-{
-}
+class MissingRequest extends \UnexpectedValueException implements WebSocketException {}

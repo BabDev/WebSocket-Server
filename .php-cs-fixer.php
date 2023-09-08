@@ -14,6 +14,7 @@ return (new PhpCsFixer\Config())
         'linebreak_after_opening_tag' => false,
         'no_superfluous_phpdoc_tags' => ['remove_inheritdoc' => true],
         'nullable_type_declaration_for_default_null_value' => ['use_nullable_type_declaration' => true],
+        'single_line_empty_body' => true,
     ])
     ->setRiskyAllowed(true)
     ->setFinder(

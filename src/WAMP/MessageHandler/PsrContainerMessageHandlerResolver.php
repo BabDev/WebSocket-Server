@@ -16,10 +16,7 @@ use Psr\Container\ContainerInterface;
  */
 final class PsrContainerMessageHandlerResolver implements MessageHandlerResolver
 {
-    public function __construct(
-        private readonly ContainerInterface $container,
-    ) {
-    }
+    public function __construct(private readonly ContainerInterface $container) {}
 
     /**
      * @throws InvalidMessageHandler if the resolved object is not a valid message handler

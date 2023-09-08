@@ -4,6 +4,4 @@ namespace BabDev\WebSocket\Server\WAMP\Exception;
 
 use BabDev\WebSocket\Server\WebSocketException;
 
-class UnknownMessageHandler extends \InvalidArgumentException implements WebSocketException
-{
-}
+class UnknownMessageHandler extends \InvalidArgumentException implements WebSocketException {}

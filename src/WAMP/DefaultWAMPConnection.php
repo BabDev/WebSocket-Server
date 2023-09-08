@@ -17,8 +17,7 @@ final class DefaultWAMPConnection implements WAMPConnection
 {
     public function __construct(
         private readonly Connection $connection,
-    ) {
-    }
+    ) {}
 
     public function getAttributeStore(): AttributeStore
     {

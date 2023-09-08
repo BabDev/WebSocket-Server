@@ -25,8 +25,7 @@ final class InitializeSession implements ServerMiddleware
         private readonly ServerMiddleware $middleware,
         private readonly SessionFactoryInterface $sessionFactory,
         private readonly OptionsHandler $optionsHandler = new IniOptionsHandler(),
-    ) {
-    }
+    ) {}
 
     /**
      * Handles a new connection to the server.

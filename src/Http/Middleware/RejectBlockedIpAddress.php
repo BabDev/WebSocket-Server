@@ -18,14 +18,11 @@ final class RejectBlockedIpAddress implements ServerMiddleware
     use ClosesConnectionWithResponse;
 
     /**
-     * @var string[]
+     * @var list<non-empty-string>
      */
     private array $blockedAddresses = [];
 
-    public function __construct(
-        private readonly ServerMiddleware $middleware,
-    ) {
-    }
+    public function __construct(private readonly ServerMiddleware $middleware) {}
 
     /**
      * Handles a new connection to the server.
@@ -71,11 +68,17 @@ final class RejectBlockedIpAddress implements ServerMiddleware
         }
     }
 
+    /**
+     * @param non-empty-string $address
+     */
     public function allowAddress(string $address): void
     {
         $this->blockedAddresses = array_filter($this->blockedAddresses, static fn (string $blockedAddress): bool => $blockedAddress !== $address);
     }
 
+    /**
+     * @param non-empty-string $address
+     */
     public function blockAddress(string $address): void
     {
         $this->blockedAddresses[] = $address;
@@ -83,6 +86,7 @@ final class RejectBlockedIpAddress implements ServerMiddleware
 
     private function isConnectionRemoteAddressBlocked(Connection $connection): bool
     {
+        /** @var non-empty-string|null $address */
         $address = $connection->getAttributeStore()->get('remote_address');
 
         if (null === $address || [] === $this->blockedAddresses) {

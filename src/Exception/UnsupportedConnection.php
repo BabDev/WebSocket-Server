@@ -4,6 +4,4 @@ namespace BabDev\WebSocket\Server\Exception;
 
 use BabDev\WebSocket\Server\WebSocketException;
 
-class UnsupportedConnection extends \RuntimeException implements WebSocketException
-{
-}
+class UnsupportedConnection extends \RuntimeException implements WebSocketException {}

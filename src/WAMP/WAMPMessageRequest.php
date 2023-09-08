@@ -9,8 +9,5 @@ use Symfony\Component\HttpFoundation\ParameterBag;
  */
 final class WAMPMessageRequest
 {
-    public function __construct(
-        public readonly ParameterBag $attributes,
-    ) {
-    }
+    public function __construct(public readonly ParameterBag $attributes) {}
 }

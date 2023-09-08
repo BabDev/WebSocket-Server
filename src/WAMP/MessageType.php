@@ -14,7 +14,5 @@ abstract class MessageType
     final public const PUBLISH = 7;
     final public const EVENT = 8;
 
-    final private function __construct()
-    {
-    }
+    final private function __construct() {}
 }

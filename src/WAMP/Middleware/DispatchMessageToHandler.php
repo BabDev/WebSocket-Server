@@ -47,8 +47,7 @@ final class DispatchMessageToHandler implements WAMPServerMiddleware
         private readonly UrlMatcherInterface $matcher,
         private readonly MessageHandlerResolver $resolver,
         private readonly ?EventDispatcherInterface $dispatcher = null,
-    ) {
-    }
+    ) {}
 
     /**
      * @return list<string>

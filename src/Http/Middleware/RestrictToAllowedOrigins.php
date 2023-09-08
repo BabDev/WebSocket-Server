@@ -18,14 +18,11 @@ final class RestrictToAllowedOrigins implements ServerMiddleware
     use ClosesConnectionWithResponse;
 
     /**
-     * @var string[]
+     * @var list<non-empty-string>
      */
     private array $allowedOrigins = [];
 
-    public function __construct(
-        private readonly ServerMiddleware $middleware,
-    ) {
-    }
+    public function __construct(private readonly ServerMiddleware $middleware) {}
 
     /**
      * Handles a new connection to the server.
@@ -91,11 +88,17 @@ final class RestrictToAllowedOrigins implements ServerMiddleware
         $this->middleware->onError($connection, $throwable);
     }
 
+    /**
+     * @param non-empty-string $origin
+     */
     public function allowOrigin(string $origin): void
     {
         $this->allowedOrigins[] = $origin;
     }
 
+    /**
+     * @param non-empty-string $origin
+     */
     public function removeAllowedOrigin(string $origin): void
     {
         $this->allowedOrigins = array_filter($this->allowedOrigins, static fn (string $allowedOrigin): bool => $allowedOrigin !== $origin);

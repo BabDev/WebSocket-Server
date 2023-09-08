@@ -4,6 +4,4 @@ namespace BabDev\WebSocket\Server\WAMP\Exception;
 
 use BabDev\WebSocket\Server\WebSocketException;
 
-class RouteNotFound extends \RuntimeException implements WebSocketException
-{
-}
+class RouteNotFound extends \RuntimeException implements WebSocketException {}

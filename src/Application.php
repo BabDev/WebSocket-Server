@@ -48,12 +48,12 @@ final class Application
     private ?OptionsHandler $optionsHandler = null;
 
     /**
-     * @var string[]
+     * @var list<non-empty-string>
      */
     private array $allowedOrigins = [];
 
     /**
-     * @var string[]
+     * @var list<non-empty-string>
      */
     private array $blockedAddresses = [];
 
@@ -160,6 +160,8 @@ final class Application
      *
      * The {@see RejectBlockedIpAddress} middleware will automatically be registered if addresses have been blocked
      * before running the server.
+     *
+     * @param non-empty-string $address
      */
     public function allowAddress(string $address): self
     {
@@ -173,6 +175,8 @@ final class Application
      *
      * The {@see RejectBlockedIpAddress} middleware will automatically be registered if addresses have been blocked
      * before running the server.
+     *
+     * @param non-empty-string $address
      */
     public function blockAddress(string $address): self
     {
@@ -188,6 +192,8 @@ final class Application
      *
      * The {@see RestrictToAllowedOrigins} middleware will automatically be registered if the server is restricted
      * to a list of allowed origins before running the server.
+     *
+     * @param non-empty-string $origin
      */
     public function allowOrigin(string $origin): self
     {
@@ -203,6 +209,8 @@ final class Application
      *
      * The {@see RestrictToAllowedOrigins} middleware will automatically be registered if the server is restricted
      * to a list of allowed origins before running the server.
+     *
+     * @param non-empty-string $origin
      */
     public function removeAllowedOrigin(string $origin): self
     {

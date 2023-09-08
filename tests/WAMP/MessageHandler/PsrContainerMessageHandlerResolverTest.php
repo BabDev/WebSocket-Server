@@ -84,9 +84,7 @@ final class PsrContainerMessageHandlerResolverTest extends TestCase
     }
 }
 
-final class ServiceNotFound extends \InvalidArgumentException implements NotFoundExceptionInterface
-{
-}
+final class ServiceNotFound extends \InvalidArgumentException implements NotFoundExceptionInterface {}
 
 final class Container implements ContainerInterface
 {

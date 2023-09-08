@@ -12,6 +12,5 @@ final class WebSocketConnectionContext
     public function __construct(
         public readonly WebSocketConnection $connection,
         public readonly MessageBuffer $buffer,
-    ) {
-    }
+    ) {}
 }

@@ -13,10 +13,7 @@ use Ratchet\RFC6455\Messaging\Frame;
  */
 final class DefaultWebSocketConnection implements WebSocketConnection
 {
-    public function __construct(
-        private readonly Connection $connection,
-    ) {
-    }
+    public function __construct(private readonly Connection $connection) {}
 
     public function getAttributeStore(): AttributeStore
     {

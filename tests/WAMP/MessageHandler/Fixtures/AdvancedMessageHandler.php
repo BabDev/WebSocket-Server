@@ -6,7 +6,5 @@ use BabDev\WebSocket\Server\MessageHandler;
 
 final class AdvancedMessageHandler implements MessageHandler
 {
-    public function __construct(public readonly string $name)
-    {
-    }
+    public function __construct(public readonly string $name) {}
 }

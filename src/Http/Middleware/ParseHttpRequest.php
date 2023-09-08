@@ -21,8 +21,7 @@ final class ParseHttpRequest implements ServerMiddleware
     public function __construct(
         private readonly ServerMiddleware $middleware,
         private readonly RequestParser $requestParser = new GuzzleRequestParser(),
-    ) {
-    }
+    ) {}
 
     /**
      * Handles a new connection to the server.

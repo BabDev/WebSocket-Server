@@ -2,6 +2,4 @@
 
 namespace BabDev\WebSocket\Server\Tests\WAMP\MessageHandler\Fixtures;
 
-final class MissingInterfaceMessageHandler
-{
-}
+final class MissingInterfaceMessageHandler {}

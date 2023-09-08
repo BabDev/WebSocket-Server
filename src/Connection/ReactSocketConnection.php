@@ -14,8 +14,7 @@ final class ReactSocketConnection implements Connection
     public function __construct(
         private readonly ConnectionInterface $connection,
         private readonly AttributeStore $attributeStore,
-    ) {
-    }
+    ) {}
 
     public function getAttributeStore(): AttributeStore
     {

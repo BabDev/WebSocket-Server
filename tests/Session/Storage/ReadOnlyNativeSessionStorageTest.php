@@ -130,9 +130,7 @@ final class ReadOnlyNativeSessionStorageTest extends TestCase
                 return 'test';
             }
 
-            public function initialize(array &$array): void
-            {
-            }
+            public function initialize(array &$array): void {}
 
             public function getStorageKey(): string
             {
