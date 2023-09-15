@@ -7,7 +7,7 @@ use Symfony\Component\HttpFoundation\ParameterBag;
 /**
  * The WAMP message request class encapsulates the matched route information for an incoming WAMP message.
  */
-final class WAMPMessageRequest
+final readonly class WAMPMessageRequest
 {
-    public function __construct(public readonly ParameterBag $attributes) {}
+    public function __construct(public ParameterBag $attributes) {}
 }

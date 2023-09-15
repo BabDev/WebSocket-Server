@@ -10,14 +10,14 @@ use BabDev\WebSocket\Server\Exception\UnsupportedConnection;
  *
  * @implements \IteratorAggregate<array-key, WAMPConnection>
  */
-final class Topic implements \IteratorAggregate, \Countable, \Stringable
+final readonly class Topic implements \IteratorAggregate, \Countable, \Stringable
 {
     /**
      * @var \SplObjectStorage<WAMPConnection, null>
      */
-    private readonly \SplObjectStorage $subscribers;
+    private \SplObjectStorage $subscribers;
 
-    public function __construct(public readonly string $id)
+    public function __construct(public string $id)
     {
         $this->subscribers = new \SplObjectStorage();
     }

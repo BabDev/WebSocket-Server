@@ -11,9 +11,9 @@ use Ratchet\RFC6455\Messaging\Frame;
  * The websocket connection is a connection class decorating another {@see Connection} adding support for
  * processing messages using the `ratchet/rfc6455` package.
  */
-final class DefaultWebSocketConnection implements WebSocketConnection
+final readonly class DefaultWebSocketConnection implements WebSocketConnection
 {
-    public function __construct(private readonly Connection $connection) {}
+    public function __construct(private Connection $connection) {}
 
     public function getAttributeStore(): AttributeStore
     {

@@ -4,9 +4,9 @@ namespace BabDev\WebSocket\Server\Connection\Event;
 
 use BabDev\WebSocket\Server\Connection;
 
-final class ConnectionClosed implements ConnectionAware
+final readonly class ConnectionClosed implements ConnectionAware
 {
-    public function __construct(private readonly Connection $connection) {}
+    public function __construct(private Connection $connection) {}
 
     public function getConnection(): Connection
     {

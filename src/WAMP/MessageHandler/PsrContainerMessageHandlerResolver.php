@@ -14,9 +14,9 @@ use Psr\Container\ContainerInterface;
  * The PSR container message handler resolver is a message handler resolver which returns a message handler set on the route's
  * "_controller" attribute or attempts to locate the message handler from a PSR-11 compatible container.
  */
-final class PsrContainerMessageHandlerResolver implements MessageHandlerResolver
+final readonly class PsrContainerMessageHandlerResolver implements MessageHandlerResolver
 {
-    public function __construct(private readonly ContainerInterface $container) {}
+    public function __construct(private ContainerInterface $container) {}
 
     /**
      * @throws InvalidMessageHandler if the resolved object is not a valid message handler

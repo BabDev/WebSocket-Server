@@ -11,14 +11,14 @@ use Symfony\Component\HttpFoundation\Session\Storage\Proxy\AbstractProxy;
 use Symfony\Component\HttpFoundation\Session\Storage\SessionStorageFactoryInterface;
 use Symfony\Component\HttpFoundation\Session\Storage\SessionStorageInterface;
 
-final class ReadOnlyNativeSessionStorageFactory implements SessionStorageFactoryInterface
+final readonly class ReadOnlyNativeSessionStorageFactory implements SessionStorageFactoryInterface
 {
     public function __construct(
-        private readonly OptionsHandler $optionsHandler = new IniOptionsHandler(),
-        private readonly ?Reader $reader = null,
-        private readonly array $options = [],
-        private readonly AbstractProxy|\SessionHandlerInterface|null $handler = null,
-        private readonly ?MetadataBag $metaBag = null
+        private OptionsHandler $optionsHandler = new IniOptionsHandler(),
+        private ?Reader $reader = null,
+        private array $options = [],
+        private AbstractProxy|\SessionHandlerInterface|null $handler = null,
+        private ?MetadataBag $metaBag = null
     ) {}
 
     public function createStorage(?Request $request): SessionStorageInterface

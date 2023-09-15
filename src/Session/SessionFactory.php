@@ -7,9 +7,9 @@ use Symfony\Component\HttpFoundation\Session\SessionFactoryInterface;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\HttpFoundation\Session\Storage\SessionStorageFactoryInterface;
 
-final class SessionFactory implements SessionFactoryInterface
+final readonly class SessionFactory implements SessionFactoryInterface
 {
-    public function __construct(private readonly SessionStorageFactoryInterface $storageFactory) {}
+    public function __construct(private SessionStorageFactoryInterface $storageFactory) {}
 
     public function createSession(): SessionInterface
     {

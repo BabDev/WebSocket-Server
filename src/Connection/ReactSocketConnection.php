@@ -9,11 +9,11 @@ use React\Socket\ConnectionInterface;
  * The React socket connection is a connection class wrapping a {@see ConnectionInterface}
  * from the `react/socket` package.
  */
-final class ReactSocketConnection implements Connection
+final readonly class ReactSocketConnection implements Connection
 {
     public function __construct(
-        private readonly ConnectionInterface $connection,
-        private readonly AttributeStore $attributeStore,
+        private ConnectionInterface $connection,
+        private AttributeStore $attributeStore,
     ) {}
 
     public function getAttributeStore(): AttributeStore

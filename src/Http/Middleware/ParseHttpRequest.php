@@ -14,13 +14,13 @@ use Psr\Http\Message\RequestInterface;
 /**
  * The parse HTTP request server middleware transforms the incoming HTTP request into a {@see RequestInterface} object.
  */
-final class ParseHttpRequest implements ServerMiddleware
+final readonly class ParseHttpRequest implements ServerMiddleware
 {
     use ClosesConnectionWithResponse;
 
     public function __construct(
-        private readonly ServerMiddleware $middleware,
-        private readonly RequestParser $requestParser = new GuzzleRequestParser(),
+        private ServerMiddleware $middleware,
+        private RequestParser $requestParser = new GuzzleRequestParser(),
     ) {}
 
     /**

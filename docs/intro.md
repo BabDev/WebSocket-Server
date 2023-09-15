@@ -10,4 +10,4 @@ The below table shows the support status and supported PHP versions for each maj
 
 | Version | Status         | PHP Versions |
 |---------|----------------|--------------|
-| 1.x     | In Development | 8.1          |
+| 1.x     | In Development | 8.2          |

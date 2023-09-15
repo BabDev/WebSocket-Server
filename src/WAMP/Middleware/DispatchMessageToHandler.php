@@ -41,12 +41,12 @@ use Symfony\Component\Routing\Matcher\UrlMatcherInterface;
  * This middleware uses Symfony's Routing component to create a router for the server application. Applications
  * choosing to use another router service will need their own middleware component.
  */
-final class DispatchMessageToHandler implements WAMPServerMiddleware
+final readonly class DispatchMessageToHandler implements WAMPServerMiddleware
 {
     public function __construct(
-        private readonly UrlMatcherInterface $matcher,
-        private readonly MessageHandlerResolver $resolver,
-        private readonly ?EventDispatcherInterface $dispatcher = null,
+        private UrlMatcherInterface $matcher,
+        private MessageHandlerResolver $resolver,
+        private ?EventDispatcherInterface $dispatcher = null,
     ) {}
 
     /**

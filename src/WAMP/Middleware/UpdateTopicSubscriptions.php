@@ -13,11 +13,11 @@ use BabDev\WebSocket\Server\WAMPServerMiddleware;
  * The update topic subscriptions server middleware is responsible for updating the list of connections for each
  * active topic.
  */
-final class UpdateTopicSubscriptions implements WAMPServerMiddleware
+final readonly class UpdateTopicSubscriptions implements WAMPServerMiddleware
 {
     public function __construct(
-        private readonly WAMPServerMiddleware $middleware,
-        private readonly TopicRegistry $topicRegistry,
+        private WAMPServerMiddleware $middleware,
+        private TopicRegistry $topicRegistry,
     ) {}
 
     /**

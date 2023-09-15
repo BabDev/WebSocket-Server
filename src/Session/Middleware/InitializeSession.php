@@ -19,12 +19,12 @@ use Symfony\Component\HttpFoundation\Session\SessionInterface;
  * This middleware uses Symfony's HttpFoundation component to interact with the session data. Applications
  * using another session service will need their own middleware component.
  */
-final class InitializeSession implements ServerMiddleware
+final readonly class InitializeSession implements ServerMiddleware
 {
     public function __construct(
-        private readonly ServerMiddleware $middleware,
-        private readonly SessionFactoryInterface $sessionFactory,
-        private readonly OptionsHandler $optionsHandler = new IniOptionsHandler(),
+        private ServerMiddleware $middleware,
+        private SessionFactoryInterface $sessionFactory,
+        private OptionsHandler $optionsHandler = new IniOptionsHandler(),
     ) {}
 
     /**

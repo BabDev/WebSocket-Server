@@ -13,11 +13,9 @@ use Ratchet\RFC6455\Messaging\DataInterface;
  * The WAMP connection is a connection class decorating another {@see Connection} adding helper methods to
  * send WAMP messages to the connected client.
  */
-final class DefaultWAMPConnection implements WAMPConnection
+final readonly class DefaultWAMPConnection implements WAMPConnection
 {
-    public function __construct(
-        private readonly Connection $connection,
-    ) {}
+    public function __construct(private Connection $connection) {}
 
     public function getAttributeStore(): AttributeStore
     {

@@ -7,10 +7,10 @@ use Ratchet\RFC6455\Messaging\MessageBuffer;
 /**
  * The websocket connection context is a data object holding a reference to a connection and its message buffer.
  */
-final class WebSocketConnectionContext
+final readonly class WebSocketConnectionContext
 {
     public function __construct(
-        public readonly WebSocketConnection $connection,
-        public readonly MessageBuffer $buffer,
+        public WebSocketConnection $connection,
+        public MessageBuffer $buffer,
     ) {}
 }

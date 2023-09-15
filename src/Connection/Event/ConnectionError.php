@@ -4,11 +4,11 @@ namespace BabDev\WebSocket\Server\Connection\Event;
 
 use BabDev\WebSocket\Server\Connection;
 
-final class ConnectionError implements ConnectionAware
+final readonly class ConnectionError implements ConnectionAware
 {
     public function __construct(
-        private readonly Connection $connection,
-        private readonly \Throwable $throwable,
+        private Connection $connection,
+        private \Throwable $throwable,
     ) {}
 
     public function getConnection(): Connection
