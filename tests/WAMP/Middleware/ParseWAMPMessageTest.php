@@ -122,6 +122,7 @@ final class ParseWAMPMessageTest extends TestCase
     #[TestDox('Handles incoming data on the connection for a WAMP "CALL" message')]
     public function testOnMessageForCallMessage(mixed ...$args): void
     {
+        /** @var int<0, max> $paramCount */
         $paramCount = array_shift($args);
 
         $uri = 'https://example.com/testing/'.random_int(1, 1000);

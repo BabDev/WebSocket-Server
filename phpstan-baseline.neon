@@ -144,8 +144,3 @@ parameters:
 			message: "#^Class UnknownClass not found\\.$#"
 			count: 1
 			path: tests/WAMP/MessageHandler/PsrContainerMessageHandlerResolverTest.php
-
-		-
-			message: "#^Method BabDev\\\\WebSocket\\\\Server\\\\Tests\\\\WAMP\\\\Middleware\\\\ParseWAMPMessageTest\\:\\:testOnMessageForCallMessage\\(\\) has parameter \\$args with no type specified\\.$#"
-			count: 1
-			path: tests/WAMP/Middleware/ParseWAMPMessageTest.php
