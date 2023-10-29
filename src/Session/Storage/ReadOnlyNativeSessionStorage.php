@@ -52,17 +52,15 @@ final class ReadOnlyNativeSessionStorage implements SessionStorageInterface
             throw new SessionMisconfigured('PHP extension "session" is required.');
         }
 
-        $options = array_merge(
-            [
-                'auto_start' => 0,
-                'cache_limiter' => '',
-                'cache_expire' => 0,
-                'use_cookies' => 0,
-                'lazy_write' => 1,
-                'use_strict_mode' => 1,
-            ],
-            $options
-        );
+        $options = [
+            'auto_start' => 0,
+            'cache_limiter' => '',
+            'cache_expire' => 0,
+            'use_cookies' => 0,
+            'lazy_write' => 1,
+            'use_strict_mode' => 1,
+            ...$options,
+        ];
 
         $this->setMetadataBag($metaBag);
         $this->setOptions($options);

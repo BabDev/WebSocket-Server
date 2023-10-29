@@ -120,14 +120,14 @@ final class ParseWAMPMessageTest extends TestCase
 
     #[DataProvider('dataCallMessage')]
     #[TestDox('Handles incoming data on the connection for a WAMP "CALL" message')]
-    public function testOnMessageForCallMessage(...$args): void
+    public function testOnMessageForCallMessage(mixed ...$args): void
     {
         $paramCount = array_shift($args);
 
         $uri = 'https://example.com/testing/'.random_int(1, 1000);
         $callId = uniqid();
 
-        $message = array_merge([MessageType::CALL, $callId, $uri], $args);
+        $message = [MessageType::CALL, $callId, $uri, ...$args];
 
         $attributeStore = new ArrayAttributeStore();
 
