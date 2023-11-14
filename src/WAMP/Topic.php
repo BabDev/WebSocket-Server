@@ -78,13 +78,14 @@ final readonly class Topic implements \IteratorAggregate, \Countable, \Stringabl
             return;
         }
 
+        $useExclude = [] !== $exclude;
         $useEligible = [] !== $eligible;
 
         /** @var WAMPConnection $subscriber */
         foreach ($this->subscribers as $subscriber) {
             $sessionId = $subscriber->getAttributeStore()->get('wamp.session_id');
 
-            if (\in_array($sessionId, $exclude, true)) {
+            if ($useExclude && \in_array($sessionId, $exclude, true)) {
                 continue;
             }
 
