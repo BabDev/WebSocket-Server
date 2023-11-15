@@ -65,7 +65,7 @@ final class PsrContainerMessageHandlerResolverTest extends TestCase
         $this->expectException(UnknownMessageHandler::class);
 
         $attributes = new ParameterBag();
-        $attributes->set('_controller', \UnknownClass::class);
+        $attributes->set('_controller', \UnknownClass::class); // @phpstan-ignore-line
 
         (new PsrContainerMessageHandlerResolver(new Container()))->findMessageHandler(new WAMPMessageRequest($attributes));
     }

@@ -279,11 +279,18 @@ final class RestrictToAllowedOriginsTest extends TestCase
         $this->middleware->allowOrigin('192.168.1.1');
         $this->middleware->allowOrigin('localhost');
 
-        $this->assertTrue(\in_array('192.168.1.1', $allowedOrigins->getValue($this->middleware), true));
-        $this->assertTrue(\in_array('localhost', $allowedOrigins->getValue($this->middleware), true));
+        /** @var list<non-empty-string> $origins */
+        $origins = $allowedOrigins->getValue($this->middleware);
+
+        $this->assertContains('192.168.1.1', $origins);
+        $this->assertContains('localhost', $origins);
 
         $this->middleware->removeAllowedOrigin('192.168.1.1');
 
-        $this->assertFalse(\in_array('192.168.1.1', $allowedOrigins->getValue($this->middleware), true));
+        /** @var list<non-empty-string> $origins */
+        $origins = $allowedOrigins->getValue($this->middleware);
+
+        $this->assertNotContains('192.168.1.1', $origins);
+        $this->assertContains('localhost', $origins);
     }
 }

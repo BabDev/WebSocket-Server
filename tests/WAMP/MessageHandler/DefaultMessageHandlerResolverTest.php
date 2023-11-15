@@ -62,7 +62,7 @@ final class DefaultMessageHandlerResolverTest extends TestCase
         $this->expectException(UnknownMessageHandler::class);
 
         $attributes = new ParameterBag();
-        $attributes->set('_controller', \UnknownClass::class);
+        $attributes->set('_controller', \UnknownClass::class); // @phpstan-ignore-line
 
         (new DefaultMessageHandlerResolver())->findMessageHandler(new WAMPMessageRequest($attributes));
     }

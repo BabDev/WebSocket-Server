@@ -106,6 +106,7 @@ final readonly class InitializeSession implements ServerMiddleware
                 throw new \RuntimeException('Invalid Cookie header.');
             }
 
+            /** @var int $separatorPosition */
             $separatorPosition = strpos($cookie, '=');
 
             $key = ltrim(substr($cookie, 0, $separatorPosition));

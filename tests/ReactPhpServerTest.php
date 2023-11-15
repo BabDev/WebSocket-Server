@@ -41,7 +41,17 @@ final class ReactPhpServerTest extends TestCase
 
         $uri = $this->socket->getAddress();
 
-        $this->port = parse_url((str_contains($uri, '://') ? '' : 'tcp://').$uri, \PHP_URL_PORT);
+        if (!\is_string($uri)) {
+            self::fail('Could not get socket server address');
+        }
+
+        $port = parse_url((str_contains($uri, '://') ? '' : 'tcp://').$uri, \PHP_URL_PORT);
+
+        if (!\is_int($port)) {
+            self::fail('Could not extract port from socket server address');
+        }
+
+        $this->port = $port;
 
         $this->server = new ReactPhpServer($this->middleware, $this->socket, Loop::get());
     }
@@ -77,6 +87,11 @@ final class ReactPhpServerTest extends TestCase
             ->with($this->isInstanceOf(Connection::class), $message);
 
         $client = socket_create(\AF_INET, \SOCK_STREAM, \SOL_TCP);
+
+        if (false === $client) {
+            self::fail(sprintf('Could not create the socket for testing: %s', socket_strerror(socket_last_error())));
+        }
+
         socket_set_option($client, \SOL_SOCKET, \SO_REUSEADDR, 1);
         socket_set_option($client, \SOL_SOCKET, \SO_SNDBUF, 4096);
         socket_set_block($client);
@@ -103,6 +118,11 @@ final class ReactPhpServerTest extends TestCase
             ->with($this->isInstanceOf(Connection::class));
 
         $client = socket_create(\AF_INET, \SOCK_STREAM, \SOL_TCP);
+
+        if (false === $client) {
+            self::fail(sprintf('Could not create the socket for testing: %s', socket_strerror(socket_last_error())));
+        }
+
         socket_set_option($client, \SOL_SOCKET, \SO_REUSEADDR, 1);
         socket_set_option($client, \SOL_SOCKET, \SO_SNDBUF, 4096);
         socket_set_block($client);
@@ -134,6 +154,11 @@ final class ReactPhpServerTest extends TestCase
             ->with($this->isInstanceOf(Connection::class), $exception);
 
         $client = socket_create(\AF_INET, \SOCK_STREAM, \SOL_TCP);
+
+        if (false === $client) {
+            self::fail(sprintf('Could not create the socket for testing: %s', socket_strerror(socket_last_error())));
+        }
+
         socket_set_option($client, \SOL_SOCKET, \SO_REUSEADDR, 1);
         socket_set_option($client, \SOL_SOCKET, \SO_SNDBUF, 4096);
         socket_set_block($client);
