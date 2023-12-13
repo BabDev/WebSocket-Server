@@ -18,11 +18,12 @@ final class RejectBlockedIpAddress implements ServerMiddleware
     use ClosesConnectionWithResponse;
 
     /**
-     * @var list<non-empty-string>
+     * @param list<non-empty-string> $blockedAddresses
      */
-    private array $blockedAddresses = [];
-
-    public function __construct(private readonly ServerMiddleware $middleware) {}
+    public function __construct(
+        private readonly ServerMiddleware $middleware,
+        private array $blockedAddresses = [],
+    ) {}
 
     /**
      * Handles a new connection to the server.

@@ -18,11 +18,12 @@ final class RestrictToAllowedOrigins implements ServerMiddleware
     use ClosesConnectionWithResponse;
 
     /**
-     * @var list<non-empty-string>
+     * @param list<non-empty-string> $allowedOrigins
      */
-    private array $allowedOrigins = [];
-
-    public function __construct(private readonly ServerMiddleware $middleware) {}
+    public function __construct(
+        private readonly ServerMiddleware $middleware,
+        private array $allowedOrigins = [],
+    ) {}
 
     /**
      * Handles a new connection to the server.

@@ -15,7 +15,7 @@ use Psr\Http\Message\RequestInterface;
 final class GuzzleRequestParserTest extends TestCase
 {
     /**
-     * @return \Generator<string, array>
+     * @return \Generator<string, array{bool, string}>
      */
     public static function dataRequestProvider(): \Generator
     {

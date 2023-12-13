@@ -105,6 +105,9 @@ final class ParseWAMPMessageTest extends TestCase
         );
     }
 
+    /**
+     * @return \Generator<string, array>
+     */
     public static function dataCallMessage(): \Generator
     {
         yield 'Parameters as separate values' => [2, 'a', 'b'];

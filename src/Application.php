@@ -91,21 +91,13 @@ final class Application
         }
 
         if ([] !== $this->allowedOrigins) {
-            $middleware = new RestrictToAllowedOrigins($middleware);
-
-            foreach ($this->allowedOrigins as $origin) {
-                $middleware->allowOrigin($origin);
-            }
+            $middleware = new RestrictToAllowedOrigins($middleware, $this->allowedOrigins);
         }
 
         $middleware = new ParseHttpRequest($middleware);
 
         if ([] !== $this->blockedAddresses) {
-            $middleware = new RejectBlockedIpAddress($middleware);
-
-            foreach ($this->blockedAddresses as $address) {
-                $middleware->blockAddress($address);
-            }
+            $middleware = new RejectBlockedIpAddress($middleware, $this->blockedAddresses);
         }
 
         $socket = new SocketServer($this->uri, $this->context, $this->loop);
