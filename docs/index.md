@@ -2,6 +2,7 @@
 - [Installation & Setup](/open-source/packages/websocket-server/docs/1.x/installation)
 - [Architecture](/open-source/packages/websocket-server/docs/1.x/architecture)
 - [Connection](/open-source/packages/websocket-server/docs/1.x/connection)
+- [Error URI Resolver](/open-source/packages/websocket-server/docs/1.x/error-uri-resolver)
 - [Message Handler](/open-source/packages/websocket-server/docs/1.x/message-handler)
 - [Message Handler Resolver](/open-source/packages/websocket-server/docs/1.x/message-handler-resolver)
 - [Middleware](/open-source/packages/websocket-server/docs/1.x/middleware)
