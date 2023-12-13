@@ -11,6 +11,8 @@ use BabDev\WebSocket\Server\RPCMessageHandler;
 use BabDev\WebSocket\Server\RPCMessageMiddleware;
 use BabDev\WebSocket\Server\TopicMessageHandler;
 use BabDev\WebSocket\Server\TopicMessageMiddleware;
+use BabDev\WebSocket\Server\WAMP\DefaultErrorUriResolver;
+use BabDev\WebSocket\Server\WAMP\ErrorUriResolver;
 use BabDev\WebSocket\Server\WAMP\Exception\CannotInstantiateMessageHandler;
 use BabDev\WebSocket\Server\WAMP\Exception\InvalidMessageHandler;
 use BabDev\WebSocket\Server\WAMP\Exception\InvalidRequest;
@@ -47,6 +49,7 @@ final readonly class DispatchMessageToHandler implements WAMPServerMiddleware
         private UrlMatcherInterface $matcher,
         private MessageHandlerResolver $resolver,
         private ?EventDispatcherInterface $dispatcher = null,
+        private ErrorUriResolver $errorUriResolver = new DefaultErrorUriResolver(),
     ) {}
 
     /**
@@ -110,7 +113,7 @@ final readonly class DispatchMessageToHandler implements WAMPServerMiddleware
         } catch (RouteNotFound $exception) {
             $connection->callError(
                 $id,
-                'https://example.com/error#not-found', // TODO - Make the error URI customizable
+                $this->errorUriResolver->resolve('not-found'),
                 sprintf('Could not find a message handler for URI "%s".', $resolvedUri),
                 [
                     'code' => 404,
@@ -126,7 +129,7 @@ final readonly class DispatchMessageToHandler implements WAMPServerMiddleware
         } catch (WebSocketException $exception) {
             $connection->callError(
                 $id,
-                'https://example.com/error#not-found', // TODO - Make the error URI customizable
+                $this->errorUriResolver->resolve('not-found'),
                 sprintf('Could not find a message handler for URI "%s".', $resolvedUri),
                 [
                     'code' => 404,
