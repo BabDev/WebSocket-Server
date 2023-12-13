@@ -162,6 +162,9 @@ final class EstablishWebSocketConnection implements ServerMiddleware
         $this->negotiator->setStrictSubProtocolCheck($enable);
     }
 
+    /**
+     * @param positive-int $interval
+     */
     public function enableKeepAlive(LoopInterface $loop, int $interval = 30): void
     {
         $lastPing = new Frame(uniqid(), true, Frame::OP_PING);

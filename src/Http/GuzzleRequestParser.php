@@ -18,6 +18,8 @@ final class GuzzleRequestParser implements RequestParser
          * The maximum number of bytes from the request that can be parsed.
          *
          * This is a security measure to help prevent attacks.
+         *
+         * @var positive-int
          */
         public int $maxRequestSize = 4096
     ) {}
