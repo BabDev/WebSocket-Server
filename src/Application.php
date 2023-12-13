@@ -7,6 +7,8 @@ use BabDev\WebSocket\Server\Http\Middleware\RejectBlockedIpAddress;
 use BabDev\WebSocket\Server\Http\Middleware\RestrictToAllowedOrigins;
 use BabDev\WebSocket\Server\Session\Middleware\InitializeSession;
 use BabDev\WebSocket\Server\WAMP\ArrayTopicRegistry;
+use BabDev\WebSocket\Server\WAMP\DefaultErrorUriResolver;
+use BabDev\WebSocket\Server\WAMP\ErrorUriResolver;
 use BabDev\WebSocket\Server\WAMP\MessageHandler\DefaultMessageHandlerResolver;
 use BabDev\WebSocket\Server\WAMP\MessageHandler\MessageHandlerResolver;
 use BabDev\WebSocket\Server\WAMP\Middleware\DispatchMessageToHandler;
@@ -41,6 +43,8 @@ final class Application
 
     private MessageHandlerResolver $messageHandlerResolver;
 
+    private ErrorUriResolver $errorUriResolver;
+
     private ?EventDispatcherInterface $dispatcher = null;
 
     private ?SessionFactoryInterface $sessionFactory = null;
@@ -73,6 +77,7 @@ final class Application
             $this->routeCollection = new RouteCollection(),
             new RequestContext(),
         );
+        $this->errorUriResolver = new DefaultErrorUriResolver();
         $this->messageHandlerResolver = new DefaultMessageHandlerResolver();
     }
 
@@ -80,7 +85,7 @@ final class Application
     {
         $topicRegistry = new ArrayTopicRegistry();
 
-        $middleware = new DispatchMessageToHandler($this->matcher, $this->messageHandlerResolver, $this->dispatcher);
+        $middleware = new DispatchMessageToHandler($this->matcher, $this->messageHandlerResolver, $this->dispatcher, $this->errorUriResolver);
         $middleware = new UpdateTopicSubscriptions($middleware, $topicRegistry);
         $middleware = new ParseWAMPMessage($middleware, $topicRegistry);
 
@@ -112,6 +117,16 @@ final class Application
             new Route($path, ['_controller' => $handler]),
             $priority
         );
+
+        return $this;
+    }
+
+    /**
+     * Replaces the {@see ErrorUriResolver} implementation to be used by the application.
+     */
+    public function withErrorUriResolver(ErrorUriResolver $errorUriResolver): self
+    {
+        $this->errorUriResolver = $errorUriResolver;
 
         return $this;
     }
