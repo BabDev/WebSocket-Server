@@ -87,10 +87,7 @@ final class GuzzleRequestParserTest extends TestCase
             ->method('getAttributeStore')
             ->willReturn($attributeStore);
 
-        $parser = new GuzzleRequestParser();
-        $parser->maxRequestSize = 10;
-
-        $parser->parse($connection, $message);
+        (new GuzzleRequestParser(10))->parse($connection, $message);
     }
 
     public function testRejectsARequestWhichCannotBeParsed(): void

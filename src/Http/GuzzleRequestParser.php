@@ -13,12 +13,14 @@ use Psr\Http\Message\RequestInterface;
  */
 final class GuzzleRequestParser implements RequestParser
 {
-    /**
-     * The maximum number of bytes from the request that can be parsed.
-     *
-     * This is a security measure to help prevent attacks.
-     */
-    public int $maxRequestSize = 4096;
+    public function __construct(
+        /**
+         * The maximum number of bytes from the request that can be parsed.
+         *
+         * This is a security measure to help prevent attacks.
+         */
+        public int $maxRequestSize = 4096
+    ) {}
 
     /**
      * @throws MalformedRequest if the HTTP request cannot be parsed
