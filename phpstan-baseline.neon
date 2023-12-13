@@ -21,7 +21,7 @@ parameters:
 			path: src/Session/Storage/Proxy/ReadOnlySessionHandlerProxy.php
 
 		-
-			message: "#^Property Symfony\\\\Component\\\\HttpFoundation\\\\Session\\\\Storage\\\\Proxy\\\\AbstractProxy\\:\\:\\$saveHandlerName \\(string\\) does not accept mixed\\.$#"
+			message: "#^Property Symfony\\\\Component\\\\HttpFoundation\\\\Session\\\\Storage\\\\Proxy\\\\AbstractProxy\\:\\:\\$saveHandlerName \\(string\\|null\\) does not accept mixed\\.$#"
 			count: 1
 			path: src/Session/Storage/Proxy/ReadOnlySessionHandlerProxy.php
 
