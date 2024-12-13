@@ -187,7 +187,7 @@ final class ReadOnlyNativeSessionStorage implements SessionStorageInterface
      *
      * @see NativeSessionStorage::setOptions()
      *
-     * @note The options list is based on the supported options as of Symfony 6.1.0
+     * @note The options list is based on the supported options as of Symfony 7.2.0
      */
     public function setOptions(array $options): void
     {
@@ -202,6 +202,10 @@ final class ReadOnlyNativeSessionStorage implements SessionStorageInterface
         ]);
 
         foreach ($options as $key => $value) {
+            if (\in_array($key, ['referer_check', 'use_only_cookies', 'use_trans_sid', 'trans_sid_hosts', 'trans_sid_tags', 'sid_length', 'sid_bits_per_character'], true)) {
+                trigger_deprecation('babdev/websocket-server', '0.1', 'The "%s" option for the read-only native session storage is deprecated as of PHP 8.4 and support will be removed before the 1.0 release.', $key);
+            }
+
             if (isset($validOptions[$key])) {
                 if ('cookie_secure' === $key && 'auto' === $value) {
                     continue;
