@@ -74,7 +74,13 @@ final class RejectBlockedIpAddress implements ServerMiddleware
      */
     public function allowAddress(string $address): void
     {
-        $this->blockedAddresses = array_filter($this->blockedAddresses, static fn (string $blockedAddress): bool => $blockedAddress !== $address);
+        $this->blockedAddresses = array_values(
+            array_filter(
+                $this->blockedAddresses,
+                /** @var non-empty-string $blockedAddress */
+                static fn (string $blockedAddress): bool => $blockedAddress !== $address,
+            ),
+        );
     }
 
     /**

@@ -172,7 +172,13 @@ final class Application
      */
     public function allowAddress(string $address): self
     {
-        $this->blockedAddresses = array_filter($this->blockedAddresses, static fn (string $blockedAddress): bool => $blockedAddress !== $address);
+        $this->blockedAddresses = array_values(
+            array_filter(
+                $this->blockedAddresses,
+                /** @var non-empty-string $blockedAddress */
+                static fn (string $blockedAddress): bool => $blockedAddress !== $address,
+            ),
+        );
 
         return $this;
     }
@@ -221,7 +227,13 @@ final class Application
      */
     public function removeAllowedOrigin(string $origin): self
     {
-        $this->allowedOrigins = array_filter($this->allowedOrigins, static fn (string $allowedOrigin): bool => $allowedOrigin !== $origin);
+        $this->allowedOrigins = array_values(
+            array_filter(
+                $this->allowedOrigins,
+                /** @var non-empty-string $allowedOrigin */
+                static fn (string $allowedOrigin): bool => $allowedOrigin !== $origin,
+            ),
+        );
 
         return $this;
     }

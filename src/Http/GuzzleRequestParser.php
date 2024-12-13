@@ -30,6 +30,7 @@ final class GuzzleRequestParser implements RequestParser
      */
     public function parse(Connection $connection, string $data): ?RequestInterface
     {
+        /** @var string $buffer */
         $buffer = $connection->getAttributeStore()->get('http.buffer', '');
         $buffer .= $data;
 

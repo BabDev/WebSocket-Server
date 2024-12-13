@@ -104,6 +104,12 @@ final class RestrictToAllowedOrigins implements ServerMiddleware
      */
     public function removeAllowedOrigin(string $origin): void
     {
-        $this->allowedOrigins = array_filter($this->allowedOrigins, static fn (string $allowedOrigin): bool => $allowedOrigin !== $origin);
+        $this->allowedOrigins = array_values(
+            array_filter(
+                $this->allowedOrigins,
+                /** @var non-empty-string $allowedOrigin */
+                static fn (string $allowedOrigin): bool => $allowedOrigin !== $origin,
+            ),
+        );
     }
 }

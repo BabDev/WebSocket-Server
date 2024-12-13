@@ -1,81 +1,121 @@
 parameters:
 	ignoreErrors:
 		-
-			message: "#^Access to an undefined property React\\\\Socket\\\\ConnectionInterface\\:\\:\\$stream\\.$#"
+			message: '#^Access to an undefined property React\\Socket\\ConnectionInterface\:\:\$stream\.$#'
+			identifier: property.notFound
 			count: 1
 			path: src/ReactPhpServer.php
 
 		-
-			message: "#^Property BabDev\\\\WebSocket\\\\Server\\\\ReactPhpServer\\:\\:\\$socket is never read, only written\\.$#"
+			message: '#^Cannot cast mixed to int\.$#'
+			identifier: cast.int
 			count: 1
 			path: src/ReactPhpServer.php
 
 		-
-			message: "#^Offset 1 does not exist on array\\{0\\: string, 1\\?\\: numeric\\-string\\}\\.$#"
+			message: '#^Property BabDev\\WebSocket\\Server\\ReactPhpServer\:\:\$socket is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: src/ReactPhpServer.php
+
+		-
+			message: '#^Parameter \#1 \$id of method Symfony\\Component\\HttpFoundation\\Session\\SessionInterface\:\:setId\(\) expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Session/Middleware/InitializeSession.php
+
+		-
+			message: '#^Offset 1 might not exist on array\{0\: string, 1\?\: numeric\-string\}\.$#'
+			identifier: offsetAccess.notFound
 			count: 1
 			path: src/Session/Reader/PhpReader.php
 
 		-
-			message: "#^Method BabDev\\\\WebSocket\\\\Server\\\\Session\\\\Reader\\\\PhpSerializeReader\\:\\:read\\(\\) should return array but returns mixed\\.$#"
+			message: '#^Method BabDev\\WebSocket\\Server\\Session\\Reader\\PhpSerializeReader\:\:read\(\) should return array but returns mixed\.$#'
+			identifier: return.type
 			count: 1
 			path: src/Session/Reader/PhpSerializeReader.php
 
 		-
-			message: "#^Property BabDev\\\\WebSocket\\\\Server\\\\Session\\\\Storage\\\\Proxy\\\\ReadOnlySessionHandlerProxy\\:\\:\\$sessionName \\(string\\) does not accept mixed\\.$#"
+			message: '#^Property BabDev\\WebSocket\\Server\\Session\\Storage\\Proxy\\ReadOnlySessionHandlerProxy\:\:\$sessionName \(string\) does not accept mixed\.$#'
+			identifier: assign.propertyType
 			count: 1
 			path: src/Session/Storage/Proxy/ReadOnlySessionHandlerProxy.php
 
 		-
-			message: "#^Property Symfony\\\\Component\\\\HttpFoundation\\\\Session\\\\Storage\\\\Proxy\\\\AbstractProxy\\:\\:\\$saveHandlerName \\(string\\|null\\) does not accept mixed\\.$#"
+			message: '#^Property Symfony\\Component\\HttpFoundation\\Session\\Storage\\Proxy\\AbstractProxy\:\:\$saveHandlerName \(string\|null\) does not accept mixed\.$#'
+			identifier: assign.propertyType
 			count: 1
 			path: src/Session/Storage/Proxy/ReadOnlySessionHandlerProxy.php
 
 		-
-			message: "#^Call to an undefined method SessionHandlerInterface\\|Symfony\\\\Component\\\\HttpFoundation\\\\Session\\\\Storage\\\\Proxy\\\\AbstractProxy\\:\\:getId\\(\\)\\.$#"
+			message: '#^Call to an undefined method SessionHandlerInterface\|Symfony\\Component\\HttpFoundation\\Session\\Storage\\Proxy\\AbstractProxy\:\:getId\(\)\.$#'
+			identifier: method.notFound
 			count: 2
 			path: src/Session/Storage/ReadOnlyNativeSessionStorage.php
 
 		-
-			message: "#^Call to an undefined method SessionHandlerInterface\\|Symfony\\\\Component\\\\HttpFoundation\\\\Session\\\\Storage\\\\Proxy\\\\AbstractProxy\\:\\:getName\\(\\)\\.$#"
+			message: '#^Call to an undefined method SessionHandlerInterface\|Symfony\\Component\\HttpFoundation\\Session\\Storage\\Proxy\\AbstractProxy\:\:getName\(\)\.$#'
+			identifier: method.notFound
 			count: 2
 			path: src/Session/Storage/ReadOnlyNativeSessionStorage.php
 
 		-
-			message: "#^Call to an undefined method SessionHandlerInterface\\|Symfony\\\\Component\\\\HttpFoundation\\\\Session\\\\Storage\\\\Proxy\\\\AbstractProxy\\:\\:isSessionHandlerInterface\\(\\)\\.$#"
+			message: '#^Call to an undefined method SessionHandlerInterface\|Symfony\\Component\\HttpFoundation\\Session\\Storage\\Proxy\\AbstractProxy\:\:isSessionHandlerInterface\(\)\.$#'
+			identifier: method.notFound
 			count: 2
 			path: src/Session/Storage/ReadOnlyNativeSessionStorage.php
 
 		-
-			message: "#^Call to an undefined method SessionHandlerInterface\\|Symfony\\\\Component\\\\HttpFoundation\\\\Session\\\\Storage\\\\Proxy\\\\AbstractProxy\\:\\:isWrapper\\(\\)\\.$#"
+			message: '#^Call to an undefined method SessionHandlerInterface\|Symfony\\Component\\HttpFoundation\\Session\\Storage\\Proxy\\AbstractProxy\:\:isWrapper\(\)\.$#'
+			identifier: method.notFound
 			count: 2
 			path: src/Session/Storage/ReadOnlyNativeSessionStorage.php
 
 		-
-			message: "#^Call to an undefined method SessionHandlerInterface\\|Symfony\\\\Component\\\\HttpFoundation\\\\Session\\\\Storage\\\\Proxy\\\\AbstractProxy\\:\\:open\\(\\)\\.$#"
+			message: '#^Call to an undefined method SessionHandlerInterface\|Symfony\\Component\\HttpFoundation\\Session\\Storage\\Proxy\\AbstractProxy\:\:open\(\)\.$#'
+			identifier: method.notFound
 			count: 1
 			path: src/Session/Storage/ReadOnlyNativeSessionStorage.php
 
 		-
-			message: "#^Call to an undefined method SessionHandlerInterface\\|Symfony\\\\Component\\\\HttpFoundation\\\\Session\\\\Storage\\\\Proxy\\\\AbstractProxy\\:\\:read\\(\\)\\.$#"
+			message: '#^Call to an undefined method SessionHandlerInterface\|Symfony\\Component\\HttpFoundation\\Session\\Storage\\Proxy\\AbstractProxy\:\:read\(\)\.$#'
+			identifier: method.notFound
 			count: 1
 			path: src/Session/Storage/ReadOnlyNativeSessionStorage.php
 
 		-
-			message: "#^Call to an undefined method SessionHandlerInterface\\|Symfony\\\\Component\\\\HttpFoundation\\\\Session\\\\Storage\\\\Proxy\\\\AbstractProxy\\:\\:setActive\\(\\)\\.$#"
+			message: '#^Call to an undefined method SessionHandlerInterface\|Symfony\\Component\\HttpFoundation\\Session\\Storage\\Proxy\\AbstractProxy\:\:setActive\(\)\.$#'
+			identifier: method.notFound
 			count: 2
 			path: src/Session/Storage/ReadOnlyNativeSessionStorage.php
 
 		-
-			message: "#^Call to an undefined method SessionHandlerInterface\\|Symfony\\\\Component\\\\HttpFoundation\\\\Session\\\\Storage\\\\Proxy\\\\AbstractProxy\\:\\:setId\\(\\)\\.$#"
+			message: '#^Call to an undefined method SessionHandlerInterface\|Symfony\\Component\\HttpFoundation\\Session\\Storage\\Proxy\\AbstractProxy\:\:setId\(\)\.$#'
+			identifier: method.notFound
 			count: 1
 			path: src/Session/Storage/ReadOnlyNativeSessionStorage.php
 
 		-
-			message: "#^Parameter \\#2 \\.\\.\\.\\$values of function sprintf expects bool\\|float\\|int\\|string\\|null, mixed given\\.$#"
+			message: '#^Parameter \#2 \.\.\.\$values of function sprintf expects bool\|float\|int\|string\|null, mixed given\.$#'
+			identifier: argument.type
 			count: 1
 			path: src/Session/Storage/ReadOnlyNativeSessionStorage.php
 
 		-
-			message: "#^Property BabDev\\\\WebSocket\\\\Server\\\\Tests\\\\ReactPhpServerTest\\:\\:\\$server is never read, only written\\.$#"
+			message: '#^Parameter \#1 \$uri of method BabDev\\WebSocket\\Server\\WAMP\\WAMPConnection\:\:getUri\(\) expects string, array\<int\<0, max\>\|string, mixed\>\|bool\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/WAMP/Middleware/ParseWAMPMessage.php
+
+		-
+			message: '#^Parameter \#4 \$exclude of method BabDev\\WebSocket\\Server\\WAMPServerMiddleware\:\:onPublish\(\) expects list\<string\>, array\<int\<0, max\>\|string, mixed\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/WAMP/Middleware/ParseWAMPMessage.php
+
+		-
+			message: '#^Property BabDev\\WebSocket\\Server\\Tests\\ReactPhpServerTest\:\:\$server is never read, only written\.$#'
+			identifier: property.onlyWritten
 			count: 1
 			path: tests/ReactPhpServerTest.php

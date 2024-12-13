@@ -79,6 +79,7 @@ final class ParseWAMPMessage implements WebSocketServerMiddleware
         $decoratedConnection = $this->connections[$connection];
 
         try {
+            /** @var array{0: MessageType::*, 1: string, 2?: array<string, mixed>|string, 3?: bool|list<string>|array<string, mixed>, 4?: list<string>} $message */
             $message = json_decode($data, true, 512, \JSON_THROW_ON_ERROR);
         } catch (\JsonException $exception) {
             throw new InvalidMessage('Invalid WAMP message.', $exception->getCode(), $exception);
@@ -94,6 +95,8 @@ final class ParseWAMPMessage implements WebSocketServerMiddleware
 
         switch ($message[0]) {
             case MessageType::PREFIX:
+                \assert(isset($message[2]));
+
                 /** @var array<string, string> $prefixes */
                 $prefixes = $decoratedConnection->getAttributeStore()->get('wamp.prefixes', []);
                 $prefixes[$message[1]] = $message[2];
@@ -126,6 +129,8 @@ final class ParseWAMPMessage implements WebSocketServerMiddleware
                 break;
 
             case MessageType::PUBLISH:
+                \assert(isset($message[2]));
+
                 $exclude = $message[3] ?? null;
 
                 if (!\is_array($exclude)) {
