@@ -83,6 +83,14 @@ final class PhpReader implements Reader
                 // Add characters for the closing quote and semicolon
                 return \strlen($matches[0]) + (int) substr($matches[0], 2, -2) + 2;
 
+                // Enum
+            case 'E':
+                if (!preg_match('/^E:\d+:"[^"]+";/', $data, $matches)) {
+                    return false;
+                }
+
+                return strlen($matches[0]);
+
                 // Array or object value
             case 'a':
             case 'O':
