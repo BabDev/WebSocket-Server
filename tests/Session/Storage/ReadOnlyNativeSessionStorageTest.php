@@ -49,7 +49,7 @@ final class ReadOnlyNativeSessionStorageTest extends TestCase
 
         $this->handler->expects($this->once())
             ->method('open')
-            ->with($this->isType('string'), self::SESSION_NAME)
+            ->with($this->isString(), self::SESSION_NAME)
             ->willReturn(true);
 
         $this->handler->expects($this->once())

@@ -147,7 +147,7 @@ final class ParseWAMPMessageTest extends TestCase
 
         $this->decoratedMiddleware->expects($this->once())
             ->method('onCall')
-            ->with($this->isInstanceOf(WAMPConnection::class), $callId, $uri, $this->isType('array'))
+            ->with($this->isInstanceOf(WAMPConnection::class), $callId, $uri, $this->isArray())
             ->willReturnCallback(static function (Connection $connection, string $id, string $resolvedUri, array $params) use ($paramCount): void {
                 self::assertCount($paramCount, $params);
             });

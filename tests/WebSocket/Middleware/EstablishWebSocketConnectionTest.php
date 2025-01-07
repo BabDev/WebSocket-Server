@@ -238,7 +238,7 @@ final class EstablishWebSocketConnectionTest extends TestCase
         $loop = $this->createMock(LoopInterface::class);
         $loop->expects($this->once())
             ->method('addPeriodicTimer')
-            ->with(60, $this->isType('callable'))
+            ->with(60, $this->isCallable())
             ->willReturn($this->createMock(TimerInterface::class));
 
         $this->middleware->enableKeepAlive($loop, 60);
