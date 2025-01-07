@@ -89,7 +89,7 @@ final class PhpReader implements Reader
                     return false;
                 }
 
-                return strlen($matches[0]);
+                return \strlen($matches[0]);
 
                 // Array or object value
             case 'a':
