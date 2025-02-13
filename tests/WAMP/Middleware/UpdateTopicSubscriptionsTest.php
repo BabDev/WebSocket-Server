@@ -15,11 +15,11 @@ use PHPUnit\Framework\TestCase;
 
 final class UpdateTopicSubscriptionsTest extends TestCase
 {
-    private MockObject&WAMPServerMiddleware $decoratedMiddleware;
+    private readonly MockObject&WAMPServerMiddleware $decoratedMiddleware;
 
-    private ArrayTopicRegistry $topicRegistry;
+    private readonly ArrayTopicRegistry $topicRegistry;
 
-    private UpdateTopicSubscriptions $middleware;
+    private readonly UpdateTopicSubscriptions $middleware;
 
     protected function setUp(): void
     {

@@ -10,23 +10,21 @@ use PHPUnit\Framework\TestCase;
 
 final class ReadOnlySessionHandlerProxyTest extends TestCase
 {
-    private const SESSION_NAME = 'TestSession';
+    private const string SESSION_NAME = 'TestSession';
 
-    private MockObject&\SessionHandlerInterface $handler;
+    private readonly MockObject&\SessionHandlerInterface $handler;
 
-    private OptionsHandler $optionsHandler;
-
-    private ReadOnlySessionHandlerProxy $proxy;
+    private readonly ReadOnlySessionHandlerProxy $proxy;
 
     protected function setUp(): void
     {
         $this->handler = $this->createMock(\SessionHandlerInterface::class);
 
-        $this->optionsHandler = $this->createOptionsHandler();
-        $this->optionsHandler->set('session.save_handler', 'user');
-        $this->optionsHandler->set('session.name', self::SESSION_NAME);
+        $optionsHandler = $this->createOptionsHandler();
+        $optionsHandler->set('session.save_handler', 'user');
+        $optionsHandler->set('session.name', self::SESSION_NAME);
 
-        $this->proxy = new ReadOnlySessionHandlerProxy($this->handler, $this->optionsHandler);
+        $this->proxy = new ReadOnlySessionHandlerProxy($this->handler, $optionsHandler);
     }
 
     public function testRetrievesSessionIdAfterBeingSet(): void

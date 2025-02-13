@@ -16,27 +16,25 @@ use Symfony\Component\HttpFoundation\Session\SessionBagInterface;
 #[RequiresPhpExtension('session')]
 final class ReadOnlyNativeSessionStorageTest extends TestCase
 {
-    private const SESSION_NAME = 'TestSession';
+    private const string SESSION_NAME = 'TestSession';
 
-    private OptionsHandler $optionsHandler;
+    private readonly MockObject&Reader $reader;
 
-    private MockObject&Reader $reader;
+    private readonly MockObject&\SessionHandlerInterface $handler;
 
-    private MockObject&\SessionHandlerInterface $handler;
-
-    private ReadOnlyNativeSessionStorage $storage;
+    private readonly ReadOnlyNativeSessionStorage $storage;
 
     protected function setUp(): void
     {
-        $this->optionsHandler = $this->createOptionsHandler();
-        $this->optionsHandler->set('session.save_handler', 'user');
-        $this->optionsHandler->set('session.name', self::SESSION_NAME);
+        $optionsHandler = $this->createOptionsHandler();
+        $optionsHandler->set('session.save_handler', 'user');
+        $optionsHandler->set('session.name', self::SESSION_NAME);
 
         $this->reader = $this->createMock(Reader::class);
         $this->handler = $this->createMock(\SessionHandlerInterface::class);
 
         $this->storage = new ReadOnlyNativeSessionStorage(
-            optionsHandler: $this->optionsHandler,
+            optionsHandler: $optionsHandler,
             reader: $this->reader,
             handler: $this->handler,
         );

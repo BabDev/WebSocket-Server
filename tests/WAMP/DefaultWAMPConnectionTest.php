@@ -11,9 +11,9 @@ use PHPUnit\Framework\TestCase;
 
 final class DefaultWAMPConnectionTest extends TestCase
 {
-    private MockObject&Connection $decoratedConnection;
+    private readonly MockObject&Connection $decoratedConnection;
 
-    private DefaultWAMPConnection $connection;
+    private readonly DefaultWAMPConnection $connection;
 
     protected function setUp(): void
     {

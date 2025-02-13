@@ -13,13 +13,13 @@ use React\Socket\ServerInterface;
  * The {@see ReactPhpServer} is an implementation of the server interface which runs a WebSocket server stack using
  * the ReactPHP library.
  */
-final class ReactPhpServer implements Server
+final readonly class ReactPhpServer implements Server
 {
-    private readonly LoopInterface $loop;
+    private LoopInterface $loop;
 
     public function __construct(
-        private readonly ServerMiddleware $middleware,
-        private readonly ServerInterface $socket,
+        private ServerMiddleware $middleware,
+        private ServerInterface $socket,
         ?LoopInterface $loop = null
     ) {
         gc_enable();

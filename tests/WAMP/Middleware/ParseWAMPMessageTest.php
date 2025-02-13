@@ -20,11 +20,11 @@ use PHPUnit\Framework\TestCase;
 
 final class ParseWAMPMessageTest extends TestCase
 {
-    private MockObject&WAMPServerMiddleware $decoratedMiddleware;
+    private readonly MockObject&WAMPServerMiddleware $decoratedMiddleware;
 
-    private MockObject&TopicRegistry $topicRegistry;
+    private readonly MockObject&TopicRegistry $topicRegistry;
 
-    private ParseWAMPMessage $middleware;
+    private readonly ParseWAMPMessage $middleware;
 
     protected function setUp(): void
     {

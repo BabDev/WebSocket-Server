@@ -11,7 +11,7 @@ use BabDev\WebSocket\Server\Session\Exception\InvalidSession;
  */
 final class PhpReader implements Reader
 {
-    private const DELIMITER = '|';
+    private const string DELIMITER = '|';
 
     /**
      * @throws InvalidSession if the session data cannot be deserialized

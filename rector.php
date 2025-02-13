@@ -12,5 +12,6 @@ return RectorConfig::configure()
         __DIR__ . '/vendor/phpstan/phpstan-phpunit/extension.neon',
         __DIR__ . '/phpstan.neon',
     ])
-    ->withPreparedSets(codeQuality: true)
+    ->withPhpSets()
+    ->withPreparedSets(codeQuality: true, phpunitCodeQuality: true)
 ;

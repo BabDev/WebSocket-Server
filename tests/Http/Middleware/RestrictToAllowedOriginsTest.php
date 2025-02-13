@@ -15,8 +15,8 @@ use Psr\Http\Message\RequestInterface;
 
 final class RestrictToAllowedOriginsTest extends TestCase
 {
-    private MockObject&ServerMiddleware $decoratedMiddleware;
-    private RestrictToAllowedOrigins $middleware;
+    private readonly MockObject&ServerMiddleware $decoratedMiddleware;
+    private readonly RestrictToAllowedOrigins $middleware;
 
     protected function setUp(): void
     {

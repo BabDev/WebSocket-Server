@@ -12,7 +12,7 @@ use PHPUnit\Framework\TestCase;
 
 final class TopicTest extends TestCase
 {
-    private Topic $topic;
+    private readonly Topic $topic;
 
     protected function setUp(): void
     {
@@ -49,7 +49,7 @@ final class TopicTest extends TestCase
         $this->topic->remove($connection2);
         $this->topic->remove($connection3);
 
-        $this->assertCount(0, $this->topic);
+        $this->assertEmpty($this->topic);
     }
 
     public function testRejectsConnectionsWhichAreNotAWampConnection(): void

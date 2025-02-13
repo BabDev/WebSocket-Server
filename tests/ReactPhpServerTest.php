@@ -15,13 +15,9 @@ use React\Socket\SocketServer;
 
 final class ReactPhpServerTest extends TestCase
 {
-    private MockObject&ServerMiddleware $middleware;
+    private readonly MockObject&ServerMiddleware $middleware;
 
-    private SocketServer $socket;
-
-    private ReactPhpServer $server;
-
-    private int $port;
+    private readonly int $port;
 
     public static function setUpBeforeClass(): void
     {
@@ -37,9 +33,9 @@ final class ReactPhpServerTest extends TestCase
     {
         $this->middleware = $this->createMock(ServerMiddleware::class);
 
-        $this->socket = new SocketServer('127.0.0.1:0', [], Loop::get());
+        $socket = new SocketServer('127.0.0.1:0', [], Loop::get());
 
-        $uri = $this->socket->getAddress();
+        $uri = $socket->getAddress();
 
         if (!\is_string($uri)) {
             self::fail('Could not get socket server address');
@@ -53,7 +49,7 @@ final class ReactPhpServerTest extends TestCase
 
         $this->port = $port;
 
-        $this->server = new ReactPhpServer($this->middleware, $this->socket, Loop::get());
+        new ReactPhpServer($this->middleware, $socket, Loop::get());
     }
 
     protected function tickLoop(LoopInterface $loop): void

@@ -18,13 +18,13 @@ use Symfony\Component\HttpFoundation\Session\SessionInterface;
 
 final class InitializeSessionTest extends TestCase
 {
-    private MockObject&ServerMiddleware $decoratedMiddleware;
+    private readonly MockObject&ServerMiddleware $decoratedMiddleware;
 
-    private MockObject&SessionFactoryInterface $sessionFactory;
+    private readonly MockObject&SessionFactoryInterface $sessionFactory;
 
-    private OptionsHandler $optionsHandler;
+    private readonly OptionsHandler $optionsHandler;
 
-    private InitializeSession $middleware;
+    private readonly InitializeSession $middleware;
 
     protected function setUp(): void
     {

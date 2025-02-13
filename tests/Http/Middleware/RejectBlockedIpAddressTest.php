@@ -12,8 +12,8 @@ use PHPUnit\Framework\TestCase;
 
 final class RejectBlockedIpAddressTest extends TestCase
 {
-    private MockObject&ServerMiddleware $decoratedMiddleware;
-    private RejectBlockedIpAddress $middleware;
+    private readonly MockObject&ServerMiddleware $decoratedMiddleware;
+    private readonly RejectBlockedIpAddress $middleware;
 
     protected function setUp(): void
     {

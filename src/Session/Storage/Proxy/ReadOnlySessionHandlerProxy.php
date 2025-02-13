@@ -22,6 +22,7 @@ final class ReadOnlySessionHandlerProxy extends AbstractProxy implements \Sessio
         $this->sessionName = $this->optionsHandler->get('session.name');
     }
 
+    #[\Override]
     public function getId(): string
     {
         return $this->sessionId ?? parent::getId();
@@ -30,6 +31,7 @@ final class ReadOnlySessionHandlerProxy extends AbstractProxy implements \Sessio
     /**
      * @throws ReadOnlySession if trying to change the session ID once it has been set
      */
+    #[\Override]
     public function setId(string $id): void
     {
         if (null !== $this->sessionId) {
@@ -39,6 +41,7 @@ final class ReadOnlySessionHandlerProxy extends AbstractProxy implements \Sessio
         $this->sessionId = $id;
     }
 
+    #[\Override]
     public function getName(): string
     {
         return $this->sessionName;
@@ -47,6 +50,7 @@ final class ReadOnlySessionHandlerProxy extends AbstractProxy implements \Sessio
     /**
      * @throws ReadOnlySession
      */
+    #[\Override]
     public function setName(string $name): never
     {
         throw new ReadOnlySession(\sprintf('The session name cannot be changed in "%s".', self::class));

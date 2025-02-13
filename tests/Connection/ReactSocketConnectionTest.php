@@ -10,11 +10,11 @@ use React\Socket\ConnectionInterface as ReactSocketConnectionInterface;
 
 final class ReactSocketConnectionTest extends TestCase
 {
-    private MockObject&ReactSocketConnectionInterface $reactConnection;
+    private readonly MockObject&ReactSocketConnectionInterface $reactConnection;
 
-    private MockObject&AttributeStore $attributeStore;
+    private readonly MockObject&AttributeStore $attributeStore;
 
-    private ReactSocketConnection $connection;
+    private readonly ReactSocketConnection $connection;
 
     protected function setUp(): void
     {

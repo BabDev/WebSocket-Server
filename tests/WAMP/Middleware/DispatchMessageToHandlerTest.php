@@ -24,13 +24,13 @@ use Symfony\Component\Routing\Matcher\UrlMatcherInterface;
 
 final class DispatchMessageToHandlerTest extends TestCase
 {
-    private MockObject&UrlMatcherInterface $matcher;
+    private readonly MockObject&UrlMatcherInterface $matcher;
 
-    private MockObject&MessageHandlerResolver $resolver;
+    private readonly MockObject&MessageHandlerResolver $resolver;
 
-    private MockObject&EventDispatcherInterface $dispatcher;
+    private readonly MockObject&EventDispatcherInterface $dispatcher;
 
-    private DispatchMessageToHandler $middleware;
+    private readonly DispatchMessageToHandler $middleware;
 
     protected function setUp(): void
     {
@@ -43,10 +43,7 @@ final class DispatchMessageToHandlerTest extends TestCase
 
     public function testGetSubProtocols(): void
     {
-        $this->assertSame(
-            [],
-            $this->middleware->getSubProtocols(),
-        );
+        $this->assertEmpty($this->middleware->getSubProtocols());
     }
 
     #[TestDox('Handles a new connection being opened')]

@@ -51,12 +51,9 @@ final class GuzzleRequestParserTest extends TestCase
             $attributeStore->expects($this->once())
                 ->method('remove')
                 ->with('http.buffer');
-            $this->assertInstanceOf(
-                RequestInterface::class,
-                (new GuzzleRequestParser())->parse($connection, $message)
-            );
+            $this->assertInstanceOf(RequestInterface::class, (new GuzzleRequestParser())->parse($connection, $message));
         } else {
-            $this->assertNull((new GuzzleRequestParser())->parse($connection, $message));
+            $this->assertNotInstanceOf(RequestInterface::class, (new GuzzleRequestParser())->parse($connection, $message));
         }
     }
 

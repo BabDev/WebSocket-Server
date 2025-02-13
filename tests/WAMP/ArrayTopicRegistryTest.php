@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 
 final class ArrayTopicRegistryTest extends TestCase
 {
-    private ArrayTopicRegistry $topicRegistry;
+    private readonly ArrayTopicRegistry $topicRegistry;
 
     protected function setUp(): void
     {

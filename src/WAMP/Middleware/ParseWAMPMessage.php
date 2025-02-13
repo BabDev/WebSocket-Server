@@ -21,7 +21,7 @@ use BabDev\WebSocket\Server\WebSocketServerMiddleware;
  */
 final class ParseWAMPMessage implements WebSocketServerMiddleware
 {
-    private const WAMP_PROTOCOL_VERSION = 1;
+    private const int WAMP_PROTOCOL_VERSION = 1;
 
     /**
      * @var \SplObjectStorage<Connection, WAMPConnection>
