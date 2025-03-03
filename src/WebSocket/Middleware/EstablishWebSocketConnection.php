@@ -10,6 +10,7 @@ use BabDev\WebSocket\Server\WebSocket\DefaultWebSocketConnection;
 use BabDev\WebSocket\Server\WebSocket\Exception\InvalidEncoding;
 use BabDev\WebSocket\Server\WebSocket\WebSocketConnectionContext;
 use BabDev\WebSocket\Server\WebSocketServerMiddleware;
+use GuzzleHttp\Psr7\HttpFactory;
 use GuzzleHttp\Psr7\Message;
 use Psr\Http\Message\RequestInterface;
 use Ratchet\RFC6455\Handshake\NegotiatorInterface;
@@ -43,7 +44,7 @@ final class EstablishWebSocketConnection implements ServerMiddleware
      */
     public function __construct(
         private readonly ServerMiddleware $middleware,
-        private readonly NegotiatorInterface $negotiator = new ServerNegotiator(new RequestVerifier()),
+        private readonly NegotiatorInterface $negotiator = new ServerNegotiator(new RequestVerifier(), new HttpFactory()),
     ) {
         if ('e29c93' !== bin2hex('✓')) {
             throw new InvalidEncoding('Invalid encoding, ensure the UTF-8 charset is active.');
