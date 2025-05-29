@@ -25,7 +25,7 @@ parameters:
 			path: src/Session/Middleware/InitializeSession.php
 
 		-
-			message: '#^Offset 1 might not exist on array\{0\: string, 1\?\: numeric\-string\}\.$#'
+			message: '#^Offset 1 might not exist on array\{0\: non\-falsy\-string, 1\?\: numeric\-string\}\.$#'
 			identifier: offsetAccess.notFound
 			count: 1
 			path: src/Session/Reader/PhpReader.php

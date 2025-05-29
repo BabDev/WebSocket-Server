@@ -69,6 +69,9 @@ final class ReadOnlyNativeSessionStorage implements SessionStorageInterface
         $this->reader = $reader ?? $this->createReader();
     }
 
+    /**
+     * @throws \RuntimeException if something goes wrong starting the session
+     */
     public function start(): bool
     {
         if ($this->started && !$this->closed) {
@@ -77,7 +80,13 @@ final class ReadOnlyNativeSessionStorage implements SessionStorageInterface
 
         $this->saveHandler->open(session_save_path(), $this->saveHandler->getName());
 
-        $sessionData = $this->reader->read($this->saveHandler->read($this->saveHandler->getId()));
+        $data = $this->saveHandler->read($this->saveHandler->getId());
+
+        if (false === $data) {
+            throw new \RuntimeException('Failed to start the session.');
+        }
+
+        $sessionData = $this->reader->read($data);
 
         $this->loadSession($sessionData);
 

@@ -66,7 +66,7 @@ final class ReadOnlySessionHandlerProxy extends AbstractProxy implements \Sessio
         return $this->handler->close();
     }
 
-    public function read(string $id): string
+    public function read(string $id): string|false
     {
         return $this->handler->read($id);
     }
