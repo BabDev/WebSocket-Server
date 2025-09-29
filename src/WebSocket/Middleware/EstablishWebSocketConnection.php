@@ -116,7 +116,7 @@ final class EstablishWebSocketConnection implements ServerMiddleware
             },
         );
 
-        $this->connections->attach($connection, new WebSocketConnectionContext($decoratedConnection, $buffer));
+        $this->connections->offsetSet($connection, new WebSocketConnectionContext($decoratedConnection, $buffer));
 
         $this->middleware->onOpen($decoratedConnection);
     }
@@ -138,9 +138,9 @@ final class EstablishWebSocketConnection implements ServerMiddleware
      */
     public function onClose(Connection $connection): void
     {
-        if ($this->connections->contains($connection)) {
+        if ($this->connections->offsetExists($connection)) {
             $context = $this->connections[$connection];
-            $this->connections->detach($connection);
+            $this->connections->offsetUnset($connection);
 
             $this->middleware->onClose($context->connection);
         }
@@ -151,7 +151,7 @@ final class EstablishWebSocketConnection implements ServerMiddleware
      */
     public function onError(Connection $connection, \Throwable $throwable): void
     {
-        if ($this->connections->contains($connection)) {
+        if ($this->connections->offsetExists($connection)) {
             $this->middleware->onError($this->connections[$connection]->connection, $throwable);
         } else {
             $this->middleware->onError($connection, $throwable);
@@ -177,7 +177,7 @@ final class EstablishWebSocketConnection implements ServerMiddleware
 
         $this->pongReceiver = static function (FrameInterface $frame, Connection $connection) use ($pingedConnections, &$lastPing): void {
             if ($frame->getPayload() === $lastPing->getPayload()) {
-                $pingedConnections->detach($connection);
+                $pingedConnections->offsetUnset($connection);
             }
         };
 
@@ -196,7 +196,7 @@ final class EstablishWebSocketConnection implements ServerMiddleware
                     $webSocketConnection = $this->connections[$connection]->connection;
 
                     $webSocketConnection->send($lastPing);
-                    $pingedConnections->attach($webSocketConnection);
+                    $pingedConnections->offsetSet($webSocketConnection);
                 }
             }
         );

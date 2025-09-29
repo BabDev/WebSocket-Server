@@ -62,7 +62,7 @@ final class ParseWAMPMessage implements WebSocketServerMiddleware
             throw new InvalidMessage($exception->getMessage(), $exception->getCode(), $exception);
         }
 
-        $this->connections->attach($connection, $decoratedConnection);
+        $this->connections->offsetSet($connection, $decoratedConnection);
 
         $this->middleware->onOpen($decoratedConnection);
     }
@@ -159,7 +159,7 @@ final class ParseWAMPMessage implements WebSocketServerMiddleware
     public function onClose(Connection $connection): void
     {
         $decoratedConnection = $this->connections[$connection];
-        $this->connections->detach($connection);
+        $this->connections->offsetUnset($connection);
 
         $this->middleware->onClose($decoratedConnection);
     }
@@ -169,7 +169,7 @@ final class ParseWAMPMessage implements WebSocketServerMiddleware
      */
     public function onError(Connection $connection, \Throwable $throwable): void
     {
-        if ($this->connections->contains($connection)) {
+        if ($this->connections->offsetExists($connection)) {
             $this->middleware->onError($this->connections[$connection], $throwable);
         } else {
             $this->middleware->onError($connection, $throwable);

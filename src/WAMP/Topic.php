@@ -36,7 +36,7 @@ final readonly class Topic implements \IteratorAggregate, \Countable, \Stringabl
             throw new UnsupportedConnection(\sprintf('Connections registered in "%s" must be an instance of "%s", "%s" given.', self::class, WAMPConnection::class, get_debug_type($connection)));
         }
 
-        $this->subscribers->attach($connection);
+        $this->subscribers->offsetSet($connection);
     }
 
     public function has(Connection $connection): bool
@@ -45,7 +45,7 @@ final readonly class Topic implements \IteratorAggregate, \Countable, \Stringabl
             return false;
         }
 
-        return $this->subscribers->contains($connection);
+        return $this->subscribers->offsetExists($connection);
     }
 
     public function remove(Connection $connection): void
@@ -54,8 +54,8 @@ final readonly class Topic implements \IteratorAggregate, \Countable, \Stringabl
             return;
         }
 
-        if ($this->subscribers->contains($connection)) {
-            $this->subscribers->detach($connection);
+        if ($this->subscribers->offsetExists($connection)) {
+            $this->subscribers->offsetUnset($connection);
         }
     }
 

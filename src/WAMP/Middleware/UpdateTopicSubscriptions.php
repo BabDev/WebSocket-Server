@@ -85,7 +85,7 @@ final readonly class UpdateTopicSubscriptions implements WAMPServerMiddleware
         /** @var \SplObjectStorage<Topic, null> $subscriptions */
         $subscriptions = $connection->getAttributeStore()->get('wamp.subscriptions', new \SplObjectStorage());
 
-        if ($subscriptions->contains($topic)) {
+        if ($subscriptions->offsetExists($topic)) {
             return;
         }
 
@@ -95,7 +95,7 @@ final readonly class UpdateTopicSubscriptions implements WAMPServerMiddleware
 
         $topic->add($connection);
 
-        $subscriptions->attach($topic);
+        $subscriptions->offsetSet($topic);
 
         try {
             $this->middleware->onSubscribe($connection, $topic);
@@ -114,7 +114,7 @@ final readonly class UpdateTopicSubscriptions implements WAMPServerMiddleware
         /** @var \SplObjectStorage<Topic, null> $subscriptions */
         $subscriptions = $connection->getAttributeStore()->get('wamp.subscriptions', new \SplObjectStorage());
 
-        if (!$subscriptions->contains($topic)) {
+        if (!$subscriptions->offsetExists($topic)) {
             return;
         }
 
@@ -146,8 +146,8 @@ final readonly class UpdateTopicSubscriptions implements WAMPServerMiddleware
         /** @var \SplObjectStorage<Topic, null> $subscriptions */
         $subscriptions = $connection->getAttributeStore()->get('wamp.subscriptions', new \SplObjectStorage());
 
-        if ($subscriptions->contains($topic)) {
-            $subscriptions->detach($topic);
+        if ($subscriptions->offsetExists($topic)) {
+            $subscriptions->offsetUnset($topic);
         }
 
         $topic->remove($connection);

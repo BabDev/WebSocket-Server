@@ -87,9 +87,9 @@ final class UpdateTopicSubscriptionsTest extends TestCase
 
         /** @var \SplObjectStorage<Topic, null> $subscriptions */
         $subscriptions = new \SplObjectStorage();
-        $subscriptions->attach($topic1);
-        $subscriptions->attach($topic2);
-        $subscriptions->attach($topic3);
+        $subscriptions->offsetSet($topic1);
+        $subscriptions->offsetSet($topic2);
+        $subscriptions->offsetSet($topic3);
 
         $attributeStore->set('wamp.subscriptions', $subscriptions);
 
@@ -182,7 +182,7 @@ final class UpdateTopicSubscriptionsTest extends TestCase
 
         $this->middleware->onSubscribe($connection, $topic);
 
-        $this->assertTrue($subscriptions->contains($topic));
+        $this->assertTrue($subscriptions->offsetExists($topic));
         $this->assertTrue($topic->has($connection));
     }
 
@@ -197,7 +197,7 @@ final class UpdateTopicSubscriptionsTest extends TestCase
 
         /** @var \SplObjectStorage<Topic, null> $subscriptions */
         $subscriptions = new \SplObjectStorage();
-        $subscriptions->attach($topic);
+        $subscriptions->offsetSet($topic);
 
         $attributeStore->set('wamp.subscriptions', $subscriptions);
 
@@ -215,7 +215,7 @@ final class UpdateTopicSubscriptionsTest extends TestCase
 
         $this->middleware->onUnsubscribe($connection, $topic);
 
-        $this->assertFalse($subscriptions->contains($topic));
+        $this->assertFalse($subscriptions->offsetExists($topic));
         $this->assertFalse($this->topicRegistry->has($topic->id));
     }
 
