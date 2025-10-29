@@ -51,9 +51,10 @@ final class GuzzleRequestParserTest extends TestCase
             $attributeStore->expects($this->once())
                 ->method('remove')
                 ->with('http.buffer');
-            $this->assertInstanceOf(RequestInterface::class, (new GuzzleRequestParser())->parse($connection, $message));
+
+            $this->assertInstanceOf(RequestInterface::class, new GuzzleRequestParser()->parse($connection, $message));
         } else {
-            $this->assertNotInstanceOf(RequestInterface::class, (new GuzzleRequestParser())->parse($connection, $message));
+            $this->assertNotInstanceOf(RequestInterface::class, new GuzzleRequestParser()->parse($connection, $message));
         }
     }
 
@@ -84,7 +85,7 @@ final class GuzzleRequestParserTest extends TestCase
             ->method('getAttributeStore')
             ->willReturn($attributeStore);
 
-        (new GuzzleRequestParser(10))->parse($connection, $message);
+        new GuzzleRequestParser(10)->parse($connection, $message);
     }
 
     public function testRejectsARequestWhichCannotBeParsed(): void
@@ -114,6 +115,6 @@ final class GuzzleRequestParserTest extends TestCase
             ->method('getAttributeStore')
             ->willReturn($attributeStore);
 
-        (new GuzzleRequestParser())->parse($connection, $message);
+        new GuzzleRequestParser()->parse($connection, $message);
     }
 }

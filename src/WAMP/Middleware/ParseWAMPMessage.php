@@ -110,7 +110,7 @@ final class ParseWAMPMessage implements WebSocketServerMiddleware
                 $callID = array_shift($message);
                 $procURI = array_shift($message);
 
-                if (1 == \count($message) && \is_array($message[0])) {
+                if (1 === \count($message) && \is_array($message[0])) {
                     $message = $message[0];
                 }
 

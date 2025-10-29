@@ -22,7 +22,7 @@ final class PsrContainerMessageHandlerResolverTest extends TestCase
 
         $request = new WAMPMessageRequest(new ParameterBag());
 
-        (new PsrContainerMessageHandlerResolver(new Container()))->findMessageHandler($request);
+        new PsrContainerMessageHandlerResolver(new Container())->findMessageHandler($request);
     }
 
     public function testReturnsTheMessageHandlerWhenSetAsTheControllerRequestAttribute(): void
@@ -32,7 +32,7 @@ final class PsrContainerMessageHandlerResolverTest extends TestCase
 
         $this->assertSame(
             $handler,
-            (new PsrContainerMessageHandlerResolver(new Container()))->findMessageHandler(new WAMPMessageRequest($attributes)),
+            new PsrContainerMessageHandlerResolver(new Container())->findMessageHandler(new WAMPMessageRequest($attributes)),
         );
     }
 
@@ -46,7 +46,7 @@ final class PsrContainerMessageHandlerResolverTest extends TestCase
 
         $this->assertSame(
             $handler,
-            (new PsrContainerMessageHandlerResolver($container))->findMessageHandler(new WAMPMessageRequest($attributes)),
+            new PsrContainerMessageHandlerResolver($container)->findMessageHandler(new WAMPMessageRequest($attributes)),
         );
     }
 
@@ -57,7 +57,7 @@ final class PsrContainerMessageHandlerResolverTest extends TestCase
         $attributes = new ParameterBag();
         $attributes->set('_controller', true);
 
-        (new PsrContainerMessageHandlerResolver(new Container()))->findMessageHandler(new WAMPMessageRequest($attributes));
+        new PsrContainerMessageHandlerResolver(new Container())->findMessageHandler(new WAMPMessageRequest($attributes));
     }
 
     public function testCannotResolveAMessageHandlerWhenTheControllerRequestAttributeIsServiceIdThatDoesNotExistInTheContainer(): void
@@ -65,9 +65,9 @@ final class PsrContainerMessageHandlerResolverTest extends TestCase
         $this->expectException(UnknownMessageHandler::class);
 
         $attributes = new ParameterBag();
-        $attributes->set('_controller', \UnknownClass::class); /* @phpstan-ignore-line class.notFound */
+        $attributes->set('_controller', \UnknownClass::class); // @phpstan-ignore-line class.notFound
 
-        (new PsrContainerMessageHandlerResolver(new Container()))->findMessageHandler(new WAMPMessageRequest($attributes));
+        new PsrContainerMessageHandlerResolver(new Container())->findMessageHandler(new WAMPMessageRequest($attributes));
     }
 
     public function testCannotResolveAMessageHandlerWhenTheControllerDoesNotImplementTheRequiredInterface(): void
@@ -80,7 +80,7 @@ final class PsrContainerMessageHandlerResolverTest extends TestCase
         $container = new Container();
         $container->set(MissingInterfaceMessageHandler::class, new MissingInterfaceMessageHandler());
 
-        (new PsrContainerMessageHandlerResolver($container))->findMessageHandler(new WAMPMessageRequest($attributes));
+        new PsrContainerMessageHandlerResolver($container)->findMessageHandler(new WAMPMessageRequest($attributes));
     }
 }
 

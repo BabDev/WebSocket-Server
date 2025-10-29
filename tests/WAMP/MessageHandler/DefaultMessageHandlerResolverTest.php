@@ -22,7 +22,7 @@ final class DefaultMessageHandlerResolverTest extends TestCase
 
         $request = new WAMPMessageRequest(new ParameterBag());
 
-        (new DefaultMessageHandlerResolver())->findMessageHandler($request);
+        new DefaultMessageHandlerResolver()->findMessageHandler($request);
     }
 
     public function testReturnsTheMessageHandlerWhenSetAsTheControllerRequestAttribute(): void
@@ -32,7 +32,7 @@ final class DefaultMessageHandlerResolverTest extends TestCase
 
         $this->assertSame(
             $handler,
-            (new DefaultMessageHandlerResolver())->findMessageHandler(new WAMPMessageRequest($attributes)),
+            new DefaultMessageHandlerResolver()->findMessageHandler(new WAMPMessageRequest($attributes)),
         );
     }
 
@@ -43,7 +43,7 @@ final class DefaultMessageHandlerResolverTest extends TestCase
 
         $this->assertInstanceOf(
             BasicMessageHandler::class,
-            (new DefaultMessageHandlerResolver())->findMessageHandler(new WAMPMessageRequest($attributes)),
+            new DefaultMessageHandlerResolver()->findMessageHandler(new WAMPMessageRequest($attributes)),
         );
     }
 
@@ -54,7 +54,7 @@ final class DefaultMessageHandlerResolverTest extends TestCase
         $attributes = new ParameterBag();
         $attributes->set('_controller', true);
 
-        (new DefaultMessageHandlerResolver())->findMessageHandler(new WAMPMessageRequest($attributes));
+        new DefaultMessageHandlerResolver()->findMessageHandler(new WAMPMessageRequest($attributes));
     }
 
     public function testCannotResolveAMessageHandlerWhenTheControllerRequestAttributeIsANonExistingClass(): void
@@ -64,7 +64,7 @@ final class DefaultMessageHandlerResolverTest extends TestCase
         $attributes = new ParameterBag();
         $attributes->set('_controller', \UnknownClass::class); /* @phpstan-ignore-line class.notFound */
 
-        (new DefaultMessageHandlerResolver())->findMessageHandler(new WAMPMessageRequest($attributes));
+        new DefaultMessageHandlerResolver()->findMessageHandler(new WAMPMessageRequest($attributes));
     }
 
     public function testCannotResolveAMessageHandlerWithRequiredConstructorArguments(): void
@@ -74,7 +74,7 @@ final class DefaultMessageHandlerResolverTest extends TestCase
         $attributes = new ParameterBag();
         $attributes->set('_controller', AdvancedMessageHandler::class);
 
-        (new DefaultMessageHandlerResolver())->findMessageHandler(new WAMPMessageRequest($attributes));
+        new DefaultMessageHandlerResolver()->findMessageHandler(new WAMPMessageRequest($attributes));
     }
 
     public function testCannotResolveAMessageHandlerWhenTheControllerDoesNotImplementTheRequiredInterface(): void
@@ -84,6 +84,6 @@ final class DefaultMessageHandlerResolverTest extends TestCase
         $attributes = new ParameterBag();
         $attributes->set('_controller', MissingInterfaceMessageHandler::class);
 
-        (new DefaultMessageHandlerResolver())->findMessageHandler(new WAMPMessageRequest($attributes));
+        new DefaultMessageHandlerResolver()->findMessageHandler(new WAMPMessageRequest($attributes));
     }
 }

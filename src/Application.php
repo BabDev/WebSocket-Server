@@ -107,7 +107,7 @@ final class Application
 
         $socket = new SocketServer($this->uri, $this->context, $this->loop);
 
-        (new ReactPhpServer($middleware, $socket, $this->loop))->run();
+        new ReactPhpServer($middleware, $socket, $this->loop)->run();
     }
 
     public function route(string $path, MessageHandler|MessageMiddleware|string $handler, int $priority = 0): self

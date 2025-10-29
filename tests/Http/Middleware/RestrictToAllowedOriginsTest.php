@@ -274,7 +274,7 @@ final class RestrictToAllowedOriginsTest extends TestCase
 
     public function testManagesAllowedOriginList(): void
     {
-        $allowedOrigins = (new \ReflectionClass($this->middleware))->getProperty('allowedOrigins');
+        $allowedOrigins = new \ReflectionClass($this->middleware)->getProperty('allowedOrigins');
 
         $this->middleware->allowOrigin('192.168.1.1');
         $this->middleware->allowOrigin('localhost');

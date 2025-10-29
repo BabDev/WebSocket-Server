@@ -198,7 +198,7 @@ final class RejectBlockedIpAddressTest extends TestCase
 
     public function testManagesBlockedAddressList(): void
     {
-        $blockedAddresses = (new \ReflectionClass($this->middleware))->getProperty('blockedAddresses');
+        $blockedAddresses = new \ReflectionClass($this->middleware)->getProperty('blockedAddresses');
 
         $this->middleware->blockAddress('192.168.1.1');
         $this->middleware->blockAddress('192.168.0.0/24');

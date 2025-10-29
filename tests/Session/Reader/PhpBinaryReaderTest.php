@@ -24,6 +24,6 @@ final class PhpBinaryReaderTest extends TestCase
             ],
         ];
 
-        $this->assertSame($expected, (new PhpBinaryReader())->read($input));
+        $this->assertSame($expected, new PhpBinaryReader()->read($input));
     }
 }

@@ -24,7 +24,7 @@ final class PhpSerializeReaderTest extends TestCase
     #[DataProvider('dataRead')]
     public function testReadsData(string $input): void
     {
-        $output = (new PhpSerializeReader())->read($input);
+        $output = new PhpSerializeReader()->read($input);
 
         $this->assertArrayHasKey('_sf2_attributes', $output);
         $this->assertArrayHasKey('_sf2_meta', $output);

@@ -25,6 +25,6 @@ final class DefaultErrorUriResolverTest extends TestCase
     #[DataProvider('dataSupportedErrors')]
     public function testResolve(string $errorType, string $expected): void
     {
-        $this->assertSame($expected, (new DefaultErrorUriResolver())->resolve($errorType));
+        $this->assertSame($expected, new DefaultErrorUriResolver()->resolve($errorType));
     }
 }
