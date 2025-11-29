@@ -109,6 +109,12 @@ parameters:
 			path: src/WAMP/Middleware/ParseWAMPMessage.php
 
 		-
+			message: '#^Parameter \#2 \$id of method BabDev\\WebSocket\\Server\\WAMPServerMiddleware\:\:onCall\(\) expects string, array\<int\<0, max\>\|string, mixed\>\|bool\|string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/WAMP/Middleware/ParseWAMPMessage.php
+
+		-
 			message: '#^Parameter \#4 \$exclude of method BabDev\\WebSocket\\Server\\WAMPServerMiddleware\:\:onPublish\(\) expects list\<string\>, array\<int\<0, max\>\|string, mixed\> given\.$#'
 			identifier: argument.type
 			count: 1
