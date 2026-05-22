@@ -3,131 +3,115 @@
 namespace BabDev\WebSocket\Server\Tests\WebSocket;
 
 use BabDev\WebSocket\Server\Connection;
+use BabDev\WebSocket\Server\Connection\ArrayAttributeStore;
 use BabDev\WebSocket\Server\Connection\AttributeStore;
 use BabDev\WebSocket\Server\WebSocket\DefaultWebSocketConnection;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Ratchet\RFC6455\Messaging\DataInterface;
 
 final class DefaultWebSocketConnectionTest extends TestCase
 {
-    private readonly MockObject&Connection $decoratedConnection;
-
-    private readonly DefaultWebSocketConnection $connection;
-
-    protected function setUp(): void
-    {
-        $this->decoratedConnection = $this->createMock(Connection::class);
-
-        $this->connection = new DefaultWebSocketConnection($this->decoratedConnection);
-    }
-
     public function testProvidesTheAttributeStoreFromTheDecoratedConnection(): void
     {
-        /** @var MockObject&AttributeStore $attributeStore */
-        $attributeStore = $this->createMock(AttributeStore::class);
+        /** @var Stub&AttributeStore $attributeStore */
+        $attributeStore = $this->createStub(AttributeStore::class);
 
-        $this->decoratedConnection->expects($this->once())
+        /** @var MockObject&Connection $decoratedConnection */
+        $decoratedConnection = $this->createMock(Connection::class);
+        $decoratedConnection->expects($this->once())
             ->method('getAttributeStore')
             ->willReturn($attributeStore);
 
-        $this->assertSame($attributeStore, $this->connection->getAttributeStore());
+        $this->assertSame(
+            $attributeStore,
+            new DefaultWebSocketConnection($decoratedConnection)->getAttributeStore(),
+        );
     }
 
     public function testProvidesTheDecoratedConnection(): void
     {
-        $this->assertSame($this->decoratedConnection, $this->connection->getConnection());
+        /** @var Stub&Connection $decoratedConnection */
+        $decoratedConnection = $this->createStub(Connection::class);
+
+        $this->assertSame(
+            $decoratedConnection,
+            new DefaultWebSocketConnection($decoratedConnection)->getConnection(),
+        );
     }
 
     public function testSendsAMessageWhenTheWebsocketStateIsNotClosing(): void
     {
-        /** @var MockObject&AttributeStore $attributeStore */
-        $attributeStore = $this->createMock(AttributeStore::class);
-        $attributeStore->expects($this->once())
-            ->method('get')
-            ->with('websocket.closing', false)
-            ->willReturn(false);
+        $attributeStore = new ArrayAttributeStore();
+        $attributeStore->set('websocket.closing', false);
 
-        $this->decoratedConnection->expects($this->once())
+        /** @var MockObject&Connection $decoratedConnection */
+        $decoratedConnection = $this->createMock(Connection::class);
+        $decoratedConnection->expects($this->once())
             ->method('getAttributeStore')
             ->willReturn($attributeStore);
 
-        $message = 'Hello World!';
-
-        $this->decoratedConnection->expects($this->once())
+        $decoratedConnection->expects($this->once())
             ->method('send');
 
-        $this->connection->send($message);
+        new DefaultWebSocketConnection($decoratedConnection)->send('Hello World!');
     }
 
     public function testDoesNotSendAMessageWhenTheWebsocketStateIsClosing(): void
     {
-        /** @var MockObject&AttributeStore $attributeStore */
-        $attributeStore = $this->createMock(AttributeStore::class);
-        $attributeStore->expects($this->once())
-            ->method('get')
-            ->with('websocket.closing', false)
-            ->willReturn(true);
+        $attributeStore = new ArrayAttributeStore();
+        $attributeStore->set('websocket.closing', true);
 
-        $this->decoratedConnection->expects($this->once())
+        /** @var MockObject&Connection $decoratedConnection */
+        $decoratedConnection = $this->createMock(Connection::class);
+        $decoratedConnection->expects($this->once())
             ->method('getAttributeStore')
             ->willReturn($attributeStore);
 
-        $message = 'Hello World!';
-
-        $this->decoratedConnection->expects($this->never())
+        $decoratedConnection->expects($this->never())
             ->method('send');
 
-        $this->connection->send($message);
+        new DefaultWebSocketConnection($decoratedConnection)->send('Hello World!');
     }
 
     public function testClosesAConnectionWithACode(): void
     {
-        /** @var MockObject&AttributeStore $attributeStore */
-        $attributeStore = $this->createMock(AttributeStore::class);
-        $attributeStore->expects($this->atLeastOnce())
-            ->method('get')
-            ->with('websocket.closing', false)
-            ->willReturn(false);
+        $attributeStore = new ArrayAttributeStore();
+        $attributeStore->set('websocket.closing', false);
 
-        $attributeStore->expects($this->once())
-            ->method('set')
-            ->with('websocket.closing', true);
-
-        $this->decoratedConnection->expects($this->atLeastOnce())
+        /** @var MockObject&Connection $decoratedConnection */
+        $decoratedConnection = $this->createMock(Connection::class);
+        $decoratedConnection->expects($this->atLeastOnce())
             ->method('getAttributeStore')
             ->willReturn($attributeStore);
 
-        $this->decoratedConnection->expects($this->once())
+        $decoratedConnection->expects($this->once())
             ->method('send');
 
-        $this->decoratedConnection->expects($this->once())
+        $decoratedConnection->expects($this->once())
             ->method('close');
 
-        $this->connection->close(1000);
+        new DefaultWebSocketConnection($decoratedConnection)->close(1000);
+
+        $this->assertTrue($attributeStore->get('websocket.closing'));
     }
 
     public function testClosesAConnectionWithADataObject(): void
     {
-        /** @var MockObject&AttributeStore $attributeStore */
-        $attributeStore = $this->createMock(AttributeStore::class);
-        $attributeStore->expects($this->atLeastOnce())
-            ->method('get')
-            ->with('websocket.closing', false)
-            ->willReturn(false);
+        $attributeStore = new ArrayAttributeStore();
+        $attributeStore->set('websocket.closing', false);
 
-        $attributeStore->expects($this->once())
-            ->method('set')
-            ->with('websocket.closing', true);
-
-        $this->decoratedConnection->expects($this->atLeastOnce())
+        /** @var MockObject&Connection $decoratedConnection */
+        $decoratedConnection = $this->createMock(Connection::class);
+        $decoratedConnection->expects($this->atLeastOnce())
             ->method('getAttributeStore')
             ->willReturn($attributeStore);
 
-        $this->decoratedConnection->expects($this->once())
+        $decoratedConnection->expects($this->once())
             ->method('send');
 
-        $this->decoratedConnection->expects($this->once())
+        $decoratedConnection->expects($this->once())
             ->method('close');
 
         /** @var MockObject&DataInterface $data */
@@ -136,31 +120,28 @@ final class DefaultWebSocketConnectionTest extends TestCase
             ->method('getContents')
             ->willReturn('Signing off!');
 
-        $this->connection->close($data);
+        new DefaultWebSocketConnection($decoratedConnection)->close($data);
+
+        $this->assertTrue($attributeStore->get('websocket.closing'));
     }
 
     public function testClosesAConnectionWithoutSendingAMessageWhenTheWebsocketStateIsClosing(): void
     {
-        /** @var MockObject&AttributeStore $attributeStore */
-        $attributeStore = $this->createMock(AttributeStore::class);
-        $attributeStore->expects($this->once())
-            ->method('get')
-            ->with('websocket.closing', false)
-            ->willReturn(true);
+        $attributeStore = new ArrayAttributeStore();
+        $attributeStore->set('websocket.closing', true);
 
-        $attributeStore->expects($this->never())
-            ->method('set');
-
-        $this->decoratedConnection->expects($this->once())
+        /** @var MockObject&Connection $decoratedConnection */
+        $decoratedConnection = $this->createMock(Connection::class);
+        $decoratedConnection->expects($this->once())
             ->method('getAttributeStore')
             ->willReturn($attributeStore);
 
-        $this->decoratedConnection->expects($this->never())
+        $decoratedConnection->expects($this->never())
             ->method('send');
 
-        $this->decoratedConnection->expects($this->never())
+        $decoratedConnection->expects($this->never())
             ->method('close');
 
-        $this->connection->close();
+        new DefaultWebSocketConnection($decoratedConnection)->close(1000);
     }
 }

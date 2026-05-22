@@ -11,6 +11,7 @@ use BabDev\WebSocket\Server\WAMP\WAMPConnection;
 use BabDev\WebSocket\Server\WAMPServerMiddleware;
 use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 final class UpdateTopicSubscriptionsTest extends TestCase
@@ -66,8 +67,8 @@ final class UpdateTopicSubscriptionsTest extends TestCase
     {
         $data = 'Testing';
 
-        /** @var MockObject&Connection $connection */
-        $connection = $this->createMock(Connection::class);
+        /** @var Stub&Connection $connection */
+        $connection = $this->createStub(Connection::class);
 
         $this->decoratedMiddleware->expects($this->once())
             ->method('onMessage')
@@ -127,8 +128,8 @@ final class UpdateTopicSubscriptionsTest extends TestCase
     #[TestDox('Handles an error')]
     public function testOnError(): void
     {
-        /** @var MockObject&Connection $connection */
-        $connection = $this->createMock(Connection::class);
+        /** @var Stub&Connection $connection */
+        $connection = $this->createStub(Connection::class);
 
         $error = new \Exception('Testing');
 
@@ -146,8 +147,8 @@ final class UpdateTopicSubscriptionsTest extends TestCase
         $resolvedUri = '/testing';
         $params = ['foo' => 'bar'];
 
-        /** @var MockObject&WAMPConnection $connection */
-        $connection = $this->createMock(WAMPConnection::class);
+        /** @var Stub&WAMPConnection $connection */
+        $connection = $this->createStub(WAMPConnection::class);
 
         $this->decoratedMiddleware->expects($this->once())
             ->method('onCall')
@@ -227,8 +228,8 @@ final class UpdateTopicSubscriptionsTest extends TestCase
         $exclude = [];
         $eligible = [];
 
-        /** @var MockObject&WAMPConnection $connection */
-        $connection = $this->createMock(WAMPConnection::class);
+        /** @var Stub&WAMPConnection $connection */
+        $connection = $this->createStub(WAMPConnection::class);
 
         $this->decoratedMiddleware->expects($this->once())
             ->method('onPublish')

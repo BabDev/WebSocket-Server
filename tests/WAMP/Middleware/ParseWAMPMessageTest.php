@@ -16,33 +16,23 @@ use BabDev\WebSocket\Server\WAMPServerMiddleware;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 final class ParseWAMPMessageTest extends TestCase
 {
-    private readonly MockObject&WAMPServerMiddleware $decoratedMiddleware;
-
-    private readonly MockObject&TopicRegistry $topicRegistry;
-
-    private readonly ParseWAMPMessage $middleware;
-
-    protected function setUp(): void
-    {
-        $this->decoratedMiddleware = $this->createMock(WAMPServerMiddleware::class);
-        $this->topicRegistry = $this->createMock(TopicRegistry::class);
-
-        $this->middleware = new ParseWAMPMessage($this->decoratedMiddleware, $this->topicRegistry);
-    }
-
     public function testGetSubProtocols(): void
     {
-        $this->decoratedMiddleware->expects($this->once())
+        /** @var MockObject&WAMPServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(WAMPServerMiddleware::class);
+
+        $decoratedMiddleware->expects($this->once())
             ->method('getSubProtocols')
             ->willReturn(['ws']);
 
         $this->assertSame(
             ['ws', 'wamp'],
-            $this->middleware->getSubProtocols(),
+            new ParseWAMPMessage($decoratedMiddleware, $this->createStub(TopicRegistry::class))->getSubProtocols(),
         );
     }
 
@@ -65,7 +55,7 @@ final class ParseWAMPMessageTest extends TestCase
                 $sentData = $data;
             });
 
-        $this->middleware->onOpen($connection);
+        new ParseWAMPMessage($this->createStub(WAMPServerMiddleware::class), $this->createStub(TopicRegistry::class))->onOpen($connection);
 
         $this->assertIsString($sentData);
         $this->assertJson($sentData);
@@ -96,8 +86,9 @@ final class ParseWAMPMessageTest extends TestCase
         $prefix = 'testing';
         $uri = 'https://example.com/testing';
 
-        $this->middleware->onOpen($connection);
-        $this->middleware->onMessage($connection, json_encode([MessageType::PREFIX, $prefix, $uri], \JSON_THROW_ON_ERROR));
+        $middleware = new ParseWAMPMessage($this->createStub(WAMPServerMiddleware::class), $this->createStub(TopicRegistry::class));
+        $middleware->onOpen($connection);
+        $middleware->onMessage($connection, json_encode([MessageType::PREFIX, $prefix, $uri], \JSON_THROW_ON_ERROR));
 
         $this->assertSame(
             [$prefix => $uri],
@@ -145,15 +136,18 @@ final class ParseWAMPMessageTest extends TestCase
         $connection->expects($this->once())
             ->method('send');
 
-        $this->decoratedMiddleware->expects($this->once())
+        /** @var MockObject&WAMPServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(WAMPServerMiddleware::class);
+        $decoratedMiddleware->expects($this->once())
             ->method('onCall')
             ->with($this->isInstanceOf(WAMPConnection::class), $callId, $uri, $this->isArray())
             ->willReturnCallback(static function (Connection $connection, string $id, string $resolvedUri, array $params) use ($paramCount): void {
                 self::assertCount($paramCount, $params);
             });
 
-        $this->middleware->onOpen($connection);
-        $this->middleware->onMessage($connection, json_encode($message, \JSON_THROW_ON_ERROR));
+        $middleware = new ParseWAMPMessage($decoratedMiddleware, $this->createStub(TopicRegistry::class));
+        $middleware->onOpen($connection);
+        $middleware->onMessage($connection, json_encode($message, \JSON_THROW_ON_ERROR));
     }
 
     #[TestDox('Handles incoming data on the connection for a WAMP "SUBSCRIBE" message')]
@@ -172,21 +166,26 @@ final class ParseWAMPMessageTest extends TestCase
         $connection->expects($this->once())
             ->method('send');
 
-        $this->topicRegistry->expects($this->once())
+        /** @var MockObject&TopicRegistry $topicRegistry */
+        $topicRegistry = $this->createMock(TopicRegistry::class);
+        $topicRegistry->expects($this->once())
             ->method('has')
             ->with($uri)
             ->willReturn(false);
 
-        $this->topicRegistry->expects($this->once())
+        $topicRegistry->expects($this->once())
             ->method('add')
             ->with($this->isInstanceOf(Topic::class));
 
-        $this->decoratedMiddleware->expects($this->once())
+        /** @var MockObject&WAMPServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(WAMPServerMiddleware::class);
+        $decoratedMiddleware->expects($this->once())
             ->method('onSubscribe')
             ->with($this->isInstanceOf(WAMPConnection::class), $this->isInstanceOf(Topic::class));
 
-        $this->middleware->onOpen($connection);
-        $this->middleware->onMessage($connection, json_encode([MessageType::SUBSCRIBE, $uri], \JSON_THROW_ON_ERROR));
+        $middleware = new ParseWAMPMessage($decoratedMiddleware, $topicRegistry);
+        $middleware->onOpen($connection);
+        $middleware->onMessage($connection, json_encode([MessageType::SUBSCRIBE, $uri], \JSON_THROW_ON_ERROR));
     }
 
     #[TestDox('Handles incoming data on the connection for a WAMP "UNSUBSCRIBE" message')]
@@ -205,21 +204,26 @@ final class ParseWAMPMessageTest extends TestCase
         $connection->expects($this->once())
             ->method('send');
 
-        $this->topicRegistry->expects($this->once())
+        /** @var MockObject&TopicRegistry $topicRegistry */
+        $topicRegistry = $this->createMock(TopicRegistry::class);
+        $topicRegistry->expects($this->once())
             ->method('has')
             ->with($uri)
             ->willReturn(false);
 
-        $this->topicRegistry->expects($this->once())
+        $topicRegistry->expects($this->once())
             ->method('add')
             ->with($this->isInstanceOf(Topic::class));
 
-        $this->decoratedMiddleware->expects($this->once())
+        /** @var MockObject&WAMPServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(WAMPServerMiddleware::class);
+        $decoratedMiddleware->expects($this->once())
             ->method('onUnsubscribe')
             ->with($this->isInstanceOf(WAMPConnection::class), $this->isInstanceOf(Topic::class));
 
-        $this->middleware->onOpen($connection);
-        $this->middleware->onMessage($connection, json_encode([MessageType::UNSUBSCRIBE, $uri], \JSON_THROW_ON_ERROR));
+        $middleware = new ParseWAMPMessage($decoratedMiddleware, $topicRegistry);
+        $middleware->onOpen($connection);
+        $middleware->onMessage($connection, json_encode([MessageType::UNSUBSCRIBE, $uri], \JSON_THROW_ON_ERROR));
     }
 
     #[TestDox('Handles incoming data on the connection for a WAMP "PUBLISH" message with string payload and no extra params')]
@@ -238,23 +242,28 @@ final class ParseWAMPMessageTest extends TestCase
         $connection->expects($this->once())
             ->method('send');
 
-        $this->topicRegistry->expects($this->once())
+        /** @var MockObject&TopicRegistry $topicRegistry */
+        $topicRegistry = $this->createMock(TopicRegistry::class);
+        $topicRegistry->expects($this->once())
             ->method('has')
             ->with($uri)
             ->willReturn(false);
 
-        $this->topicRegistry->expects($this->once())
+        $topicRegistry->expects($this->once())
             ->method('add')
             ->with($this->isInstanceOf(Topic::class));
 
         $event = 'Simple event payload';
 
-        $this->decoratedMiddleware->expects($this->once())
+        /** @var MockObject&WAMPServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(WAMPServerMiddleware::class);
+        $decoratedMiddleware->expects($this->once())
             ->method('onPublish')
             ->with($this->isInstanceOf(WAMPConnection::class), $this->isInstanceOf(Topic::class), $event, [], []);
 
-        $this->middleware->onOpen($connection);
-        $this->middleware->onMessage($connection, json_encode([MessageType::PUBLISH, $uri, $event], \JSON_THROW_ON_ERROR));
+        $middleware = new ParseWAMPMessage($decoratedMiddleware, $topicRegistry);
+        $middleware->onOpen($connection);
+        $middleware->onMessage($connection, json_encode([MessageType::PUBLISH, $uri, $event], \JSON_THROW_ON_ERROR));
     }
 
     #[TestDox('Handles incoming data on the connection for a WAMP "PUBLISH" message with array payload and no extra params')]
@@ -273,23 +282,28 @@ final class ParseWAMPMessageTest extends TestCase
         $connection->expects($this->once())
             ->method('send');
 
-        $this->topicRegistry->expects($this->once())
+        /** @var MockObject&TopicRegistry $topicRegistry */
+        $topicRegistry = $this->createMock(TopicRegistry::class);
+        $topicRegistry->expects($this->once())
             ->method('has')
             ->with($uri)
             ->willReturn(false);
 
-        $this->topicRegistry->expects($this->once())
+        $topicRegistry->expects($this->once())
             ->method('add')
             ->with($this->isInstanceOf(Topic::class));
 
         $event = ['hello' => 'world', 'herp' => 'derp'];
 
-        $this->decoratedMiddleware->expects($this->once())
+        /** @var MockObject&WAMPServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(WAMPServerMiddleware::class);
+        $decoratedMiddleware->expects($this->once())
             ->method('onPublish')
             ->with($this->isInstanceOf(WAMPConnection::class), $this->isInstanceOf(Topic::class), $event, [], []);
 
-        $this->middleware->onOpen($connection);
-        $this->middleware->onMessage($connection, json_encode([MessageType::PUBLISH, $uri, $event], \JSON_THROW_ON_ERROR));
+        $middleware = new ParseWAMPMessage($decoratedMiddleware, $topicRegistry);
+        $middleware->onOpen($connection);
+        $middleware->onMessage($connection, json_encode([MessageType::PUBLISH, $uri, $event], \JSON_THROW_ON_ERROR));
     }
 
     #[TestDox('Handles incoming data on the connection for a WAMP "PUBLISH" message with the "excludeMe" param')]
@@ -308,12 +322,14 @@ final class ParseWAMPMessageTest extends TestCase
         $connection->expects($this->once())
             ->method('send');
 
-        $this->topicRegistry->expects($this->once())
+        /** @var MockObject&TopicRegistry $topicRegistry */
+        $topicRegistry = $this->createMock(TopicRegistry::class);
+        $topicRegistry->expects($this->once())
             ->method('has')
             ->with($uri)
             ->willReturn(false);
 
-        $this->topicRegistry->expects($this->once())
+        $topicRegistry->expects($this->once())
             ->method('add')
             ->with($this->isInstanceOf(Topic::class));
 
@@ -321,14 +337,17 @@ final class ParseWAMPMessageTest extends TestCase
 
         $excludedSessions = [];
 
-        $this->decoratedMiddleware->expects($this->once())
+        /** @var MockObject&WAMPServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(WAMPServerMiddleware::class);
+        $decoratedMiddleware->expects($this->once())
             ->method('onPublish')
             ->willReturnCallback(static function (Connection $connection, Topic $topic, array|string $event, array $exclude, array $eligible) use (&$excludedSessions): void {
                 $excludedSessions = $exclude;
             });
 
-        $this->middleware->onOpen($connection);
-        $this->middleware->onMessage($connection, json_encode([MessageType::PUBLISH, $uri, $event, true], \JSON_THROW_ON_ERROR));
+        $middleware = new ParseWAMPMessage($decoratedMiddleware, $topicRegistry);
+        $middleware->onOpen($connection);
+        $middleware->onMessage($connection, json_encode([MessageType::PUBLISH, $uri, $event, true], \JSON_THROW_ON_ERROR));
 
         $this->assertSame(
             [$attributeStore->get('wamp.session_id')],
@@ -353,12 +372,14 @@ final class ParseWAMPMessageTest extends TestCase
         $connection->expects($this->once())
             ->method('send');
 
-        $this->topicRegistry->expects($this->once())
+        /** @var MockObject&TopicRegistry $topicRegistry */
+        $topicRegistry = $this->createMock(TopicRegistry::class);
+        $topicRegistry->expects($this->once())
             ->method('has')
             ->with($uri)
             ->willReturn(false);
 
-        $this->topicRegistry->expects($this->once())
+        $topicRegistry->expects($this->once())
             ->method('add')
             ->with($this->isInstanceOf(Topic::class));
 
@@ -367,14 +388,17 @@ final class ParseWAMPMessageTest extends TestCase
 
         $excludedSessions = [];
 
-        $this->decoratedMiddleware->expects($this->once())
+        /** @var MockObject&WAMPServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(WAMPServerMiddleware::class);
+        $decoratedMiddleware->expects($this->once())
             ->method('onPublish')
             ->willReturnCallback(static function (Connection $connection, Topic $topic, array|string $event, array $exclude, array $eligible) use (&$excludedSessions): void {
                 $excludedSessions = $exclude;
             });
 
-        $this->middleware->onOpen($connection);
-        $this->middleware->onMessage($connection, json_encode([MessageType::PUBLISH, $uri, $event, $exclude], \JSON_THROW_ON_ERROR));
+        $middleware = new ParseWAMPMessage($decoratedMiddleware, $topicRegistry);
+        $middleware->onOpen($connection);
+        $middleware->onMessage($connection, json_encode([MessageType::PUBLISH, $uri, $event, $exclude], \JSON_THROW_ON_ERROR));
 
         $this->assertSame(
             $exclude,
@@ -399,12 +423,14 @@ final class ParseWAMPMessageTest extends TestCase
         $connection->expects($this->once())
             ->method('send');
 
-        $this->topicRegistry->expects($this->once())
+        /** @var MockObject&TopicRegistry $topicRegistry */
+        $topicRegistry = $this->createMock(TopicRegistry::class);
+        $topicRegistry->expects($this->once())
             ->method('has')
             ->with($uri)
             ->willReturn(false);
 
-        $this->topicRegistry->expects($this->once())
+        $topicRegistry->expects($this->once())
             ->method('add')
             ->with($this->isInstanceOf(Topic::class));
 
@@ -413,14 +439,17 @@ final class ParseWAMPMessageTest extends TestCase
 
         $eligibleSessions = [];
 
-        $this->decoratedMiddleware->expects($this->once())
+        /** @var MockObject&WAMPServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(WAMPServerMiddleware::class);
+        $decoratedMiddleware->expects($this->once())
             ->method('onPublish')
             ->willReturnCallback(static function (Connection $connection, Topic $topic, array|string $event, array $exclude, array $eligible) use (&$eligibleSessions): void {
                 $eligibleSessions = $eligible;
             });
 
-        $this->middleware->onOpen($connection);
-        $this->middleware->onMessage($connection, json_encode([MessageType::PUBLISH, $uri, $event, [], $eligible], \JSON_THROW_ON_ERROR));
+        $middleware = new ParseWAMPMessage($decoratedMiddleware, $topicRegistry);
+        $middleware->onOpen($connection);
+        $middleware->onMessage($connection, json_encode([MessageType::PUBLISH, $uri, $event, [], $eligible], \JSON_THROW_ON_ERROR));
 
         $this->assertSame(
             $eligible,
@@ -432,8 +461,6 @@ final class ParseWAMPMessageTest extends TestCase
     #[TestDox('Handles incoming data on the connection for an unsupported WAMP message type')]
     public function testOnMessageForUnsupportedMessageType(): void
     {
-        $this->expectException(UnsupportedMessageType::class);
-
         $uri = 'https://example.com/testing/'.random_int(1, 1000);
 
         $attributeStore = new ArrayAttributeStore();
@@ -449,15 +476,17 @@ final class ParseWAMPMessageTest extends TestCase
 
         $event = 'Simple event payload';
 
-        $this->middleware->onOpen($connection);
-        $this->middleware->onMessage($connection, json_encode([MessageType::EVENT, $uri, $event], \JSON_THROW_ON_ERROR));
+        $middleware = new ParseWAMPMessage($this->createStub(WAMPServerMiddleware::class), $this->createStub(TopicRegistry::class));
+        $middleware->onOpen($connection);
+
+        $this->expectException(UnsupportedMessageType::class);
+
+        $middleware->onMessage($connection, json_encode([MessageType::EVENT, $uri, $event], \JSON_THROW_ON_ERROR));
     }
 
     #[TestDox('Handles incoming data on the connection with a message body that does not decode into an array')]
     public function testOnMessageWithNonArrayMessageType(): void
     {
-        $this->expectException(InvalidMessage::class);
-
         $uri = 'https://example.com/testing/'.random_int(1, 1000);
 
         $attributeStore = new ArrayAttributeStore();
@@ -471,15 +500,17 @@ final class ParseWAMPMessageTest extends TestCase
         $connection->expects($this->once())
             ->method('send');
 
-        $this->middleware->onOpen($connection);
-        $this->middleware->onMessage($connection, json_encode($uri, \JSON_THROW_ON_ERROR));
+        $middleware = new ParseWAMPMessage($this->createStub(WAMPServerMiddleware::class), $this->createStub(TopicRegistry::class));
+        $middleware->onOpen($connection);
+
+        $this->expectException(InvalidMessage::class);
+
+        $middleware->onMessage($connection, json_encode($uri, \JSON_THROW_ON_ERROR));
     }
 
     #[TestDox('Handles incoming data on the connection with a message body that decodes into an associative array')]
     public function testOnMessageWithAssociativeArrayMessageType(): void
     {
-        $this->expectException(InvalidMessage::class);
-
         $uri = 'https://example.com/testing/'.random_int(1, 1000);
 
         $attributeStore = new ArrayAttributeStore();
@@ -493,15 +524,17 @@ final class ParseWAMPMessageTest extends TestCase
         $connection->expects($this->once())
             ->method('send');
 
-        $this->middleware->onOpen($connection);
-        $this->middleware->onMessage($connection, json_encode(['uri' => $uri], \JSON_THROW_ON_ERROR));
+        $middleware = new ParseWAMPMessage($this->createStub(WAMPServerMiddleware::class), $this->createStub(TopicRegistry::class));
+        $middleware->onOpen($connection);
+
+        $this->expectException(InvalidMessage::class);
+
+        $middleware->onMessage($connection, json_encode(['uri' => $uri], \JSON_THROW_ON_ERROR));
     }
 
     #[TestDox('Handles incoming data on the connection with a message body that includes a topic URI that is not a string')]
     public function testOnMessageWithNonStringTopicUri(): void
     {
-        $this->expectException(InvalidMessage::class);
-
         $uri = 'https://example.com/testing/'.random_int(1, 1000);
 
         $attributeStore = new ArrayAttributeStore();
@@ -515,15 +548,17 @@ final class ParseWAMPMessageTest extends TestCase
         $connection->expects($this->once())
             ->method('send');
 
-        $this->middleware->onOpen($connection);
-        $this->middleware->onMessage($connection, json_encode([MessageType::PUBLISH, [$uri], 'Testing'], \JSON_THROW_ON_ERROR));
+        $middleware = new ParseWAMPMessage($this->createStub(WAMPServerMiddleware::class), $this->createStub(TopicRegistry::class));
+        $middleware->onOpen($connection);
+
+        $this->expectException(InvalidMessage::class);
+
+        $middleware->onMessage($connection, json_encode([MessageType::PUBLISH, [$uri], 'Testing'], \JSON_THROW_ON_ERROR));
     }
 
     #[TestDox('Handles incoming data on the connection with invalid JSON')]
     public function testOnMessageWithInvalidJson(): void
     {
-        $this->expectException(InvalidMessage::class);
-
         $attributeStore = new ArrayAttributeStore();
 
         /** @var MockObject&Connection $connection */
@@ -535,8 +570,12 @@ final class ParseWAMPMessageTest extends TestCase
         $connection->expects($this->once())
             ->method('send');
 
-        $this->middleware->onOpen($connection);
-        $this->middleware->onMessage($connection, '"[7,["https:\/\/example.com\/testing\/255"],"Testing]"');
+        $middleware = new ParseWAMPMessage($this->createStub(WAMPServerMiddleware::class), $this->createStub(TopicRegistry::class));
+        $middleware->onOpen($connection);
+
+        $this->expectException(InvalidMessage::class);
+
+        $middleware->onMessage($connection, '"[7,["https:\/\/example.com\/testing\/255"],"Testing]"');
     }
 
     #[TestDox('Closes the connection')]
@@ -553,12 +592,15 @@ final class ParseWAMPMessageTest extends TestCase
         $connection->expects($this->once())
             ->method('send');
 
-        $this->decoratedMiddleware->expects($this->once())
+        /** @var MockObject&WAMPServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(WAMPServerMiddleware::class);
+        $decoratedMiddleware->expects($this->once())
             ->method('onClose')
             ->with($this->isInstanceOf(WAMPConnection::class));
 
-        $this->middleware->onOpen($connection);
-        $this->middleware->onClose($connection);
+        $middleware = new ParseWAMPMessage($decoratedMiddleware, $this->createStub(TopicRegistry::class));
+        $middleware->onOpen($connection);
+        $middleware->onClose($connection);
     }
 
     #[TestDox('Forwards the decorated connection to middleware onError when a decorator is available')]
@@ -577,38 +619,43 @@ final class ParseWAMPMessageTest extends TestCase
 
         $error = new \Exception('Testing');
 
-        $this->decoratedMiddleware->expects($this->once())
+        /** @var MockObject&WAMPServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(WAMPServerMiddleware::class);
+        $decoratedMiddleware->expects($this->once())
             ->method('onError')
             ->with($this->isInstanceOf(WAMPConnection::class), $error);
 
-        $this->middleware->onOpen($connection);
-        $this->middleware->onError($connection, $error);
+        $middleware = new ParseWAMPMessage($decoratedMiddleware, $this->createStub(TopicRegistry::class));
+        $middleware->onOpen($connection);
+        $middleware->onError($connection, $error);
     }
 
     #[TestDox('Forwards the non-decorated connection to middleware onError if a decorator is not available')]
     public function testOnErrorWithUndecoratedConnection(): void
     {
-        /** @var MockObject&Connection $connection */
-        $connection = $this->createMock(Connection::class);
+        /** @var Stub&Connection $connection */
+        $connection = $this->createStub(Connection::class);
 
         $exception = new \Exception('Testing');
 
-        $this->decoratedMiddleware->expects($this->once())
+        /** @var MockObject&WAMPServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(WAMPServerMiddleware::class);
+        $decoratedMiddleware->expects($this->once())
             ->method('onError')
             ->with($connection, $exception);
 
-        $this->middleware->onError($connection, $exception);
+        new ParseWAMPMessage($decoratedMiddleware, $this->createStub(TopicRegistry::class))->onError($connection, $exception);
     }
 
     #[TestDox('The server identity can be managed')]
     public function testServerIdentity(): void
     {
-        $newIdentity = 'Test-Identity/4.2';
+        $middleware = new ParseWAMPMessage($this->createStub(WAMPServerMiddleware::class), $this->createStub(TopicRegistry::class));
 
-        $this->assertSame(Server::VERSION, $this->middleware->getServerIdentity());
+        $this->assertSame(Server::VERSION, $middleware->getServerIdentity());
 
-        $this->middleware->setServerIdentity($newIdentity);
+        $middleware->setServerIdentity($newIdentity = 'Test-Identity/4.2');
 
-        $this->assertSame($newIdentity, $this->middleware->getServerIdentity());
+        $this->assertSame($newIdentity, $middleware->getServerIdentity());
     }
 }

@@ -8,6 +8,7 @@ use BabDev\WebSocket\Server\Exception\UnsupportedConnection;
 use BabDev\WebSocket\Server\WAMP\Topic;
 use BabDev\WebSocket\Server\WAMP\WAMPConnection;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 final class TopicTest extends TestCase
@@ -26,14 +27,14 @@ final class TopicTest extends TestCase
 
     public function testConnectionsCanBeAddedAndRemovedFromATopic(): void
     {
-        /** @var MockObject&WAMPConnection $connection1 */
-        $connection1 = $this->createMock(WAMPConnection::class);
+        /** @var Stub&WAMPConnection $connection1 */
+        $connection1 = $this->createStub(WAMPConnection::class);
 
-        /** @var MockObject&WAMPConnection $connection2 */
-        $connection2 = $this->createMock(WAMPConnection::class);
+        /** @var Stub&WAMPConnection $connection2 */
+        $connection2 = $this->createStub(WAMPConnection::class);
 
-        /** @var MockObject&WAMPConnection $connection3 */
-        $connection3 = $this->createMock(WAMPConnection::class);
+        /** @var Stub&WAMPConnection $connection3 */
+        $connection3 = $this->createStub(WAMPConnection::class);
 
         $this->topic->add($connection1);
         $this->topic->add($connection2);
@@ -56,23 +57,14 @@ final class TopicTest extends TestCase
     {
         $this->expectException(UnsupportedConnection::class);
 
-        $this->topic->add($this->createMock(Connection::class));
+        $this->topic->add($this->createStub(Connection::class));
     }
 
     public function testCanBeIterated(): void
     {
-        /** @var MockObject&WAMPConnection $connection1 */
-        $connection1 = $this->createMock(WAMPConnection::class);
-
-        /** @var MockObject&WAMPConnection $connection2 */
-        $connection2 = $this->createMock(WAMPConnection::class);
-
-        /** @var MockObject&WAMPConnection $connection3 */
-        $connection3 = $this->createMock(WAMPConnection::class);
-
-        $this->topic->add($connection1);
-        $this->topic->add($connection2);
-        $this->topic->add($connection3);
+        $this->topic->add($this->createStub(WAMPConnection::class));
+        $this->topic->add($this->createStub(WAMPConnection::class));
+        $this->topic->add($this->createStub(WAMPConnection::class));
 
         $items = 0;
 

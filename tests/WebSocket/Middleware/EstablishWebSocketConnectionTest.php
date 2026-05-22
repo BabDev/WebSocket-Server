@@ -4,13 +4,13 @@ namespace BabDev\WebSocket\Server\Tests\WebSocket\Middleware;
 
 use BabDev\WebSocket\Server\Connection;
 use BabDev\WebSocket\Server\Connection\ArrayAttributeStore;
-use BabDev\WebSocket\Server\Connection\AttributeStore;
 use BabDev\WebSocket\Server\Http\Exception\MissingRequest;
 use BabDev\WebSocket\Server\ServerMiddleware;
 use BabDev\WebSocket\Server\WebSocket\Middleware\EstablishWebSocketConnection;
 use BabDev\WebSocket\Server\WebSocket\WebSocketConnection;
 use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -21,25 +21,11 @@ use React\EventLoop\TimerInterface;
 
 final class EstablishWebSocketConnectionTest extends TestCase
 {
-    private readonly MockObject&ServerMiddleware $decoratedMiddleware;
-
-    private readonly MockObject&NegotiatorInterface $negotiator;
-
-    private readonly EstablishWebSocketConnection $middleware;
-
-    protected function setUp(): void
-    {
-        $this->decoratedMiddleware = $this->createMock(ServerMiddleware::class);
-        $this->negotiator = $this->createMock(NegotiatorInterface::class);
-
-        $this->middleware = new EstablishWebSocketConnection($this->decoratedMiddleware, $this->negotiator);
-    }
-
     #[TestDox('Handles activity during the lifecycle of a connection')]
     public function testConnectionLifecycle(): void
     {
-        /** @var MockObject&RequestInterface $request */
-        $request = $this->createMock(RequestInterface::class);
+        /** @var Stub&RequestInterface $request */
+        $request = $this->createStub(RequestInterface::class);
 
         $attributeStore = new ArrayAttributeStore();
         $attributeStore->set('http.request', $request);
@@ -77,7 +63,9 @@ final class EstablishWebSocketConnectionTest extends TestCase
             ->method('getBody')
             ->willReturn($stream);
 
-        $this->negotiator->expects($this->once())
+        /** @var MockObject&NegotiatorInterface $negotiator */
+        $negotiator = $this->createMock(NegotiatorInterface::class);
+        $negotiator->expects($this->once())
             ->method('handshake')
             ->with($request)
             ->willReturn($response);
@@ -88,72 +76,63 @@ final class EstablishWebSocketConnectionTest extends TestCase
             ->method('getAttributeStore')
             ->willReturn($attributeStore);
 
-        $this->decoratedMiddleware->expects($this->once())
+        /** @var MockObject&ServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(ServerMiddleware::class);
+        $decoratedMiddleware->expects($this->once())
             ->method('onOpen')
             ->with($this->isInstanceOf(WebSocketConnection::class));
 
-        $this->middleware->onOpen($connection);
-
-        $this->middleware->onMessage($connection, 'Incoming');
+        $middleware = new EstablishWebSocketConnection($decoratedMiddleware, $negotiator);
+        $middleware->onOpen($connection);
+        $middleware->onMessage($connection, 'Incoming');
 
         $exception = new \RuntimeException('Testing');
 
-        $this->decoratedMiddleware->expects($this->once())
+        $decoratedMiddleware->expects($this->once())
             ->method('onError')
             ->with($this->isInstanceOf(WebSocketConnection::class), $exception);
 
-        $this->middleware->onError($connection, $exception);
+        $middleware->onError($connection, $exception);
 
-        $this->decoratedMiddleware->expects($this->once())
+        $decoratedMiddleware->expects($this->once())
             ->method('onClose')
             ->with($this->isInstanceOf(WebSocketConnection::class));
 
-        $this->middleware->onClose($connection);
+        $middleware->onClose($connection);
     }
 
     #[TestDox('Handles a new connection being opened when required middleware have not run before this middleware')]
     public function testOnOpenWithoutRequest(): void
     {
-        $this->expectException(MissingRequest::class);
-
-        /** @var MockObject&AttributeStore $attributeStore */
-        $attributeStore = $this->createMock(AttributeStore::class);
-        $attributeStore->expects($this->once())
-            ->method('get')
-            ->with('http.request')
-            ->willReturn(null);
-
-        $this->negotiator->expects($this->never())
+        /** @var MockObject&NegotiatorInterface $negotiator */
+        $negotiator = $this->createMock(NegotiatorInterface::class);
+        $negotiator->expects($this->never())
             ->method('handshake');
 
         /** @var MockObject&Connection $connection */
         $connection = $this->createMock(Connection::class);
         $connection->expects($this->atLeastOnce())
             ->method('getAttributeStore')
-            ->willReturn($attributeStore);
+            ->willReturn(new ArrayAttributeStore());
 
-        $this->decoratedMiddleware->expects($this->never())
+        /** @var MockObject&ServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(ServerMiddleware::class);
+        $decoratedMiddleware->expects($this->never())
             ->method('onOpen');
 
-        $this->middleware->onOpen($connection);
+        $this->expectException(MissingRequest::class);
+
+        new EstablishWebSocketConnection($decoratedMiddleware, $negotiator)->onOpen($connection);
     }
 
     #[TestDox('Handles a new connection being opened with an invalid request')]
     public function testOnOpenWithInvalidRequest(): void
     {
-        /** @var MockObject&RequestInterface $request */
-        $request = $this->createMock(RequestInterface::class);
+        /** @var Stub&RequestInterface $request */
+        $request = $this->createStub(RequestInterface::class);
 
-        /** @var MockObject&AttributeStore $attributeStore */
-        $attributeStore = $this->createMock(AttributeStore::class);
-        $attributeStore->expects($this->once())
-            ->method('get')
-            ->with('http.request')
-            ->willReturn($request);
-
-        $attributeStore->expects($this->once())
-            ->method('set')
-            ->with('websocket.closing', false);
+        $attributeStore = new ArrayAttributeStore();
+        $attributeStore->set('http.request', $request);
 
         /** @var MockObject&StreamInterface $stream */
         $stream = $this->createMock(StreamInterface::class);
@@ -188,7 +167,9 @@ final class EstablishWebSocketConnectionTest extends TestCase
             ->method('getBody')
             ->willReturn($stream);
 
-        $this->negotiator->expects($this->once())
+        /** @var MockObject&NegotiatorInterface $negotiator */
+        $negotiator = $this->createMock(NegotiatorInterface::class);
+        $negotiator->expects($this->once())
             ->method('handshake')
             ->with($request)
             ->willReturn($response);
@@ -202,34 +183,48 @@ final class EstablishWebSocketConnectionTest extends TestCase
         $connection->expects($this->once())
             ->method('close');
 
-        $this->decoratedMiddleware->expects($this->never())
+        /** @var MockObject&ServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(ServerMiddleware::class);
+        $decoratedMiddleware->expects($this->never())
             ->method('onOpen');
 
-        $this->middleware->onOpen($connection);
+        new EstablishWebSocketConnection($decoratedMiddleware, $negotiator)->onOpen($connection);
+
+        $this->assertTrue($attributeStore->has('websocket.closing'));
+        $this->assertFalse($attributeStore->get('websocket.closing'));
     }
 
     #[TestDox('Forwards the non-decorated connection to middleware onError if a decorator is not available')]
     public function testCanForwardNotDecoratedConnectionToMiddlewareOnError(): void
     {
-        /** @var MockObject&Connection $connection */
-        $connection = $this->createMock(Connection::class);
+        /** @var Stub&Connection $connection */
+        $connection = $this->createStub(Connection::class);
 
         $exception = new \RuntimeException('Testing');
 
-        $this->decoratedMiddleware->expects($this->once())
+        /** @var MockObject&ServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(ServerMiddleware::class);
+        $decoratedMiddleware->expects($this->once())
             ->method('onError')
             ->with($connection, $exception);
 
-        $this->middleware->onError($connection, $exception);
+        new EstablishWebSocketConnection($decoratedMiddleware, $this->createStub(NegotiatorInterface::class))->onError($connection, $exception);
     }
 
     public function testTogglesStrictSubProtocolChecks(): void
     {
-        $this->negotiator->expects($this->once())
-            ->method('setStrictSubProtocolCheck')
-            ->with(false);
+        /** @var MockObject&NegotiatorInterface $negotiator */
+        $negotiator = $this->createMock(NegotiatorInterface::class);
 
-        $this->middleware->setStrictSubProtocolCheck(false);
+        // The constructor call setStrictSubProtocolCheck to enable strict checks by default
+        $negotiator->expects($this->exactly(2))
+            ->method('setStrictSubProtocolCheck')
+            ->willReturnMap([
+                [true],
+                [false],
+            ]);
+
+        new EstablishWebSocketConnection($this->createStub(ServerMiddleware::class), $negotiator)->setStrictSubProtocolCheck(false);
     }
 
     public function testEnableKeepAlive(): void
@@ -239,8 +234,8 @@ final class EstablishWebSocketConnectionTest extends TestCase
         $loop->expects($this->once())
             ->method('addPeriodicTimer')
             ->with(60, $this->isCallable())
-            ->willReturn($this->createMock(TimerInterface::class));
+            ->willReturn($this->createStub(TimerInterface::class));
 
-        $this->middleware->enableKeepAlive($loop, 60);
+        new EstablishWebSocketConnection($this->createStub(ServerMiddleware::class), $this->createStub(NegotiatorInterface::class))->enableKeepAlive($loop, 60);
     }
 }
