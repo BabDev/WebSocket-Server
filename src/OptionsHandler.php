@@ -7,7 +7,7 @@ namespace BabDev\WebSocket\Server;
  */
 interface OptionsHandler
 {
-    public function get(string $option): mixed;
+    public function get(string $option): string|false;
 
-    public function set(string $option, mixed $value): void;
+    public function set(string $option, string|int|float|bool|null $value): string|false;
 }

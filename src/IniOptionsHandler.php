@@ -4,19 +4,13 @@ namespace BabDev\WebSocket\Server;
 
 final class IniOptionsHandler implements OptionsHandler
 {
-    /**
-     * @phpstan-return string|false
-     */
-    public function get(string $option): mixed
+    public function get(string $option): string|false
     {
         return \ini_get($option);
     }
 
-    /**
-     * @phpstan-param string|int|float|bool|null $value
-     */
-    public function set(string $option, mixed $value): void
+    public function set(string $option, string|int|float|bool|null $value): string|false
     {
-        ini_set($option, $value);
+        return \ini_set($option, $value);
     }
 }

@@ -137,16 +137,19 @@ final class ReadOnlySessionHandlerProxyTest extends TestCase
     private function createOptionsHandler(): OptionsHandler
     {
         return new class implements OptionsHandler {
+            /**
+             * @var array<string, string>
+             */
             private array $options = [];
 
-            public function get(string $option): mixed
+            public function get(string $option): string
             {
-                return $this->options[$option] ?? null;
+                return $this->options[$option] ?? '';
             }
 
-            public function set(string $option, mixed $value): void
+            public function set(string $option, string|int|float|bool|null $value): string
             {
-                $this->options[$option] = $value;
+                return $this->options[$option] = (string) $value;
             }
         };
     }
