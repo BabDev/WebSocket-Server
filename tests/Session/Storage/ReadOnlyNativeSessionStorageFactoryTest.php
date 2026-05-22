@@ -24,8 +24,8 @@ final class ReadOnlyNativeSessionStorageFactoryTest extends TestCase
 
         $this->factory = new ReadOnlyNativeSessionStorageFactory(
             optionsHandler: $optionsHandler,
-            reader: $this->createMock(Reader::class),
-            handler: $this->createMock(\SessionHandlerInterface::class),
+            reader: $this->createStub(Reader::class),
+            handler: $this->createStub(\SessionHandlerInterface::class),
         );
     }
 

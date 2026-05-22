@@ -10,6 +10,7 @@ use BabDev\WebSocket\Server\Http\Middleware\RestrictToAllowedOrigins;
 use BabDev\WebSocket\Server\ServerMiddleware;
 use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
 
@@ -29,7 +30,7 @@ final class RestrictToAllowedOriginsTest extends TestCase
     public function testOnOpenWithNoOriginRestrictions(): void
     {
         /** @var MockObject&RequestInterface $request */
-        $request = $this->createMock(RequestInterface::class);
+        $request = $this->createStub(RequestInterface::class);
 
         /** @var MockObject&AttributeStore $attributeStore */
         $attributeStore = $this->createMock(AttributeStore::class);
@@ -234,8 +235,8 @@ final class RestrictToAllowedOriginsTest extends TestCase
     {
         $message = 'Testing';
 
-        /** @var MockObject&Connection $connection */
-        $connection = $this->createMock(Connection::class);
+        /** @var Stub&Connection $connection */
+        $connection = $this->createStub(Connection::class);
 
         $this->decoratedMiddleware->expects($this->once())
             ->method('onMessage')
@@ -247,8 +248,8 @@ final class RestrictToAllowedOriginsTest extends TestCase
     #[TestDox('Closes the connection')]
     public function testOnClose(): void
     {
-        /** @var MockObject&Connection $connection */
-        $connection = $this->createMock(Connection::class);
+        /** @var Stub&Connection $connection */
+        $connection = $this->createStub(Connection::class);
 
         $this->decoratedMiddleware->expects($this->once())
             ->method('onClose')
@@ -262,8 +263,8 @@ final class RestrictToAllowedOriginsTest extends TestCase
     {
         $exception = new \RuntimeException('Testing');
 
-        /** @var MockObject&Connection $connection */
-        $connection = $this->createMock(Connection::class);
+        /** @var Stub&Connection $connection */
+        $connection = $this->createStub(Connection::class);
 
         $this->decoratedMiddleware->expects($this->once())
             ->method('onError')

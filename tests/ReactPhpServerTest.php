@@ -54,7 +54,7 @@ final class ReactPhpServerTest extends TestCase
 
     protected function tickLoop(LoopInterface $loop): void
     {
-        $loop->futureTick(function () use ($loop): void {
+        $loop->futureTick(static function () use ($loop): void {
             $loop->stop();
         });
 

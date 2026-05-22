@@ -11,6 +11,6 @@ final class IniOptionsHandler implements OptionsHandler
 
     public function set(string $option, string|int|float|bool|null $value): string|false
     {
-        return \ini_set($option, $value);
+        return ini_set($option, $value);
     }
 }

@@ -11,6 +11,7 @@ use BabDev\WebSocket\Server\Http\RequestParser;
 use BabDev\WebSocket\Server\ServerMiddleware;
 use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
 
@@ -49,8 +50,8 @@ final class ParseHttpRequestTest extends TestCase
     {
         $message = 'Testing';
 
-        /** @var MockObject&RequestInterface $request */
-        $request = $this->createMock(RequestInterface::class);
+        /** @var Stub&RequestInterface $request */
+        $request = $this->createStub(RequestInterface::class);
 
         $attributeStore = new ArrayAttributeStore();
         $attributeStore->set('http.headers_received', false);

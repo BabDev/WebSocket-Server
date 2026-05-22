@@ -17,6 +17,7 @@ use BabDev\WebSocket\Server\WAMP\WAMPConnection;
 use BabDev\WebSocket\Server\WAMP\WAMPMessageRequest;
 use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Routing\Exception\ResourceNotFoundException;
@@ -53,8 +54,8 @@ final class DispatchMessageToHandlerTest extends TestCase
             ->method('dispatch')
             ->with($this->isInstanceOf(ConnectionOpened::class));
 
-        /** @var MockObject&Connection $connection */
-        $connection = $this->createMock(Connection::class);
+        /** @var Stub&Connection $connection */
+        $connection = $this->createStub(Connection::class);
 
         $this->middleware->onOpen($connection);
     }
@@ -66,8 +67,8 @@ final class DispatchMessageToHandlerTest extends TestCase
             ->method('dispatch')
             ->with($this->isInstanceOf(ConnectionClosed::class));
 
-        /** @var MockObject&Connection $connection */
-        $connection = $this->createMock(Connection::class);
+        /** @var Stub&Connection $connection */
+        $connection = $this->createStub(Connection::class);
 
         $this->middleware->onClose($connection);
     }
@@ -81,8 +82,8 @@ final class DispatchMessageToHandlerTest extends TestCase
             ->method('dispatch')
             ->with($this->isInstanceOf(ConnectionError::class));
 
-        /** @var MockObject&Connection $connection */
-        $connection = $this->createMock(Connection::class);
+        /** @var Stub&Connection $connection */
+        $connection = $this->createStub(Connection::class);
 
         $this->middleware->onError($connection, $exception);
     }
@@ -94,8 +95,8 @@ final class DispatchMessageToHandlerTest extends TestCase
         $resolvedUri = '/testing';
         $params = ['foo' => 'bar'];
 
-        /** @var MockObject&WAMPConnection $connection */
-        $connection = $this->createMock(WAMPConnection::class);
+        /** @var Stub&WAMPConnection $connection */
+        $connection = $this->createStub(WAMPConnection::class);
 
         /** @var MockObject&RPCMessageHandler $handler */
         $handler = $this->createMock(RPCMessageHandler::class);
@@ -173,8 +174,8 @@ final class DispatchMessageToHandlerTest extends TestCase
     {
         $topic = new Topic('testing');
 
-        /** @var MockObject&WAMPConnection $connection */
-        $connection = $this->createMock(WAMPConnection::class);
+        /** @var Stub&WAMPConnection $connection */
+        $connection = $this->createStub(WAMPConnection::class);
 
         /** @var MockObject&TopicMessageHandler $handler */
         $handler = $this->createMock(TopicMessageHandler::class);
@@ -248,8 +249,8 @@ final class DispatchMessageToHandlerTest extends TestCase
     {
         $topic = new Topic('testing');
 
-        /** @var MockObject&WAMPConnection $connection */
-        $connection = $this->createMock(WAMPConnection::class);
+        /** @var Stub&WAMPConnection $connection */
+        $connection = $this->createStub(WAMPConnection::class);
 
         /** @var MockObject&TopicMessageHandler $handler */
         $handler = $this->createMock(TopicMessageHandler::class);
@@ -326,8 +327,8 @@ final class DispatchMessageToHandlerTest extends TestCase
         $exclude = [];
         $eligible = [];
 
-        /** @var MockObject&WAMPConnection $connection */
-        $connection = $this->createMock(WAMPConnection::class);
+        /** @var Stub&WAMPConnection $connection */
+        $connection = $this->createStub(WAMPConnection::class);
 
         /** @var MockObject&TopicMessageHandler $handler */
         $handler = $this->createMock(TopicMessageHandler::class);

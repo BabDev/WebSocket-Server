@@ -7,6 +7,7 @@ use BabDev\WebSocket\Server\Connection\AttributeStore;
 use BabDev\WebSocket\Server\WAMP\DefaultWAMPConnection;
 use BabDev\WebSocket\Server\WAMP\MessageType;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 final class DefaultWAMPConnectionTest extends TestCase
@@ -24,8 +25,8 @@ final class DefaultWAMPConnectionTest extends TestCase
 
     public function testProvidesTheAttributeStoreFromTheDecoratedConnection(): void
     {
-        /** @var MockObject&AttributeStore $attributeStore */
-        $attributeStore = $this->createMock(AttributeStore::class);
+        /** @var Stub&AttributeStore $attributeStore */
+        $attributeStore = $this->createStub(AttributeStore::class);
 
         $this->decoratedConnection->expects($this->once())
             ->method('getAttributeStore')

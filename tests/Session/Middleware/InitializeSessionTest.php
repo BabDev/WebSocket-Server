@@ -11,6 +11,7 @@ use BabDev\WebSocket\Server\ServerMiddleware;
 use BabDev\WebSocket\Server\Session\Middleware\InitializeSession;
 use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
 use Symfony\Component\HttpFoundation\Session\SessionFactoryInterface;
@@ -45,8 +46,8 @@ final class InitializeSessionTest extends TestCase
             ->with('Cookie')
             ->willReturn(false);
 
-        /** @var MockObject&SessionInterface $session */
-        $session = $this->createMock(SessionInterface::class);
+        /** @var Stub&SessionInterface $session */
+        $session = $this->createStub(SessionInterface::class);
 
         /** @var MockObject&AttributeStore $attributeStore */
         $attributeStore = $this->createMock(AttributeStore::class);
@@ -218,8 +219,8 @@ final class InitializeSessionTest extends TestCase
     {
         $data = 'Testing';
 
-        /** @var MockObject&Connection $connection */
-        $connection = $this->createMock(Connection::class);
+        /** @var Stub&Connection $connection */
+        $connection = $this->createStub(Connection::class);
 
         $this->decoratedMiddleware->expects($this->once())
             ->method('onMessage')
@@ -231,8 +232,8 @@ final class InitializeSessionTest extends TestCase
     #[TestDox('Closes the connection')]
     public function testOnClose(): void
     {
-        /** @var MockObject&Connection $connection */
-        $connection = $this->createMock(Connection::class);
+        /** @var Stub&Connection $connection */
+        $connection = $this->createStub(Connection::class);
 
         $this->decoratedMiddleware->expects($this->once())
             ->method('onClose')
@@ -244,8 +245,8 @@ final class InitializeSessionTest extends TestCase
     #[TestDox('Handles an error')]
     public function testOnError(): void
     {
-        /** @var MockObject&Connection $connection */
-        $connection = $this->createMock(Connection::class);
+        /** @var Stub&Connection $connection */
+        $connection = $this->createStub(Connection::class);
 
         $error = new \Exception('Testing');
 
