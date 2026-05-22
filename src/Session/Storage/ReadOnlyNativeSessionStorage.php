@@ -220,6 +220,7 @@ final class ReadOnlyNativeSessionStorage implements SessionStorageInterface
                     continue;
                 }
 
+                /** @phpstan-ignore argument.type */
                 $this->optionsHandler->set('session.'.$key, $value);
             }
         }

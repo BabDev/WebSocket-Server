@@ -313,6 +313,7 @@ final readonly class DispatchMessageToHandler implements WAMPServerMiddleware
         }
 
         // This snippet emulates the HttpKernel's RouterListener behavior for setting route attributes to the request
+        /** @phpstan-ignore argument.type */
         $attributes = new ParameterBag($parameters);
         unset($parameters['_route'], $parameters['_controller']);
         $attributes->set('_route_params', $parameters);
