@@ -25,67 +25,45 @@ use Symfony\Component\Routing\Matcher\UrlMatcherInterface;
 
 final class DispatchMessageToHandlerTest extends TestCase
 {
-    private readonly MockObject&UrlMatcherInterface $matcher;
-
-    private readonly MockObject&MessageHandlerResolver $resolver;
-
-    private readonly MockObject&EventDispatcherInterface $dispatcher;
-
-    private readonly DispatchMessageToHandler $middleware;
-
-    protected function setUp(): void
-    {
-        $this->matcher = $this->createMock(UrlMatcherInterface::class);
-        $this->resolver = $this->createMock(MessageHandlerResolver::class);
-        $this->dispatcher = $this->createMock(EventDispatcherInterface::class);
-
-        $this->middleware = new DispatchMessageToHandler($this->matcher, $this->resolver, $this->dispatcher);
-    }
-
     public function testGetSubProtocols(): void
     {
-        $this->assertEmpty($this->middleware->getSubProtocols());
+        $this->assertEmpty($this->createMiddleware()->getSubProtocols());
     }
 
     #[TestDox('Handles a new connection being opened')]
     public function testOnOpen(): void
     {
-        $this->dispatcher->expects($this->once())
+        /** @var MockObject&EventDispatcherInterface $dispatcher */
+        $dispatcher = $this->createMock(EventDispatcherInterface::class);
+        $dispatcher->expects($this->once())
             ->method('dispatch')
             ->with($this->isInstanceOf(ConnectionOpened::class));
 
-        /** @var Stub&Connection $connection */
-        $connection = $this->createStub(Connection::class);
-
-        $this->middleware->onOpen($connection);
+        $this->createMiddleware(dispatcher: $dispatcher)->onOpen($this->createStub(Connection::class));
     }
 
     #[TestDox('Closes the connection')]
     public function testOnClose(): void
     {
-        $this->dispatcher->expects($this->once())
+        /** @var MockObject&EventDispatcherInterface $dispatcher */
+        $dispatcher = $this->createMock(EventDispatcherInterface::class);
+        $dispatcher->expects($this->once())
             ->method('dispatch')
             ->with($this->isInstanceOf(ConnectionClosed::class));
 
-        /** @var Stub&Connection $connection */
-        $connection = $this->createStub(Connection::class);
-
-        $this->middleware->onClose($connection);
+        $this->createMiddleware(dispatcher: $dispatcher)->onClose($this->createStub(Connection::class));
     }
 
     #[TestDox('Handles an error')]
     public function testOnError(): void
     {
-        $exception = new \RuntimeException('Testing');
-
-        $this->dispatcher->expects($this->once())
+        /** @var MockObject&EventDispatcherInterface $dispatcher */
+        $dispatcher = $this->createMock(EventDispatcherInterface::class);
+        $dispatcher->expects($this->once())
             ->method('dispatch')
             ->with($this->isInstanceOf(ConnectionError::class));
 
-        /** @var Stub&Connection $connection */
-        $connection = $this->createStub(Connection::class);
-
-        $this->middleware->onError($connection, $exception);
+        $this->createMiddleware(dispatcher: $dispatcher)->onError($this->createStub(Connection::class), new \RuntimeException('Testing'));
     }
 
     #[TestDox('Handles an RPC "CALL" WAMP message')]
@@ -104,17 +82,21 @@ final class DispatchMessageToHandlerTest extends TestCase
             ->method('onCall')
             ->with($connection, $id, $this->isInstanceOf(WAMPMessageRequest::class), $params);
 
-        $this->matcher->expects($this->once())
+        /** @var MockObject&UrlMatcherInterface $matcher */
+        $matcher = $this->createMock(UrlMatcherInterface::class);
+        $matcher->expects($this->once())
             ->method('match')
             ->with($resolvedUri)
             ->willReturn(['_controller' => 'rpc.handler']);
 
-        $this->resolver->expects($this->once())
+        /** @var MockObject&MessageHandlerResolver $resolver */
+        $resolver = $this->createMock(MessageHandlerResolver::class);
+        $resolver->expects($this->once())
             ->method('findMessageHandler')
             ->with($this->isInstanceOf(WAMPMessageRequest::class))
             ->willReturn($handler);
 
-        $this->middleware->onCall($connection, $id, $resolvedUri, $params);
+        $this->createMiddleware(matcher: $matcher, resolver: $resolver)->onCall($connection, $id, $resolvedUri, $params);
     }
 
     #[TestDox('Handles an RPC "CALL" WAMP message when there is no handler for a URI')]
@@ -131,15 +113,19 @@ final class DispatchMessageToHandlerTest extends TestCase
         $connection->expects($this->once())
             ->method('callError');
 
-        $this->matcher->expects($this->once())
+        /** @var MockObject&UrlMatcherInterface $matcher */
+        $matcher = $this->createMock(UrlMatcherInterface::class);
+        $matcher->expects($this->once())
             ->method('match')
             ->with($resolvedUri)
             ->willThrowException(new ResourceNotFoundException('Testing'));
 
-        $this->resolver->expects($this->never())
+        /** @var MockObject&MessageHandlerResolver $resolver */
+        $resolver = $this->createMock(MessageHandlerResolver::class);
+        $resolver->expects($this->never())
             ->method('findMessageHandler');
 
-        $this->middleware->onCall($connection, $id, $resolvedUri, $params);
+        $this->createMiddleware(matcher: $matcher, resolver: $resolver)->onCall($connection, $id, $resolvedUri, $params);
     }
 
     #[TestDox('Handles an RPC "CALL" WAMP message when the handler is invalid')]
@@ -156,17 +142,21 @@ final class DispatchMessageToHandlerTest extends TestCase
         $connection->expects($this->once())
             ->method('callError');
 
-        $this->matcher->expects($this->once())
+        /** @var MockObject&UrlMatcherInterface $matcher */
+        $matcher = $this->createMock(UrlMatcherInterface::class);
+        $matcher->expects($this->once())
             ->method('match')
             ->with($resolvedUri)
             ->willReturn(['_controller' => 'rpc.handler']);
 
-        $this->resolver->expects($this->once())
+        /** @var MockObject&MessageHandlerResolver $resolver */
+        $resolver = $this->createMock(MessageHandlerResolver::class);
+        $resolver->expects($this->once())
             ->method('findMessageHandler')
             ->with($this->isInstanceOf(WAMPMessageRequest::class))
             ->willThrowException(new UnknownMessageHandler('Testing'));
 
-        $this->middleware->onCall($connection, $id, $resolvedUri, $params);
+        $this->createMiddleware(matcher: $matcher, resolver: $resolver)->onCall($connection, $id, $resolvedUri, $params);
     }
 
     #[TestDox('Handles a "SUBSCRIBE" WAMP message')]
@@ -183,17 +173,21 @@ final class DispatchMessageToHandlerTest extends TestCase
             ->method('onSubscribe')
             ->with($connection, $topic, $this->isInstanceOf(WAMPMessageRequest::class));
 
-        $this->matcher->expects($this->once())
+        /** @var MockObject&UrlMatcherInterface $matcher */
+        $matcher = $this->createMock(UrlMatcherInterface::class);
+        $matcher->expects($this->once())
             ->method('match')
             ->with($topic->id)
             ->willReturn(['_controller' => 'topic.handler']);
 
-        $this->resolver->expects($this->once())
+        /** @var MockObject&MessageHandlerResolver $resolver */
+        $resolver = $this->createMock(MessageHandlerResolver::class);
+        $resolver->expects($this->once())
             ->method('findMessageHandler')
             ->with($this->isInstanceOf(WAMPMessageRequest::class))
             ->willReturn($handler);
 
-        $this->middleware->onSubscribe($connection, $topic);
+        $this->createMiddleware(matcher: $matcher, resolver: $resolver)->onSubscribe($connection, $topic);
     }
 
     #[TestDox('Handles a "SUBSCRIBE" WAMP message when there is no handler for a URI')]
@@ -208,15 +202,19 @@ final class DispatchMessageToHandlerTest extends TestCase
         $connection->expects($this->once())
             ->method('event');
 
-        $this->matcher->expects($this->once())
+        /** @var MockObject&UrlMatcherInterface $matcher */
+        $matcher = $this->createMock(UrlMatcherInterface::class);
+        $matcher->expects($this->once())
             ->method('match')
             ->with($topic->id)
             ->willThrowException(new ResourceNotFoundException('Testing'));
 
-        $this->resolver->expects($this->never())
+        /** @var MockObject&MessageHandlerResolver $resolver */
+        $resolver = $this->createMock(MessageHandlerResolver::class);
+        $resolver->expects($this->never())
             ->method('findMessageHandler');
 
-        $this->middleware->onSubscribe($connection, $topic);
+        $this->createMiddleware(matcher: $matcher, resolver: $resolver)->onSubscribe($connection, $topic);
     }
 
     #[TestDox('Handles a "SUBSCRIBE" WAMP message when the handler is invalid')]
@@ -231,17 +229,21 @@ final class DispatchMessageToHandlerTest extends TestCase
         $connection->expects($this->once())
             ->method('event');
 
-        $this->matcher->expects($this->once())
+        /** @var MockObject&UrlMatcherInterface $matcher */
+        $matcher = $this->createMock(UrlMatcherInterface::class);
+        $matcher->expects($this->once())
             ->method('match')
             ->with($topic->id)
             ->willReturn(['_controller' => 'rpc.handler']);
 
-        $this->resolver->expects($this->once())
+        /** @var MockObject&MessageHandlerResolver $resolver */
+        $resolver = $this->createMock(MessageHandlerResolver::class);
+        $resolver->expects($this->once())
             ->method('findMessageHandler')
             ->with($this->isInstanceOf(WAMPMessageRequest::class))
             ->willThrowException(new UnknownMessageHandler('Testing'));
 
-        $this->middleware->onSubscribe($connection, $topic);
+        $this->createMiddleware(matcher: $matcher, resolver: $resolver)->onSubscribe($connection, $topic);
     }
 
     #[TestDox('Handles an "UNSUBSCRIBE" WAMP message')]
@@ -258,17 +260,21 @@ final class DispatchMessageToHandlerTest extends TestCase
             ->method('onUnsubscribe')
             ->with($connection, $topic, $this->isInstanceOf(WAMPMessageRequest::class));
 
-        $this->matcher->expects($this->once())
+        /** @var MockObject&UrlMatcherInterface $matcher */
+        $matcher = $this->createMock(UrlMatcherInterface::class);
+        $matcher->expects($this->once())
             ->method('match')
             ->with($topic->id)
             ->willReturn(['_controller' => 'topic.handler']);
 
-        $this->resolver->expects($this->once())
+        /** @var MockObject&MessageHandlerResolver $resolver */
+        $resolver = $this->createMock(MessageHandlerResolver::class);
+        $resolver->expects($this->once())
             ->method('findMessageHandler')
             ->with($this->isInstanceOf(WAMPMessageRequest::class))
             ->willReturn($handler);
 
-        $this->middleware->onUnsubscribe($connection, $topic);
+        $this->createMiddleware(matcher: $matcher, resolver: $resolver)->onUnsubscribe($connection, $topic);
     }
 
     #[TestDox('Handles an "UNSUBSCRIBE" WAMP message when there is no handler for a URI')]
@@ -283,15 +289,19 @@ final class DispatchMessageToHandlerTest extends TestCase
         $connection->expects($this->once())
             ->method('event');
 
-        $this->matcher->expects($this->once())
+        /** @var MockObject&UrlMatcherInterface $matcher */
+        $matcher = $this->createMock(UrlMatcherInterface::class);
+        $matcher->expects($this->once())
             ->method('match')
             ->with($topic->id)
             ->willThrowException(new ResourceNotFoundException('Testing'));
 
-        $this->resolver->expects($this->never())
+        /** @var MockObject&MessageHandlerResolver $resolver */
+        $resolver = $this->createMock(MessageHandlerResolver::class);
+        $resolver->expects($this->never())
             ->method('findMessageHandler');
 
-        $this->middleware->onUnsubscribe($connection, $topic);
+        $this->createMiddleware(matcher: $matcher, resolver: $resolver)->onUnsubscribe($connection, $topic);
     }
 
     #[TestDox('Handles an "UNSUBSCRIBE" WAMP message when the handler is invalid')]
@@ -306,17 +316,21 @@ final class DispatchMessageToHandlerTest extends TestCase
         $connection->expects($this->once())
             ->method('event');
 
-        $this->matcher->expects($this->once())
+        /** @var MockObject&UrlMatcherInterface $matcher */
+        $matcher = $this->createMock(UrlMatcherInterface::class);
+        $matcher->expects($this->once())
             ->method('match')
             ->with($topic->id)
             ->willReturn(['_controller' => 'rpc.handler']);
 
-        $this->resolver->expects($this->once())
+        /** @var MockObject&MessageHandlerResolver $resolver */
+        $resolver = $this->createMock(MessageHandlerResolver::class);
+        $resolver->expects($this->once())
             ->method('findMessageHandler')
             ->with($this->isInstanceOf(WAMPMessageRequest::class))
             ->willThrowException(new UnknownMessageHandler('Testing'));
 
-        $this->middleware->onUnsubscribe($connection, $topic);
+        $this->createMiddleware(matcher: $matcher, resolver: $resolver)->onUnsubscribe($connection, $topic);
     }
 
     #[TestDox('Handles a "PUBLISH" WAMP message')]
@@ -336,17 +350,21 @@ final class DispatchMessageToHandlerTest extends TestCase
             ->method('onPublish')
             ->with($connection, $topic, $this->isInstanceOf(WAMPMessageRequest::class), $event, $exclude, $eligible);
 
-        $this->matcher->expects($this->once())
+        /** @var MockObject&UrlMatcherInterface $matcher */
+        $matcher = $this->createMock(UrlMatcherInterface::class);
+        $matcher->expects($this->once())
             ->method('match')
             ->with($topic->id)
             ->willReturn(['_controller' => 'topic.handler']);
 
-        $this->resolver->expects($this->once())
+        /** @var MockObject&MessageHandlerResolver $resolver */
+        $resolver = $this->createMock(MessageHandlerResolver::class);
+        $resolver->expects($this->once())
             ->method('findMessageHandler')
             ->with($this->isInstanceOf(WAMPMessageRequest::class))
             ->willReturn($handler);
 
-        $this->middleware->onPublish($connection, $topic, $event, $exclude, $eligible);
+        $this->createMiddleware(matcher: $matcher, resolver: $resolver)->onPublish($connection, $topic, $event, $exclude, $eligible);
     }
 
     #[TestDox('Handles a "PUBLISH" WAMP message when there is no handler for a URI')]
@@ -364,15 +382,19 @@ final class DispatchMessageToHandlerTest extends TestCase
         $connection->expects($this->once())
             ->method('event');
 
-        $this->matcher->expects($this->once())
+        /** @var MockObject&UrlMatcherInterface $matcher */
+        $matcher = $this->createMock(UrlMatcherInterface::class);
+        $matcher->expects($this->once())
             ->method('match')
             ->with($topic->id)
             ->willThrowException(new ResourceNotFoundException('Testing'));
 
-        $this->resolver->expects($this->never())
+        /** @var MockObject&MessageHandlerResolver $resolver */
+        $resolver = $this->createMock(MessageHandlerResolver::class);
+        $resolver->expects($this->never())
             ->method('findMessageHandler');
 
-        $this->middleware->onPublish($connection, $topic, $event, $exclude, $eligible);
+        $this->createMiddleware(matcher: $matcher, resolver: $resolver)->onPublish($connection, $topic, $event, $exclude, $eligible);
     }
 
     #[TestDox('Handles a "PUBLISH" WAMP message when the handler is invalid')]
@@ -390,16 +412,29 @@ final class DispatchMessageToHandlerTest extends TestCase
         $connection->expects($this->once())
             ->method('event');
 
-        $this->matcher->expects($this->once())
+        /** @var MockObject&UrlMatcherInterface $matcher */
+        $matcher = $this->createMock(UrlMatcherInterface::class);
+        $matcher->expects($this->once())
             ->method('match')
             ->with($topic->id)
             ->willReturn(['_controller' => 'topic.handler']);
 
-        $this->resolver->expects($this->once())
+        /** @var MockObject&MessageHandlerResolver $resolver */
+        $resolver = $this->createMock(MessageHandlerResolver::class);
+        $resolver->expects($this->once())
             ->method('findMessageHandler')
             ->with($this->isInstanceOf(WAMPMessageRequest::class))
             ->willThrowException(new UnknownMessageHandler('Testing'));
 
-        $this->middleware->onPublish($connection, $topic, $event, $exclude, $eligible);
+        $this->createMiddleware(matcher: $matcher, resolver: $resolver)->onPublish($connection, $topic, $event, $exclude, $eligible);
+    }
+
+    private function createMiddleware(?UrlMatcherInterface $matcher = null, ?MessageHandlerResolver $resolver = null, ?EventDispatcherInterface $dispatcher = null): DispatchMessageToHandler
+    {
+        return new DispatchMessageToHandler(
+            $matcher ?? $this->createStub(UrlMatcherInterface::class),
+            $resolver ?? $this->createStub(MessageHandlerResolver::class),
+            $dispatcher ?? $this->createStub(EventDispatcherInterface::class),
+        );
     }
 }
