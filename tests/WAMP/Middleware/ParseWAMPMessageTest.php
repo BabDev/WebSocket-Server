@@ -101,7 +101,7 @@ final class ParseWAMPMessageTest extends TestCase
     #[TestDox('Rejects a WAMP "PREFIX" message once the connection has reached the prefix limit')]
     public function testOnMessageForPrefixMessageRejectsPrefixesOverTheLimit(): void
     {
-        [$middleware, $connection, $attributeStore] = $this->createMiddlewareForPrefixMessages();
+        [$middleware, $connection, $attributeStore] = $this->createOpenedMiddleware();
         $middleware->setMaxPrefixes(2);
 
         $middleware->onMessage($connection, json_encode([MessageType::PREFIX, 'one', 'https://example.com/one'], \JSON_THROW_ON_ERROR));
@@ -125,7 +125,7 @@ final class ParseWAMPMessageTest extends TestCase
     #[TestDox('Allows a WAMP "PREFIX" message to replace a registered prefix when the connection has reached the prefix limit')]
     public function testOnMessageForPrefixMessageReplacesPrefixAtTheLimit(): void
     {
-        [$middleware, $connection, $attributeStore] = $this->createMiddlewareForPrefixMessages();
+        [$middleware, $connection, $attributeStore] = $this->createOpenedMiddleware();
         $middleware->setMaxPrefixes(1);
 
         $middleware->onMessage($connection, json_encode([MessageType::PREFIX, 'one', 'https://example.com/one'], \JSON_THROW_ON_ERROR));
@@ -162,7 +162,7 @@ final class ParseWAMPMessageTest extends TestCase
     #[DataProvider('dataInvalidPrefixMessage')]
     public function testOnMessageForInvalidPrefixMessage(array $message): void
     {
-        [$middleware, $connection, $attributeStore] = $this->createMiddlewareForPrefixMessages();
+        [$middleware, $connection, $attributeStore] = $this->createOpenedMiddleware();
 
         try {
             $middleware->onMessage($connection, json_encode($message, \JSON_THROW_ON_ERROR));
@@ -176,9 +176,133 @@ final class ParseWAMPMessageTest extends TestCase
     }
 
     /**
+     * @return \Generator<string, array{list<mixed>}>
+     */
+    public static function dataInvalidMessage(): \Generator
+    {
+        yield 'Empty message' => [[]];
+
+        yield 'Null message type' => [[null, 'https://example.com/testing']];
+
+        yield 'String message type' => [['2', 'call-id', 'https://example.com/testing']];
+
+        yield 'Boolean message type' => [[true, 'testing', 'https://example.com/testing']];
+
+        yield '"CALL" message without a call ID' => [[MessageType::CALL]];
+
+        yield '"CALL" message with an array call ID' => [[MessageType::CALL, ['call-id'], 'https://example.com/testing']];
+
+        yield '"CALL" message without a procedure URI' => [[MessageType::CALL, 'call-id']];
+
+        yield '"CALL" message with a numeric procedure URI' => [[MessageType::CALL, 'call-id', 123]];
+
+        yield '"SUBSCRIBE" message without a topic URI' => [[MessageType::SUBSCRIBE]];
+
+        yield '"SUBSCRIBE" message with an array topic URI' => [[MessageType::SUBSCRIBE, ['https://example.com/testing']]];
+
+        yield '"UNSUBSCRIBE" message without a topic URI' => [[MessageType::UNSUBSCRIBE]];
+
+        yield '"UNSUBSCRIBE" message with an empty topic URI' => [[MessageType::UNSUBSCRIBE, '']];
+
+        yield '"PUBLISH" message without a topic URI' => [[MessageType::PUBLISH]];
+
+        yield '"PUBLISH" message without an event' => [[MessageType::PUBLISH, 'https://example.com/testing']];
+
+        yield '"PUBLISH" message with an integer event' => [[MessageType::PUBLISH, 'https://example.com/testing', 42]];
+
+        yield '"PUBLISH" message with a null event' => [[MessageType::PUBLISH, 'https://example.com/testing', null]];
+
+        yield '"PUBLISH" message with a string exclude value' => [[MessageType::PUBLISH, 'https://example.com/testing', 'Testing', 'yes']];
+
+        yield '"PUBLISH" message with non-string excluded session IDs' => [[MessageType::PUBLISH, 'https://example.com/testing', 'Testing', [1, 2]]];
+
+        yield '"PUBLISH" message with a keyed exclude list' => [[MessageType::PUBLISH, 'https://example.com/testing', 'Testing', ['session' => 'abc']]];
+
+        yield '"PUBLISH" message with a string eligible value' => [[MessageType::PUBLISH, 'https://example.com/testing', 'Testing', [], 'abc']];
+
+        yield '"PUBLISH" message with non-string eligible session IDs' => [[MessageType::PUBLISH, 'https://example.com/testing', 'Testing', [], [1]]];
+    }
+
+    /**
+     * @param list<mixed> $message
+     */
+    #[TestDox('Rejects an invalid WAMP message')]
+    #[DataProvider('dataInvalidMessage')]
+    public function testOnMessageForInvalidMessage(array $message): void
+    {
+        /** @var MockObject&WAMPServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(WAMPServerMiddleware::class);
+
+        foreach (['onCall', 'onSubscribe', 'onUnsubscribe', 'onPublish'] as $method) {
+            $decoratedMiddleware->expects($this->never())
+                ->method($method);
+        }
+
+        [$middleware, $connection] = $this->createOpenedMiddleware($decoratedMiddleware);
+
+        try {
+            $middleware->onMessage($connection, json_encode($message, \JSON_THROW_ON_ERROR));
+
+            self::fail(\sprintf('A %s exception should have been thrown.', InvalidMessage::class));
+        } catch (InvalidMessage $exception) {
+            $this->assertNotInstanceOf(PrefixLimitExceeded::class, $exception);
+        }
+    }
+
+    #[TestDox('Handles incoming data on the connection for a WAMP "CALL" message with a numeric call ID')]
+    public function testOnMessageForCallMessageWithNumericCallId(): void
+    {
+        /** @var MockObject&WAMPServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(WAMPServerMiddleware::class);
+        $decoratedMiddleware->expects($this->once())
+            ->method('onCall')
+            ->with($this->isInstanceOf(WAMPConnection::class), '123', 'https://example.com/testing', []);
+
+        [$middleware, $connection] = $this->createOpenedMiddleware($decoratedMiddleware);
+
+        $middleware->onMessage($connection, json_encode([MessageType::CALL, 123, 'https://example.com/testing'], \JSON_THROW_ON_ERROR));
+    }
+
+    #[TestDox('Handles incoming data on the connection for a WAMP "SUBSCRIBE" message with a numeric topic URI')]
+    public function testOnMessageForSubscribeMessageWithNumericTopicUri(): void
+    {
+        /** @var MockObject&WAMPServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(WAMPServerMiddleware::class);
+        $subscribedTopic = null;
+
+        $decoratedMiddleware->expects($this->once())
+            ->method('onSubscribe')
+            ->with($this->isInstanceOf(WAMPConnection::class), $this->isInstanceOf(Topic::class))
+            ->willReturnCallback(static function (WAMPConnection $connection, Topic $topic) use (&$subscribedTopic): void {
+                $subscribedTopic = $topic;
+            });
+
+        [$middleware, $connection] = $this->createOpenedMiddleware($decoratedMiddleware);
+
+        $middleware->onMessage($connection, json_encode([MessageType::SUBSCRIBE, 42], \JSON_THROW_ON_ERROR));
+
+        $this->assertInstanceOf(Topic::class, $subscribedTopic);
+        $this->assertSame('42', $subscribedTopic->id);
+    }
+
+    #[TestDox('Handles incoming data on the connection for an unknown WAMP message type')]
+    public function testOnMessageForUnknownMessageType(): void
+    {
+        [$middleware, $connection] = $this->createOpenedMiddleware();
+
+        try {
+            $middleware->onMessage($connection, json_encode([99, 'https://example.com/testing'], \JSON_THROW_ON_ERROR));
+
+            self::fail(\sprintf('A %s exception should have been thrown.', UnsupportedMessageType::class));
+        } catch (UnsupportedMessageType $exception) {
+            $this->assertSame(99, $exception->messageType);
+        }
+    }
+
+    /**
      * @return array{ParseWAMPMessage, Connection, ArrayAttributeStore}
      */
-    private function createMiddlewareForPrefixMessages(): array
+    private function createOpenedMiddleware(?WAMPServerMiddleware $decoratedMiddleware = null): array
     {
         $attributeStore = new ArrayAttributeStore();
 
@@ -187,7 +311,7 @@ final class ParseWAMPMessageTest extends TestCase
         $connection->method('getAttributeStore')
             ->willReturn($attributeStore);
 
-        $middleware = new ParseWAMPMessage($this->createStub(WAMPServerMiddleware::class), $this->createStub(TopicRegistry::class));
+        $middleware = new ParseWAMPMessage($decoratedMiddleware ?? $this->createStub(WAMPServerMiddleware::class), $this->createStub(TopicRegistry::class));
         $middleware->onOpen($connection);
 
         return [$middleware, $connection, $attributeStore];

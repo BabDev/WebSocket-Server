@@ -8,7 +8,7 @@ use BabDev\WebSocket\Server\WebSocketException;
 class UnsupportedMessageType extends \RuntimeException implements WebSocketException
 {
     /**
-     * @phpstan-param MessageType::* $messageType
+     * @param int $messageType The message type from the client
      */
     public function __construct(
         public readonly int $messageType,

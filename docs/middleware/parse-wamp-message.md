@@ -4,6 +4,16 @@ The `BabDev\WebSocket\Server\WAMP\Middleware\ParseWAMPMessage` class is a [serve
 
 The middleware also allows enabling a keepalive ping-pong for the server.
 
+## Message Validation
+
+Incoming messages are validated before they are forwarded to the decorated middleware, and a `BabDev\WebSocket\Server\WAMP\Exception\InvalidMessage` exception is thrown for a message which does not match the [WAMP version 1](https://web.archive.org/web/20150419051041/http://wamp.ws/spec/wamp1/) specification:
+
+- The message must be a JSON array whose first element is an integer message type; an unknown message type throws a `BabDev\WebSocket\Server\WAMP\Exception\UnsupportedMessageType` exception
+- The call ID of a "CALL" message, and the topic URI of a "SUBSCRIBE", "UNSUBSCRIBE", or "PUBLISH" message, must be a non-empty string; numeric values are accepted and converted to strings
+- The procedure URI of a "CALL" message must be a non-empty string
+- The event of a "PUBLISH" message is required and must be an array or a string
+- The exclude parameter of a "PUBLISH" message must be a boolean or a list of session ID strings, and the eligible parameter must be a list of session ID strings
+
 ## Topic Lookup
 
 For "SUBSCRIBE", "UNSUBSCRIBE", and "PUBLISH" messages, the middleware looks up the topic for the message's URI in the topic registry. If the topic is not registered, a new `BabDev\WebSocket\Server\WAMP\Topic` is created for the message, but it is not added to the registry; registering topics is the responsibility of the `BabDev\WebSocket\Server\WAMP\Middleware\UpdateTopicSubscriptions` middleware once a connection subscribes to the topic. This prevents clients from adding topics to the registry by sending messages for topics that no connection is subscribed to.

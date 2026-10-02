@@ -86,84 +86,94 @@ final class ParseWAMPMessage implements WebSocketServerMiddleware
         $decoratedConnection = $this->connections[$connection];
 
         try {
-            /** @var array{0: MessageType::*, 1: string, 2?: array<string, mixed>|string, 3?: bool|list<string>|array<string, mixed>, 4?: list<string>} $message */
             $message = json_decode($data, true, 512, \JSON_THROW_ON_ERROR);
         } catch (\JsonException $exception) {
             throw new InvalidMessage('Invalid WAMP message.', $exception->getCode(), $exception);
         }
 
-        if (!\is_array($message) || $message !== array_values($message)) {
+        if (!\is_array($message) || !array_is_list($message)) {
             throw new InvalidMessage('Invalid WAMP message format.');
         }
 
-        if (isset($message[1]) && (!\is_string($message[1]) && !is_numeric($message[1]))) {
-            throw new InvalidMessage('Invalid Topic, must be a string.');
+        if (!isset($message[0]) || !\is_int($message[0])) {
+            throw new InvalidMessage('Invalid WAMP message type, must be an integer.');
         }
 
         switch ($message[0]) {
             case MessageType::PREFIX:
-                if (!\is_string($message[1]) || '' === $message[1]) {
-                    throw new InvalidMessage('Invalid prefix, must be a non-empty string.');
-                }
-
-                if (!isset($message[2]) || !\is_string($message[2]) || '' === $message[2]) {
-                    throw new InvalidMessage('Invalid prefix URI, must be a non-empty string.');
-                }
+                $prefix = $this->getStringElement($message, 1, 'prefix');
+                $prefixUri = $this->getStringElement($message, 2, 'prefix URI');
 
                 /** @var array<string, string> $prefixes */
                 $prefixes = $decoratedConnection->getAttributeStore()->get('wamp.prefixes', []);
 
                 // Replacing an already registered prefix is allowed when the limit has been reached
-                if (!isset($prefixes[$message[1]]) && \count($prefixes) >= $this->maxPrefixes) {
-                    throw new PrefixLimitExceeded($this->maxPrefixes, \sprintf('Cannot register prefix "%s", the connection has reached the limit of %d prefixes.', $message[1], $this->maxPrefixes));
+                if (!isset($prefixes[$prefix]) && \count($prefixes) >= $this->maxPrefixes) {
+                    throw new PrefixLimitExceeded($this->maxPrefixes, \sprintf('Cannot register prefix "%s", the connection has reached the limit of %d prefixes.', $prefix, $this->maxPrefixes));
                 }
 
-                $prefixes[$message[1]] = $message[2];
+                $prefixes[$prefix] = $prefixUri;
 
                 $decoratedConnection->getAttributeStore()->set('wamp.prefixes', $prefixes);
 
                 break;
 
             case MessageType::CALL:
-                array_shift($message);
-                $callID = array_shift($message);
-                $procURI = array_shift($message);
+                $callId = $this->getStringElement($message, 1, 'call ID', allowNumeric: true);
+                $procUri = $this->getStringElement($message, 2, 'procedure URI');
 
-                if (1 === \count($message) && \is_array($message[0])) {
-                    $message = $message[0];
+                $params = \array_slice($message, 3);
+
+                if (1 === \count($params) && \is_array($params[0])) {
+                    $params = $params[0];
                 }
 
-                $this->middleware->onCall($decoratedConnection, $callID, $decoratedConnection->getUri($procURI), $message);
+                $this->middleware->onCall($decoratedConnection, $callId, $decoratedConnection->getUri($procUri), $params);
 
                 break;
 
             case MessageType::SUBSCRIBE:
-                $this->middleware->onSubscribe($decoratedConnection, $this->getTopic($decoratedConnection, $message[1]));
+                $topicUri = $this->getStringElement($message, 1, 'topic URI', allowNumeric: true);
+
+                $this->middleware->onSubscribe($decoratedConnection, $this->getTopic($decoratedConnection, $topicUri));
 
                 break;
 
             case MessageType::UNSUBSCRIBE:
-                $this->middleware->onUnsubscribe($decoratedConnection, $this->getTopic($decoratedConnection, $message[1]));
+                $topicUri = $this->getStringElement($message, 1, 'topic URI', allowNumeric: true);
+
+                $this->middleware->onUnsubscribe($decoratedConnection, $this->getTopic($decoratedConnection, $topicUri));
 
                 break;
 
             case MessageType::PUBLISH:
-                \assert(isset($message[2]));
+                $topicUri = $this->getStringElement($message, 1, 'topic URI', allowNumeric: true);
 
-                $exclude = $message[3] ?? null;
-
-                if (!\is_array($exclude)) {
-                    if ((bool) $exclude) {
-                        $sessionId = $decoratedConnection->getAttributeStore()->get('wamp.session_id');
-                        $exclude = [$sessionId];
-                    } else {
-                        $exclude = [];
-                    }
+                if (!\array_key_exists(2, $message)) {
+                    throw new InvalidMessage('Invalid "PUBLISH" message, the event payload is required.');
                 }
 
-                $eligible = $message[4] ?? [];
+                $event = $message[2];
 
-                $this->middleware->onPublish($decoratedConnection, $this->getTopic($decoratedConnection, $message[1]), $message[2], $exclude, $eligible);
+                if (!\is_array($event) && !\is_string($event)) {
+                    throw new InvalidMessage(\sprintf('Invalid "PUBLISH" message, the event payload must be an array or a string, %s given.', get_debug_type($event)));
+                }
+
+                $exclude = $message[3] ?? false;
+
+                if (true === $exclude) {
+                    $sessionId = $decoratedConnection->getAttributeStore()->get('wamp.session_id');
+
+                    $exclude = \is_string($sessionId) ? [$sessionId] : [];
+                } elseif (false === $exclude) {
+                    $exclude = [];
+                } else {
+                    $exclude = $this->getSessionIdList($exclude, 'exclude');
+                }
+
+                $eligible = $this->getSessionIdList($message[4] ?? [], 'eligible');
+
+                $this->middleware->onPublish($decoratedConnection, $this->getTopic($decoratedConnection, $topicUri), $event, $exclude, $eligible);
 
                 break;
 
@@ -219,6 +229,54 @@ final class ParseWAMPMessage implements WebSocketServerMiddleware
     public function setMaxPrefixes(int $maxPrefixes): void
     {
         $this->maxPrefixes = $maxPrefixes;
+    }
+
+    /**
+     * Gets a required, non-empty string element from a WAMP message.
+     *
+     * @param list<mixed> $message
+     * @param bool        $allowNumeric Whether a numeric value is accepted and converted to a string
+     *
+     * @return non-empty-string
+     *
+     * @throws InvalidMessage if the element is missing or is not a non-empty string
+     */
+    private function getStringElement(array $message, int $index, string $name, bool $allowNumeric = false): string
+    {
+        $value = $message[$index] ?? null;
+
+        if ($allowNumeric && (\is_int($value) || \is_float($value))) {
+            $value = (string) $value;
+        }
+
+        if (!\is_string($value) || '' === $value) {
+            throw new InvalidMessage(\sprintf('Invalid %s, must be a non-empty string.', $name));
+        }
+
+        return $value;
+    }
+
+    /**
+     * Validates a list of WAMP session IDs from a "PUBLISH" message.
+     *
+     * @return list<string>
+     *
+     * @throws InvalidMessage if the value is not a list of strings
+     */
+    private function getSessionIdList(mixed $value, string $name): array
+    {
+        if (!\is_array($value) || !array_is_list($value)) {
+            throw new InvalidMessage(\sprintf('Invalid "PUBLISH" message, the %s list must be a list of session IDs.', $name));
+        }
+
+        foreach ($value as $sessionId) {
+            if (!\is_string($sessionId)) {
+                throw new InvalidMessage(\sprintf('Invalid "PUBLISH" message, the %s list must only contain string session IDs.', $name));
+            }
+        }
+
+        /* @var list<string> $value */
+        return $value;
     }
 
     /**
