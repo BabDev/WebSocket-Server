@@ -4,6 +4,7 @@ namespace BabDev\WebSocket\Server\Http\Middleware;
 
 use BabDev\WebSocket\Server\Connection;
 use BabDev\WebSocket\Server\Connection\ClosesConnectionWithResponse;
+use BabDev\WebSocket\Server\Http\Exception\InvalidRequestTimeout;
 use BabDev\WebSocket\Server\Http\Exception\MalformedRequest;
 use BabDev\WebSocket\Server\Http\Exception\MessageTooLarge;
 use BabDev\WebSocket\Server\Http\GuzzleRequestParser;
@@ -116,12 +117,12 @@ final class ParseHttpRequest implements ServerMiddleware
      * The timeout applies to connections opened after it is enabled. It measures the total time to receive the request,
      * so a client sending the request slowly is closed even if it sends data before the timeout expires.
      *
-     * @throws \InvalidArgumentException if the timeout is not a positive number
+     * @throws InvalidRequestTimeout if the timeout is not a positive number
      */
     public function enableRequestTimeout(LoopInterface $loop, float $timeout = 10.0): void
     {
         if ($timeout <= 0) {
-            throw new \InvalidArgumentException(\sprintf('The request timeout must be a positive number, %s given.', $timeout));
+            throw new InvalidRequestTimeout($timeout, \sprintf('The request timeout must be a positive number, %s given.', $timeout));
         }
 
         $this->loop = $loop;

@@ -3,6 +3,7 @@
 namespace BabDev\WebSocket\Server\Tests;
 
 use BabDev\WebSocket\Server\Application;
+use BabDev\WebSocket\Server\Http\Exception\InvalidRequestTimeout;
 use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -53,7 +54,7 @@ final class ApplicationTest extends TestCase
     #[TestDox('Rejects a request timeout which is not a positive number')]
     public function testRequestTimeoutMustBePositive(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidRequestTimeout::class);
 
         new Application("unix://{$this->socketPath}", [], $this->createStub(LoopInterface::class))->withRequestTimeout(0.0);
     }

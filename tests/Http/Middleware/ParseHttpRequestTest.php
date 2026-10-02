@@ -4,6 +4,7 @@ namespace BabDev\WebSocket\Server\Tests\Http\Middleware;
 
 use BabDev\WebSocket\Server\Connection;
 use BabDev\WebSocket\Server\Connection\ArrayAttributeStore;
+use BabDev\WebSocket\Server\Http\Exception\InvalidRequestTimeout;
 use BabDev\WebSocket\Server\Http\Exception\MalformedRequest;
 use BabDev\WebSocket\Server\Http\Exception\MessageTooLarge;
 use BabDev\WebSocket\Server\Http\Middleware\ParseHttpRequest;
@@ -353,7 +354,7 @@ final class ParseHttpRequestTest extends TestCase
         $this->requestParser->expects($this->never())
             ->method('parse');
 
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidRequestTimeout::class);
 
         $this->middleware->enableRequestTimeout($this->createStub(LoopInterface::class), $timeout);
     }

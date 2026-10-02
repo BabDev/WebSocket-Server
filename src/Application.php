@@ -2,6 +2,7 @@
 
 namespace BabDev\WebSocket\Server;
 
+use BabDev\WebSocket\Server\Http\Exception\InvalidRequestTimeout;
 use BabDev\WebSocket\Server\Http\Middleware\ParseHttpRequest;
 use BabDev\WebSocket\Server\Http\Middleware\RejectBlockedIpAddress;
 use BabDev\WebSocket\Server\Http\Middleware\RestrictToAllowedOrigins;
@@ -174,12 +175,12 @@ final class Application
     /**
      * Sets the number of seconds a client has to send its HTTP request before the connection is closed.
      *
-     * @throws \InvalidArgumentException if the timeout is not a positive number
+     * @throws InvalidRequestTimeout if the timeout is not a positive number
      */
     public function withRequestTimeout(?float $timeout): self
     {
         if (null !== $timeout && $timeout <= 0) {
-            throw new \InvalidArgumentException(\sprintf('The request timeout must be a positive number, %s given.', $timeout));
+            throw new InvalidRequestTimeout($timeout, \sprintf('The request timeout must be a positive number, %s given.', $timeout));
         }
 
         $this->requestTimeout = $timeout;
