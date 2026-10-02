@@ -24,9 +24,9 @@ interface TopicMessageHandler extends MessageMiddleware
     /**
      * Handles a "PUBLISH" WAMP message from the client.
      *
-     * @param array|string $event    The event payload for the message
+     * @param mixed        $event    The event payload for the message, which may be any decoded JSON value
      * @param list<string> $exclude  A list of session IDs the message should be excluded from
      * @param list<string> $eligible A list of session IDs the message should be sent to
      */
-    public function onPublish(Connection $connection, Topic $topic, WAMPMessageRequest $request, array|string $event, array $exclude, array $eligible): void;
+    public function onPublish(Connection $connection, Topic $topic, WAMPMessageRequest $request, mixed $event, array $exclude, array $eligible): void;
 }

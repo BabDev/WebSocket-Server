@@ -149,15 +149,12 @@ final class ParseWAMPMessage implements WebSocketServerMiddleware
             case MessageType::PUBLISH:
                 $topicUri = $this->getStringElement($message, 1, 'topic URI', allowNumeric: true);
 
+                // The event may be any JSON value, including null, so only its presence is validated
                 if (!\array_key_exists(2, $message)) {
                     throw new InvalidMessage('Invalid "PUBLISH" message, the event payload is required.');
                 }
 
                 $event = $message[2];
-
-                if (!\is_array($event) && !\is_string($event)) {
-                    throw new InvalidMessage(\sprintf('Invalid "PUBLISH" message, the event payload must be an array or a string, %s given.', get_debug_type($event)));
-                }
 
                 $exclude = $message[3] ?? false;
 

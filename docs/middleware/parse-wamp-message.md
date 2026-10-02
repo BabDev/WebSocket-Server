@@ -11,7 +11,7 @@ Incoming messages are validated before they are forwarded to the decorated middl
 - The message must be a JSON array whose first element is an integer message type; an unknown message type throws a `BabDev\WebSocket\Server\WAMP\Exception\UnsupportedMessageType` exception
 - The call ID of a "CALL" message, and the topic URI of a "SUBSCRIBE", "UNSUBSCRIBE", or "PUBLISH" message, must be a non-empty string; numeric values are accepted and converted to strings
 - The procedure URI of a "CALL" message must be a non-empty string
-- The event of a "PUBLISH" message is required and must be an array or a string
+- The event of a "PUBLISH" message is required, but may be any JSON value (including `null`)
 - The exclude parameter of a "PUBLISH" message must be a boolean or a list of session ID strings, and the eligible parameter must be a list of session ID strings
 
 ## Topic Lookup

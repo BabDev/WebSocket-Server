@@ -208,10 +208,6 @@ final class ParseWAMPMessageTest extends TestCase
 
         yield '"PUBLISH" message without an event' => [[MessageType::PUBLISH, 'https://example.com/testing']];
 
-        yield '"PUBLISH" message with an integer event' => [[MessageType::PUBLISH, 'https://example.com/testing', 42]];
-
-        yield '"PUBLISH" message with a null event' => [[MessageType::PUBLISH, 'https://example.com/testing', null]];
-
         yield '"PUBLISH" message with a string exclude value' => [[MessageType::PUBLISH, 'https://example.com/testing', 'Testing', 'yes']];
 
         yield '"PUBLISH" message with non-string excluded session IDs' => [[MessageType::PUBLISH, 'https://example.com/testing', 'Testing', [1, 2]]];
@@ -283,6 +279,35 @@ final class ParseWAMPMessageTest extends TestCase
 
         $this->assertInstanceOf(Topic::class, $subscribedTopic);
         $this->assertSame('42', $subscribedTopic->id);
+    }
+
+    /**
+     * @return \Generator<string, array{mixed}>
+     */
+    public static function dataPublishEvent(): \Generator
+    {
+        yield 'Integer event' => [42];
+
+        yield 'Float event' => [4.2];
+
+        yield 'Boolean event' => [false];
+
+        yield 'Null event' => [null];
+    }
+
+    #[TestDox('Handles incoming data on the connection for a WAMP "PUBLISH" message with any JSON value as the event')]
+    #[DataProvider('dataPublishEvent')]
+    public function testOnMessageForPublishMessageWithScalarEvent(mixed $event): void
+    {
+        /** @var MockObject&WAMPServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(WAMPServerMiddleware::class);
+        $decoratedMiddleware->expects($this->once())
+            ->method('onPublish')
+            ->with($this->isInstanceOf(WAMPConnection::class), $this->isInstanceOf(Topic::class), $event, [], []);
+
+        [$middleware, $connection] = $this->createOpenedMiddleware($decoratedMiddleware);
+
+        $middleware->onMessage($connection, json_encode([MessageType::PUBLISH, 'https://example.com/testing', $event], \JSON_THROW_ON_ERROR));
     }
 
     #[TestDox('Handles incoming data on the connection for an unknown WAMP message type')]
@@ -556,7 +581,7 @@ final class ParseWAMPMessageTest extends TestCase
         $decoratedMiddleware = $this->createMock(WAMPServerMiddleware::class);
         $decoratedMiddleware->expects($this->once())
             ->method('onPublish')
-            ->willReturnCallback(static function (Connection $connection, Topic $topic, array|string $event, array $exclude, array $eligible) use (&$excludedSessions): void {
+            ->willReturnCallback(static function (Connection $connection, Topic $topic, mixed $event, array $exclude, array $eligible) use (&$excludedSessions): void {
                 $excludedSessions = $exclude;
             });
 
@@ -606,7 +631,7 @@ final class ParseWAMPMessageTest extends TestCase
         $decoratedMiddleware = $this->createMock(WAMPServerMiddleware::class);
         $decoratedMiddleware->expects($this->once())
             ->method('onPublish')
-            ->willReturnCallback(static function (Connection $connection, Topic $topic, array|string $event, array $exclude, array $eligible) use (&$excludedSessions): void {
+            ->willReturnCallback(static function (Connection $connection, Topic $topic, mixed $event, array $exclude, array $eligible) use (&$excludedSessions): void {
                 $excludedSessions = $exclude;
             });
 
@@ -656,7 +681,7 @@ final class ParseWAMPMessageTest extends TestCase
         $decoratedMiddleware = $this->createMock(WAMPServerMiddleware::class);
         $decoratedMiddleware->expects($this->once())
             ->method('onPublish')
-            ->willReturnCallback(static function (Connection $connection, Topic $topic, array|string $event, array $exclude, array $eligible) use (&$eligibleSessions): void {
+            ->willReturnCallback(static function (Connection $connection, Topic $topic, mixed $event, array $exclude, array $eligible) use (&$eligibleSessions): void {
                 $eligibleSessions = $eligible;
             });
 

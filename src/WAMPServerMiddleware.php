@@ -31,9 +31,9 @@ interface WAMPServerMiddleware extends WebSocketServerMiddleware
     /**
      * Handles a "PUBLISH" WAMP message from the client.
      *
-     * @param array|string $event    The event payload for the message
+     * @param mixed        $event    The event payload for the message, which may be any decoded JSON value
      * @param list<string> $exclude  A list of session IDs the message should be excluded from
      * @param list<string> $eligible A list of session IDs the message should be sent to
      */
-    public function onPublish(WAMPConnection $connection, Topic $topic, array|string $event, array $exclude, array $eligible): void;
+    public function onPublish(WAMPConnection $connection, Topic $topic, mixed $event, array $exclude, array $eligible): void;
 }

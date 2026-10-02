@@ -46,7 +46,7 @@ final class TopicRegistryLifecycleTest extends TestCase
 
             public function onUnsubscribe(WAMPConnection $connection, Topic $topic, WAMPMessageRequest $request): void {}
 
-            public function onPublish(Connection $connection, Topic $topic, WAMPMessageRequest $request, array|string $event, array $exclude, array $eligible): void {}
+            public function onPublish(Connection $connection, Topic $topic, WAMPMessageRequest $request, mixed $event, array $exclude, array $eligible): void {}
         };
 
         $routes = new RouteCollection();
