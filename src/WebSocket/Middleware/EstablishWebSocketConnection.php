@@ -8,6 +8,7 @@ use BabDev\WebSocket\Server\Http\Middleware\ParseHttpRequest;
 use BabDev\WebSocket\Server\ServerMiddleware;
 use BabDev\WebSocket\Server\WebSocket\DefaultWebSocketConnection;
 use BabDev\WebSocket\Server\WebSocket\Exception\InvalidEncoding;
+use BabDev\WebSocket\Server\WebSocket\WebSocketConnection;
 use BabDev\WebSocket\Server\WebSocket\WebSocketConnectionContext;
 use BabDev\WebSocket\Server\WebSocketServerMiddleware;
 use GuzzleHttp\Psr7\HttpFactory;
@@ -22,6 +23,7 @@ use Ratchet\RFC6455\Messaging\FrameInterface;
 use Ratchet\RFC6455\Messaging\MessageBuffer;
 use Ratchet\RFC6455\Messaging\MessageInterface;
 use React\EventLoop\LoopInterface;
+use React\EventLoop\TimerInterface;
 
 /**
  * The establish websocket connection server middleware sends the HTTP response for the connection to establish the
@@ -35,9 +37,15 @@ final class EstablishWebSocketConnection implements ServerMiddleware
     private readonly \SplObjectStorage $connections;
 
     /**
-     * @phpstan-var \Closure(FrameInterface $frame, Connection $connection): void
+     * @var \SplObjectStorage<WebSocketConnection, null>
      */
-    private \Closure $pongReceiver;
+    private readonly \SplObjectStorage $pingedConnections;
+
+    private ?Frame $lastPing = null;
+
+    private ?LoopInterface $keepAliveLoop = null;
+
+    private ?TimerInterface $keepAliveTimer = null;
 
     /**
      * @throws InvalidEncoding if UTF-8 support is not available
@@ -51,14 +59,13 @@ final class EstablishWebSocketConnection implements ServerMiddleware
         }
 
         $this->connections = new \SplObjectStorage();
+        $this->pingedConnections = new \SplObjectStorage();
 
         $this->negotiator->setStrictSubProtocolCheck(true);
 
         if ($this->middleware instanceof WebSocketServerMiddleware) {
             $this->negotiator->setSupportedSubProtocols($this->middleware->getSubProtocols());
         }
-
-        $this->pongReceiver = static function (FrameInterface $frame, Connection $connection): void {};
     }
 
     /**
@@ -108,8 +115,7 @@ final class EstablishWebSocketConnection implements ServerMiddleware
                         break;
 
                     case Frame::OP_PONG:
-                        $pongReceiver = $this->pongReceiver;
-                        $pongReceiver($frame, $decoratedConnection);
+                        $this->onPong($frame, $decoratedConnection);
 
                         break;
                 }
@@ -141,6 +147,7 @@ final class EstablishWebSocketConnection implements ServerMiddleware
         if ($this->connections->offsetExists($connection)) {
             $context = $this->connections[$connection];
             $this->connections->offsetUnset($connection);
+            $this->pingedConnections->offsetUnset($context->connection);
 
             $this->middleware->onClose($context->connection);
         }
@@ -164,41 +171,50 @@ final class EstablishWebSocketConnection implements ServerMiddleware
     }
 
     /**
-     * @param positive-int $interval
+     * Enables the keepalive ping-pong, closing connections which do not respond to a ping before the next one is sent.
+     *
+     * Calling this method again replaces the previous keepalive timer.
+     *
+     * @param positive-int $interval The number of seconds between pings
      */
     public function enableKeepAlive(LoopInterface $loop, int $interval = 30): void
     {
-        $lastPing = new Frame(uniqid(), true, Frame::OP_PING);
+        if ($this->keepAliveTimer instanceof TimerInterface) {
+            $this->keepAliveLoop?->cancelTimer($this->keepAliveTimer);
+        }
 
-        /** @var \SplObjectStorage<Connection, null> $pingedConnections */
-        $pingedConnections = new \SplObjectStorage();
+        $this->keepAliveLoop = $loop;
+        $this->keepAliveTimer = $loop->addPeriodicTimer($interval, $this->sendKeepAlivePings(...));
+    }
 
-        $splClearer = new \SplObjectStorage();
+    private function onPong(FrameInterface $frame, WebSocketConnection $connection): void
+    {
+        if ($this->lastPing instanceof Frame && $frame->getPayload() === $this->lastPing->getPayload()) {
+            $this->pingedConnections->offsetUnset($connection);
+        }
+    }
 
-        $this->pongReceiver = static function (FrameInterface $frame, Connection $connection) use ($pingedConnections, &$lastPing): void {
-            if ($frame->getPayload() === $lastPing->getPayload()) {
-                $pingedConnections->offsetUnset($connection);
-            }
-        };
+    private function sendKeepAlivePings(): void
+    {
+        // Closing a connection can synchronously trigger onClose(), so the storage objects are copied before iterating
+        $unresponsiveConnections = iterator_to_array($this->pingedConnections, false);
 
-        $loop->addPeriodicTimer(
-            $interval,
-            function () use ($pingedConnections, &$lastPing, $splClearer): void {
-                foreach ($pingedConnections as $pingedConnection) {
-                    $pingedConnection->close();
-                }
+        foreach ($unresponsiveConnections as $unresponsiveConnection) {
+            $this->pingedConnections->offsetUnset($unresponsiveConnection);
+            $unresponsiveConnection->close();
+        }
 
-                $pingedConnections->removeAllExcept($splClearer);
+        $this->lastPing = new Frame(uniqid(), true, Frame::OP_PING);
 
-                $lastPing = new Frame(uniqid(), true, Frame::OP_PING);
+        $openConnections = [];
 
-                foreach ($this->connections as $connection) {
-                    $webSocketConnection = $this->connections[$connection]->connection;
+        foreach ($this->connections as $connection) {
+            $openConnections[] = $this->connections[$connection]->connection;
+        }
 
-                    $webSocketConnection->send($lastPing);
-                    $pingedConnections->offsetSet($webSocketConnection);
-                }
-            }
-        );
+        foreach ($openConnections as $webSocketConnection) {
+            $webSocketConnection->send($this->lastPing);
+            $this->pingedConnections->offsetSet($webSocketConnection);
+        }
     }
 }

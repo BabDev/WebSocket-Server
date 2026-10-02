@@ -6,7 +6,9 @@ The middleware also allows enabling a keepalive ping-pong for the server.
 
 ## Enabling keepalive
 
-To enable the keepalive feature, you can use the middleware's `enableKeepAlive()` method, providing it the event loop and the interval time in seconds (defaults to 30):
+The keepalive sends a ping to every connected client at the given interval, and closes connections which have not responded to the previous ping by the time the next one is sent. This removes connections whose client has disappeared without closing the connection (for example, after a network failure).
+
+To enable the keepalive feature, you can use the middleware's `enableKeepAlive()` method, providing it the event loop and the interval time in seconds (defaults to 30); calling the method again replaces the previous interval:
 
 ```php
 <?php declare(strict_types=1);
@@ -17,6 +19,8 @@ use React\EventLoop\Loop;
 $middleware = new EstablishWebSocketConnection($decoratedMiddleware);
 $middleware->enableKeepAlive(Loop::get(), 60);
 ```
+
+When using the `BabDev\WebSocket\Server\Application` class, the keepalive is disabled by default and can be enabled with the `withKeepAlive()` method.
 
 ## Position in Middleware Stack
 

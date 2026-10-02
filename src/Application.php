@@ -54,6 +54,13 @@ final class Application
 
     private ?OptionsHandler $optionsHandler = null;
 
+    private ?float $requestTimeout = 10.0;
+
+    /**
+     * @var positive-int|null
+     */
+    private ?int $keepAliveInterval = null;
+
     /**
      * @var list<non-empty-string>
      */
@@ -94,6 +101,10 @@ final class Application
 
         $middleware = new EstablishWebSocketConnection($middleware);
 
+        if (null !== $this->keepAliveInterval) {
+            $middleware->enableKeepAlive($this->loop, $this->keepAliveInterval);
+        }
+
         if ($this->sessionFactory instanceof SessionFactoryInterface) {
             $middleware = new InitializeSession($middleware, $this->sessionFactory, $this->optionsHandler ?? new IniOptionsHandler());
         }
@@ -103,6 +114,10 @@ final class Application
         }
 
         $middleware = new ParseHttpRequest($middleware);
+
+        if (null !== $this->requestTimeout) {
+            $middleware->enableRequestTimeout($this->loop, $this->requestTimeout);
+        }
 
         if ([] !== $this->blockedAddresses) {
             $middleware = new RejectBlockedIpAddress($middleware, $this->blockedAddresses);
@@ -140,6 +155,34 @@ final class Application
     public function withEventDispatcher(EventDispatcherInterface $eventDispatcher): self
     {
         $this->dispatcher = $eventDispatcher;
+
+        return $this;
+    }
+
+    /**
+     * Enables the keepalive ping-pong, closing connections which do not respond to a ping before the next one is sent.
+     *
+     * @param positive-int $interval The number of seconds between pings
+     */
+    public function withKeepAlive(int $interval = 30): self
+    {
+        $this->keepAliveInterval = $interval;
+
+        return $this;
+    }
+
+    /**
+     * Sets the number of seconds a client has to send its HTTP request before the connection is closed.
+     *
+     * @throws \InvalidArgumentException if the timeout is not a positive number
+     */
+    public function withRequestTimeout(?float $timeout): self
+    {
+        if (null !== $timeout && $timeout <= 0) {
+            throw new \InvalidArgumentException(\sprintf('The request timeout must be a positive number, %s given.', $timeout));
+        }
+
+        $this->requestTimeout = $timeout;
 
         return $this;
     }

@@ -9,11 +9,15 @@ use BabDev\WebSocket\Server\Http\Exception\MessageTooLarge;
 use BabDev\WebSocket\Server\Http\Middleware\ParseHttpRequest;
 use BabDev\WebSocket\Server\Http\RequestParser;
 use BabDev\WebSocket\Server\ServerMiddleware;
+use BabDev\WebSocket\Server\Tests\Fixtures\RecordingConnection;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
+use React\EventLoop\LoopInterface;
+use React\EventLoop\TimerInterface;
 
 final class ParseHttpRequestTest extends TestCase
 {
@@ -231,5 +235,126 @@ final class ParseHttpRequestTest extends TestCase
             ->method('close');
 
         $this->middleware->onError($connection, $exception);
+    }
+
+    #[TestDox('Closes the connection with a 408 response when the request is not received before the request timeout')]
+    public function testRequestTimeoutClosesConnection(): void
+    {
+        $timerCallback = null;
+
+        /** @var MockObject&LoopInterface $loop */
+        $loop = $this->createMock(LoopInterface::class);
+        $loop->expects($this->once())
+            ->method('addTimer')
+            ->with(5.0, $this->isCallable())
+            ->willReturnCallback(function (float $interval, callable $callback) use (&$timerCallback): TimerInterface {
+                $timerCallback = $callback;
+
+                return $this->createStub(TimerInterface::class);
+            });
+
+        $this->decoratedMiddleware->expects($this->never())
+            ->method('onOpen');
+
+        $this->requestParser->expects($this->never())
+            ->method('parse');
+
+        $connection = new RecordingConnection();
+        $connection->getAttributeStore()->set('http.buffer', 'GET / HTTP/1.1');
+
+        $this->middleware->enableRequestTimeout($loop, 5.0);
+        $this->middleware->onOpen($connection);
+
+        $this->assertIsCallable($timerCallback);
+
+        $timerCallback();
+
+        $this->assertCount(1, $connection->sent);
+        $this->assertStringStartsWith('HTTP/1.1 408 ', $connection->sent[0]);
+        $this->assertSame(1, $connection->closeCount);
+        $this->assertFalse($connection->getAttributeStore()->has('http.buffer'), 'The partial request buffer should be cleared.');
+    }
+
+    #[TestDox('Cancels the request timeout once the request has been received')]
+    public function testRequestTimeoutIsCanceledWhenRequestParsed(): void
+    {
+        $timer = $this->createStub(TimerInterface::class);
+
+        /** @var MockObject&LoopInterface $loop */
+        $loop = $this->createMock(LoopInterface::class);
+        $loop->expects($this->once())
+            ->method('addTimer')
+            ->willReturn($timer);
+
+        $loop->expects($this->once())
+            ->method('cancelTimer')
+            ->with($timer);
+
+        $connection = new RecordingConnection();
+
+        $this->requestParser->expects($this->once())
+            ->method('parse')
+            ->willReturn($this->createStub(RequestInterface::class));
+
+        $this->decoratedMiddleware->expects($this->once())
+            ->method('onOpen')
+            ->with($connection);
+
+        $this->middleware->enableRequestTimeout($loop);
+        $this->middleware->onOpen($connection);
+        $this->middleware->onMessage($connection, "GET / HTTP/1.1\r\n\r\n");
+    }
+
+    #[TestDox('Cancels the request timeout when the connection is closed before the request is received')]
+    public function testRequestTimeoutIsCanceledWhenConnectionClosed(): void
+    {
+        $timer = $this->createStub(TimerInterface::class);
+
+        /** @var MockObject&LoopInterface $loop */
+        $loop = $this->createMock(LoopInterface::class);
+        $loop->expects($this->once())
+            ->method('addTimer')
+            ->willReturn($timer);
+
+        $loop->expects($this->once())
+            ->method('cancelTimer')
+            ->with($timer);
+
+        $this->decoratedMiddleware->expects($this->never())
+            ->method('onClose');
+
+        $this->requestParser->expects($this->never())
+            ->method('parse');
+
+        $connection = new RecordingConnection();
+
+        $this->middleware->enableRequestTimeout($loop);
+        $this->middleware->onOpen($connection);
+        $this->middleware->onClose($connection);
+    }
+
+    /**
+     * @return \Generator<string, array{float}>
+     */
+    public static function dataInvalidRequestTimeout(): \Generator
+    {
+        yield 'Zero' => [0.0];
+
+        yield 'Negative' => [-1.0];
+    }
+
+    #[TestDox('Rejects a request timeout which is not a positive number')]
+    #[DataProvider('dataInvalidRequestTimeout')]
+    public function testRequestTimeoutMustBePositive(float $timeout): void
+    {
+        $this->decoratedMiddleware->expects($this->never())
+            ->method('onOpen');
+
+        $this->requestParser->expects($this->never())
+            ->method('parse');
+
+        $this->expectException(\InvalidArgumentException::class);
+
+        $this->middleware->enableRequestTimeout($this->createStub(LoopInterface::class), $timeout);
     }
 }

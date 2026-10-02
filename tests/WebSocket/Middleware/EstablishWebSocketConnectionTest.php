@@ -6,8 +6,10 @@ use BabDev\WebSocket\Server\Connection;
 use BabDev\WebSocket\Server\Connection\ArrayAttributeStore;
 use BabDev\WebSocket\Server\Http\Exception\MissingRequest;
 use BabDev\WebSocket\Server\ServerMiddleware;
+use BabDev\WebSocket\Server\Tests\Fixtures\RecordingConnection;
 use BabDev\WebSocket\Server\WebSocket\Middleware\EstablishWebSocketConnection;
 use BabDev\WebSocket\Server\WebSocket\WebSocketConnection;
+use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
@@ -16,6 +18,7 @@ use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
 use Ratchet\RFC6455\Handshake\NegotiatorInterface;
+use Ratchet\RFC6455\Messaging\Frame;
 use React\EventLoop\LoopInterface;
 use React\EventLoop\TimerInterface;
 
@@ -237,5 +240,143 @@ final class EstablishWebSocketConnectionTest extends TestCase
             ->willReturn($this->createStub(TimerInterface::class));
 
         new EstablishWebSocketConnection($this->createStub(ServerMiddleware::class), $this->createStub(NegotiatorInterface::class))->enableKeepAlive($loop, 60);
+    }
+
+    #[TestDox('Replaces the keepalive timer when the keepalive is enabled again')]
+    public function testEnableKeepAliveReplacesTimer(): void
+    {
+        $firstTimer = $this->createStub(TimerInterface::class);
+        $secondTimer = $this->createStub(TimerInterface::class);
+
+        /** @var MockObject&LoopInterface $loop */
+        $loop = $this->createMock(LoopInterface::class);
+        $loop->expects($this->exactly(2))
+            ->method('addPeriodicTimer')
+            ->willReturn($firstTimer, $secondTimer);
+
+        $loop->expects($this->once())
+            ->method('cancelTimer')
+            ->with($firstTimer);
+
+        $middleware = new EstablishWebSocketConnection($this->createStub(ServerMiddleware::class), $this->createStub(NegotiatorInterface::class));
+        $middleware->enableKeepAlive($loop, 30);
+        $middleware->enableKeepAlive($loop, 60);
+    }
+
+    #[TestDox('Closes connections which do not respond to the keepalive ping')]
+    public function testKeepAliveClosesUnresponsiveConnection(): void
+    {
+        [$middleware, $sendPings] = $this->createMiddlewareWithKeepAlive();
+
+        $connection = $this->openConnection($middleware);
+
+        $sendPings();
+
+        $this->assertSame(Frame::OP_PING, $this->getOpcode($this->lastSent($connection)));
+        $this->assertSame(0, $connection->closeCount);
+
+        $sendPings();
+
+        $this->assertSame(Frame::OP_CLOSE, $this->getOpcode($this->lastSent($connection)));
+        $this->assertSame(1, $connection->closeCount);
+    }
+
+    #[TestDox('Keeps connections which respond to the keepalive ping')]
+    public function testKeepAliveKeepsResponsiveConnection(): void
+    {
+        [$middleware, $sendPings] = $this->createMiddlewareWithKeepAlive();
+
+        $connection = $this->openConnection($middleware);
+
+        $sendPings();
+
+        $pong = new Frame($this->getPayload($this->lastSent($connection)), true, Frame::OP_PONG);
+        $pong->maskPayload();
+
+        $middleware->onMessage($connection, $pong->getContents());
+
+        $sendPings();
+
+        $this->assertSame(Frame::OP_PING, $this->getOpcode($this->lastSent($connection)));
+        $this->assertSame(0, $connection->closeCount);
+    }
+
+    #[TestDox('Does not ping or close connections which were closed after the last keepalive ping')]
+    public function testKeepAliveForgetsClosedConnection(): void
+    {
+        [$middleware, $sendPings] = $this->createMiddlewareWithKeepAlive();
+
+        $connection = $this->openConnection($middleware);
+
+        $sendPings();
+
+        $middleware->onClose($connection);
+
+        $sentBeforeNextPing = \count($connection->sent);
+
+        $sendPings();
+
+        $this->assertCount($sentBeforeNextPing, $connection->sent, 'Nothing should be sent to a closed connection.');
+        $this->assertSame(0, $connection->closeCount);
+    }
+
+    /**
+     * @return array{EstablishWebSocketConnection, callable(): void}
+     */
+    private function createMiddlewareWithKeepAlive(): array
+    {
+        $sendPings = null;
+
+        $loop = $this->createStub(LoopInterface::class);
+        $loop->method('addPeriodicTimer')
+            ->willReturnCallback(function (float|int $interval, callable $callback) use (&$sendPings): TimerInterface {
+                $sendPings = $callback;
+
+                return $this->createStub(TimerInterface::class);
+            });
+
+        // The handshake is stubbed as these tests only cover the keepalive behavior of established connections
+        $negotiator = $this->createStub(NegotiatorInterface::class);
+        $negotiator->method('handshake')
+            ->willReturn(new Response(101, ['Upgrade' => 'websocket', 'Connection' => 'Upgrade']));
+
+        $middleware = new EstablishWebSocketConnection($this->createStub(ServerMiddleware::class), $negotiator);
+        $middleware->enableKeepAlive($loop);
+
+        $this->assertIsCallable($sendPings);
+
+        return [$middleware, $sendPings];
+    }
+
+    private function openConnection(EstablishWebSocketConnection $middleware): RecordingConnection
+    {
+        $connection = new RecordingConnection();
+        $connection->getAttributeStore()->set('http.request', $this->createStub(RequestInterface::class));
+
+        $middleware->onOpen($connection);
+
+        $this->assertStringStartsWith('HTTP/1.1 101 ', $connection->sent[0] ?? '', 'The WebSocket handshake should succeed.');
+
+        return $connection;
+    }
+
+    private function lastSent(RecordingConnection $connection): string
+    {
+        $this->assertNotSame([], $connection->sent);
+
+        return $connection->sent[array_key_last($connection->sent)];
+    }
+
+    private function getOpcode(string $frame): int
+    {
+        return \ord($frame[0]) & 0x0F;
+    }
+
+    /**
+     * Extracts the payload from an unmasked server frame with a payload shorter than 126 bytes.
+     */
+    private function getPayload(string $frame): string
+    {
+        return substr($frame, 2, \ord($frame[1]) & 0x7F);
     }
 }
