@@ -187,6 +187,44 @@ final class UpdateTopicSubscriptionsTest extends TestCase
         $this->assertTrue($topic->has($connection));
     }
 
+    #[TestDox('Rolls back a "SUBSCRIBE" WAMP message when the decorated middleware throws')]
+    public function testOnSubscribeRollsBackOnFailure(): void
+    {
+        $topic = new Topic('testing');
+
+        $attributeStore = new ArrayAttributeStore();
+
+        /** @var \SplObjectStorage<Topic, null> $subscriptions */
+        $subscriptions = new \SplObjectStorage();
+
+        $attributeStore->set('wamp.subscriptions', $subscriptions);
+
+        /** @var MockObject&WAMPConnection $connection */
+        $connection = $this->createMock(WAMPConnection::class);
+        $connection->expects($this->atLeastOnce())
+            ->method('getAttributeStore')
+            ->willReturn($attributeStore);
+
+        $exception = new \RuntimeException('Testing');
+
+        $this->decoratedMiddleware->expects($this->once())
+            ->method('onSubscribe')
+            ->with($connection, $topic)
+            ->willThrowException($exception);
+
+        try {
+            $this->middleware->onSubscribe($connection, $topic);
+
+            self::fail('The exception from the decorated middleware should have been rethrown.');
+        } catch (\RuntimeException $thrown) {
+            $this->assertSame($exception, $thrown);
+        }
+
+        $this->assertFalse($subscriptions->offsetExists($topic));
+        $this->assertFalse($topic->has($connection));
+        $this->assertFalse($this->topicRegistry->has($topic->id));
+    }
+
     #[TestDox('Handles an "UNSUBSCRIBE" WAMP message')]
     public function testOnUnsubscribe(): void
     {

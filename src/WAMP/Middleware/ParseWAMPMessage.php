@@ -186,16 +186,21 @@ final class ParseWAMPMessage implements WebSocketServerMiddleware
         $this->serverIdentity = $serverIdentity;
     }
 
+    /**
+     * Gets the topic for a URI from the registry, or creates a new topic if one is not registered.
+     *
+     * A new topic is intentionally not added to the registry, as this would allow clients to register an unlimited
+     * number of topics; it is the responsibility of the {@see UpdateTopicSubscriptions} middleware to register the
+     * topic once a connection has subscribed to it.
+     */
     private function getTopic(WAMPConnection $connection, string $uri): Topic
     {
         $resolvedUri = $connection->getUri($uri);
 
         if ($this->topicRegistry->has($resolvedUri)) {
-            $topic = $this->topicRegistry->get($resolvedUri);
-        } else {
-            $this->topicRegistry->add($topic = new Topic($resolvedUri));
+            return $this->topicRegistry->get($resolvedUri);
         }
 
-        return $topic;
+        return new Topic($resolvedUri);
     }
 }

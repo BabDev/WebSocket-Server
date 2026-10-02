@@ -99,10 +99,11 @@ final readonly class UpdateTopicSubscriptions implements WAMPServerMiddleware
 
         try {
             $this->middleware->onSubscribe($connection, $topic);
-        } catch (RouteNotFound $exception) {
+        } catch (\Throwable $throwable) {
+            // The subscription is not active if the message handler could not process it, roll back the subscription
             $this->cleanTopic($topic, $connection);
 
-            throw $exception;
+            throw $throwable;
         }
     }
 

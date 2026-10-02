@@ -173,9 +173,8 @@ final class ParseWAMPMessageTest extends TestCase
             ->with($uri)
             ->willReturn(false);
 
-        $topicRegistry->expects($this->once())
-            ->method('add')
-            ->with($this->isInstanceOf(Topic::class));
+        $topicRegistry->expects($this->never())
+            ->method('add');
 
         /** @var MockObject&WAMPServerMiddleware $decoratedMiddleware */
         $decoratedMiddleware = $this->createMock(WAMPServerMiddleware::class);
@@ -211,9 +210,8 @@ final class ParseWAMPMessageTest extends TestCase
             ->with($uri)
             ->willReturn(false);
 
-        $topicRegistry->expects($this->once())
-            ->method('add')
-            ->with($this->isInstanceOf(Topic::class));
+        $topicRegistry->expects($this->never())
+            ->method('add');
 
         /** @var MockObject&WAMPServerMiddleware $decoratedMiddleware */
         $decoratedMiddleware = $this->createMock(WAMPServerMiddleware::class);
@@ -249,9 +247,8 @@ final class ParseWAMPMessageTest extends TestCase
             ->with($uri)
             ->willReturn(false);
 
-        $topicRegistry->expects($this->once())
-            ->method('add')
-            ->with($this->isInstanceOf(Topic::class));
+        $topicRegistry->expects($this->never())
+            ->method('add');
 
         $event = 'Simple event payload';
 
@@ -289,9 +286,8 @@ final class ParseWAMPMessageTest extends TestCase
             ->with($uri)
             ->willReturn(false);
 
-        $topicRegistry->expects($this->once())
-            ->method('add')
-            ->with($this->isInstanceOf(Topic::class));
+        $topicRegistry->expects($this->never())
+            ->method('add');
 
         $event = ['hello' => 'world', 'herp' => 'derp'];
 
@@ -329,9 +325,8 @@ final class ParseWAMPMessageTest extends TestCase
             ->with($uri)
             ->willReturn(false);
 
-        $topicRegistry->expects($this->once())
-            ->method('add')
-            ->with($this->isInstanceOf(Topic::class));
+        $topicRegistry->expects($this->never())
+            ->method('add');
 
         $event = 'Simple event payload';
 
@@ -379,9 +374,8 @@ final class ParseWAMPMessageTest extends TestCase
             ->with($uri)
             ->willReturn(false);
 
-        $topicRegistry->expects($this->once())
-            ->method('add')
-            ->with($this->isInstanceOf(Topic::class));
+        $topicRegistry->expects($this->never())
+            ->method('add');
 
         $event = 'Simple event payload';
         $exclude = [bin2hex(random_bytes(32)), bin2hex(random_bytes(32)), bin2hex(random_bytes(32))];
@@ -430,9 +424,8 @@ final class ParseWAMPMessageTest extends TestCase
             ->with($uri)
             ->willReturn(false);
 
-        $topicRegistry->expects($this->once())
-            ->method('add')
-            ->with($this->isInstanceOf(Topic::class));
+        $topicRegistry->expects($this->never())
+            ->method('add');
 
         $event = 'Simple event payload';
         $eligible = [bin2hex(random_bytes(32)), bin2hex(random_bytes(32)), bin2hex(random_bytes(32))];

@@ -4,6 +4,12 @@ The `BabDev\WebSocket\Server\WAMP\Middleware\ParseWAMPMessage` class is a [serve
 
 The middleware also allows enabling a keepalive ping-pong for the server.
 
+## Topic Lookup
+
+For "SUBSCRIBE", "UNSUBSCRIBE", and "PUBLISH" messages, the middleware looks up the topic for the message's URI in the topic registry. If the topic is not registered, a new `BabDev\WebSocket\Server\WAMP\Topic` is created for the message, but it is not added to the registry; registering topics is the responsibility of the `BabDev\WebSocket\Server\WAMP\Middleware\UpdateTopicSubscriptions` middleware once a connection subscribes to the topic. This prevents clients from adding topics to the registry by sending messages for topics that no connection is subscribed to.
+
+As a result, a message handler processing a "PUBLISH" message for a topic without any subscribers receives a topic which is not in the registry.
+
 ## Customizing The Server Identity
 
 Per the [WAMP version 1](https://web.archive.org/web/20150419051041/http://wamp.ws/spec/wamp1/) specification, a server may identify itself with the `serverIdent` parameter in its response to the WELCOME message. By default, the middleware uses the `BabDev\WebSocket\Server\Server::VERSION` constant as its identity, but this can be customized by updating the server identity for the middleware instance.
