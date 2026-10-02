@@ -123,6 +123,36 @@ final class RejectBlockedIpAddressTest extends TestCase
         $this->middleware->onOpen($connection);
     }
 
+    #[TestDox('Handles a new connection being opened when the remote IPv6 address is in a blocked subnet')]
+    public function testOnOpenWithBlockedRemoteIpv6Address(): void
+    {
+        /** @var MockObject&AttributeStore $attributeStore */
+        $attributeStore = $this->createMock(AttributeStore::class);
+        $attributeStore->expects($this->once())
+            ->method('get')
+            ->with('remote_address')
+            ->willReturn('2001:db8::1');
+
+        /** @var MockObject&Connection $connection */
+        $connection = $this->createMock(Connection::class);
+        $connection->expects($this->once())
+            ->method('getAttributeStore')
+            ->willReturn($attributeStore);
+
+        $connection->expects($this->once())
+            ->method('send');
+
+        $connection->expects($this->once())
+            ->method('close');
+
+        $this->decoratedMiddleware->expects($this->never())
+            ->method('onOpen');
+
+        $this->middleware->blockAddress('2001:db8::/32');
+
+        $this->middleware->onOpen($connection);
+    }
+
     #[TestDox('Handles incoming data on the connection')]
     public function testOnMessage(): void
     {

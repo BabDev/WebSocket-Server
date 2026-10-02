@@ -4,6 +4,8 @@ The `BabDev\WebSocket\Server\Http\Middleware\RejectBlockedIpAddress` class is a 
 
 The middleware supports blocking either single addresses or subnet ranges from both IPv4 and IPv6 network ranges.
 
+Addresses are matched against the connection's normalized `remote_address` attribute, so IPv4 clients connecting to a dual-stack server (one listening on `[::]`) are matched by their IPv4 address. Block these clients using IPv4 addresses and subnets, not their IPv4-mapped IPv6 form (`::ffff:203.0.113.5`).
+
 The blocked address list can be updated at any time, including while the server is running.
 
 ## Blocking an Address

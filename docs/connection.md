@@ -18,13 +18,23 @@ Each connection has a `BabDev\WebSocket\Server\Connection\AttributeStore` attach
 | `http.buffer`           | string                                                                          | Temporary storage for the incoming HTTP request body (this buffer is cleared once the full body is received)               |
 | `http.headers_received` | boolean                                                                         | Internal flag tracking whether the HTTP headers have been received and parsed                                              |
 | `http.request`          | [PSR-7](https://www.php-fig.org/psr/psr-7/) `Psr\Http\Message\RequestInterface` | The fully parsed HTTP request body                                                                                         |
-| `remote_address`        | string                                                                          | The remote address for the connected client, if available                                                                  |
+| `remote_address`        | string                                                                          | The IP address for the connected client, if available (see [remote address normalization](#remote-address-normalization))  |
 | `resource_id`           | integer                                                                         | An identifier for the underlying connection resource                                                                       |
 | `session`               | `Symfony\Component\HttpFoundation\Session\SessionInterface`                     | When using the session middleware, the session is initialized into a `SessionInterface` implementation                     |
 | `wamp.session_id`       | string                                                                          | A unique, randomly generated, identifier for the connection                                                                |
 | `wamp.subscriptions`    | `SplObjectStorage<BabDev\WebSocket\Server\WAMP\Topic, null>`                    | A list of topics (PubSub channels) that the connection is currently subscribed to                                          |
 | `wamp.prefixes`         | `array<string, string>`                                                         | An associative array storing the list of prefixes for the connection, as configured by the "PREFIX" WAMP message           |
 | `websocket.closing`     | boolean                                                                         | Internal flag tracking if the connection is being closed; once set to true, no further messages will be sent to the client |
+
+### Remote Address Normalization
+
+When using the default `BabDev\WebSocket\Server\ReactPhpServer`, the `remote_address` attribute is normalized so it can be compared against IP addresses and subnets:
+
+- IPv6 addresses are stored without brackets (e.g. `::1` instead of `[::1]`)
+- The zone ID is removed from link-local IPv6 addresses (e.g. `fe80::1` instead of `fe80::1%en0`)
+- IPv4-mapped IPv6 addresses are stored as their IPv4 address (e.g. `203.0.113.5` instead of `::ffff:203.0.113.5`); a server listening on a dual-stack address such as `[::]` reports IPv4 clients this way
+
+The attribute is not set when the connection does not have an IP address, such as a Unix domain socket.
 
 ## Client Communication
 
@@ -40,7 +50,7 @@ The `BabDev\WebSocket\Server\Connection::close()` method is used to close a clie
 
 The `BabDev\WebSocket\Server\WebSocket\WebSocketConnection` interface extends the core connection interface to add extended messaging support.
 
-Specifically, this interface extends the connection's `send()` method to support sending either any data string or a `Ratchet\RFC6455\Messaging\DataInterface` object from the [`ratchet/rfc6455` package](https://github.com/ratchetphp/RFC6455). This is beneficial for applications to have full control over the data frames sent to the client (i.e. to support sending binary data). Please review the package's documentation for additional usage details.
+Specifically, this interface extends the connection's `send()` method to support sending either any data string or a `Ratchet\RFC6455\Messaging\DataInterface` object from the [`ratchet/rfc6455` package](https://github.com/ratchetphp/RFC6455). This is beneficial for applications to have full control over the data frames sent to the client (e.g. to support sending binary data). Please review the package's documentation for additional usage details.
 
 ### WAMP Connection
 

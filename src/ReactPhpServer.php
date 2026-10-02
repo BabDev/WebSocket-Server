@@ -4,6 +4,7 @@ namespace BabDev\WebSocket\Server;
 
 use BabDev\WebSocket\Server\Connection\ArrayAttributeStore;
 use BabDev\WebSocket\Server\Connection\ReactSocketConnection;
+use BabDev\WebSocket\Server\Connection\RemoteAddress;
 use Psr\Log\LoggerInterface;
 use React\EventLoop\Loop;
 use React\EventLoop\LoopInterface;
@@ -50,12 +51,8 @@ final readonly class ReactPhpServer implements Server
         $decoratedConnection = new ReactSocketConnection($connection, new ArrayAttributeStore());
         $decoratedConnection->getAttributeStore()->set('resource_id', (int) $connection->stream);
 
-        if (null !== $uri) {
-            $parsedHost = parse_url((str_contains($uri, '://') ? '' : 'tcp://').$uri, \PHP_URL_HOST);
-
-            if ($parsedHost) {
-                $decoratedConnection->getAttributeStore()->set('remote_address', $parsedHost);
-            }
+        if (null !== $uri && null !== $remoteAddress = RemoteAddress::fromUri($uri)) {
+            $decoratedConnection->getAttributeStore()->set('remote_address', $remoteAddress);
         }
 
         $connection->on(

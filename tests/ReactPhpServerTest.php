@@ -6,6 +6,7 @@ use BabDev\WebSocket\Server\Connection;
 use BabDev\WebSocket\Server\ReactPhpServer;
 use BabDev\WebSocket\Server\ServerMiddleware;
 use BabDev\WebSocket\Server\Tests\Fixtures\RecordingLogger;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -286,6 +287,73 @@ final class ReactPhpServerTest extends TestCase
         socket_close($client);
 
         $this->tickLoop(Loop::get());
+    }
+
+    /**
+     * @return \Generator<string, array{non-empty-string, array<string, mixed>, non-empty-string, non-empty-string}>
+     */
+    public static function dataRemoteAddress(): \Generator
+    {
+        yield 'IPv4 client' => ['127.0.0.1:0', [], '127.0.0.1', '127.0.0.1'];
+
+        yield 'IPv6 client' => ['[::1]:0', ['tcp' => ['ipv6_v6only' => true]], '[::1]', '::1'];
+
+        // A dual-stack server reports IPv4 clients using an IPv4-mapped IPv6 address
+        yield 'IPv4 client on a dual-stack server' => ['[::]:0', ['tcp' => ['ipv6_v6only' => false]], '127.0.0.1', '127.0.0.1'];
+    }
+
+    /**
+     * @param non-empty-string     $listenUri
+     * @param array<string, mixed> $context
+     * @param non-empty-string     $clientHost
+     * @param non-empty-string     $expectedAddress
+     */
+    #[TestDox('Stores the normalized remote address for the connection')]
+    #[DataProvider('dataRemoteAddress')]
+    public function testStoresRemoteAddress(string $listenUri, array $context, string $clientHost, string $expectedAddress): void
+    {
+        try {
+            $socket = new SocketServer($listenUri, $context, Loop::get());
+        } catch (\RuntimeException $exception) {
+            self::markTestSkipped(\sprintf('Cannot listen on "%s": %s', $listenUri, $exception->getMessage()));
+        }
+
+        $port = parse_url((string) $socket->getAddress(), \PHP_URL_PORT);
+
+        if (!\is_int($port)) {
+            $socket->close();
+
+            self::fail('Could not extract port from socket server address');
+        }
+
+        // The connection is made to this test's server, not the one created in setUp()
+        $this->middleware->expects($this->never())
+            ->method('onOpen');
+
+        $remoteAddress = null;
+
+        $middleware = $this->createMock(ServerMiddleware::class);
+        $middleware->expects($this->once())
+            ->method('onOpen')
+            ->willReturnCallback(static function (Connection $connection) use (&$remoteAddress): void {
+                $remoteAddress = $connection->getAttributeStore()->get('remote_address');
+            });
+
+        new ReactPhpServer($middleware, $socket, Loop::get(), $this->logger);
+
+        $client = stream_socket_client("tcp://{$clientHost}:{$port}");
+
+        $this->tickLoop(Loop::get());
+
+        $socket->close();
+
+        if (\is_resource($client)) {
+            fclose($client);
+        }
+
+        $this->tickLoop(Loop::get());
+
+        $this->assertSame($expectedAddress, $remoteAddress);
     }
 
     private function connectClient(): \Socket
