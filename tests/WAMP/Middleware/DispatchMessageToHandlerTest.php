@@ -8,6 +8,9 @@ use BabDev\WebSocket\Server\Connection\Event\ConnectionError;
 use BabDev\WebSocket\Server\Connection\Event\ConnectionOpened;
 use BabDev\WebSocket\Server\RPCMessageHandler;
 use BabDev\WebSocket\Server\TopicMessageHandler;
+use BabDev\WebSocket\Server\WAMP\DefaultErrorUriResolver;
+use BabDev\WebSocket\Server\WAMP\ErrorUriResolver;
+use BabDev\WebSocket\Server\WAMP\Exception\InvalidMessageHandler;
 use BabDev\WebSocket\Server\WAMP\Exception\RouteNotFound;
 use BabDev\WebSocket\Server\WAMP\Exception\UnknownMessageHandler;
 use BabDev\WebSocket\Server\WAMP\MessageHandler\MessageHandlerResolver;
@@ -429,12 +432,108 @@ final class DispatchMessageToHandlerTest extends TestCase
         $this->createMiddleware(matcher: $matcher, resolver: $resolver)->onPublish($connection, $topic, $event, $exclude, $eligible);
     }
 
-    private function createMiddleware(?UrlMatcherInterface $matcher = null, ?MessageHandlerResolver $resolver = null, ?EventDispatcherInterface $dispatcher = null): DispatchMessageToHandler
+    #[TestDox('Sends a "CALLERROR" message without the error details when the RPC handler throws while handling a "CALL" WAMP message')]
+    public function testOnCallWhenHandlerThrows(): void
+    {
+        $id = uniqid();
+        $resolvedUri = '/testing';
+        $params = ['foo' => 'bar'];
+
+        $exception = new \RuntimeException('Sensitive internal details');
+
+        /** @var MockObject&WAMPConnection $connection */
+        $connection = $this->createMock(WAMPConnection::class);
+        $connection->expects($this->once())
+            ->method('callError')
+            ->with(
+                $id,
+                'https://example.com/error#generic',
+                $this->logicalNot($this->stringContains('Sensitive internal details')),
+                ['code' => 500, 'uri' => $resolvedUri],
+            );
+
+        /** @var MockObject&RPCMessageHandler $handler */
+        $handler = $this->createMock(RPCMessageHandler::class);
+        $handler->expects($this->once())
+            ->method('onCall')
+            ->willThrowException($exception);
+
+        try {
+            $this->createMiddleware(matcher: $this->createMatcher($resolvedUri), resolver: $this->createResolver($handler))->onCall($connection, $id, $resolvedUri, $params);
+
+            self::fail('The exception from the message handler should have been rethrown.');
+        } catch (\RuntimeException $thrown) {
+            $this->assertSame($exception, $thrown);
+        }
+    }
+
+    #[TestDox('Sends a "CALLERROR" message when the resolved handler for a "CALL" WAMP message is not an RPC handler')]
+    public function testOnCallWithNonRpcHandler(): void
+    {
+        $this->expectException(InvalidMessageHandler::class);
+
+        $id = uniqid();
+        $resolvedUri = '/testing';
+
+        /** @var MockObject&WAMPConnection $connection */
+        $connection = $this->createMock(WAMPConnection::class);
+        $connection->expects($this->once())
+            ->method('callError')
+            ->with($id, 'https://example.com/error#generic', $this->isString(), ['code' => 500, 'uri' => $resolvedUri]);
+
+        $this->createMiddleware(matcher: $this->createMatcher($resolvedUri), resolver: $this->createResolver($this->createStub(TopicMessageHandler::class)))->onCall($connection, $id, $resolvedUri, []);
+    }
+
+    #[TestDox('Resolves the error URI for the "internal-error" type when the RPC handler throws while handling a "CALL" WAMP message')]
+    public function testOnCallWhenHandlerThrowsUsesInternalErrorType(): void
+    {
+        $this->expectException(\RuntimeException::class);
+
+        /** @var MockObject&ErrorUriResolver $errorUriResolver */
+        $errorUriResolver = $this->createMock(ErrorUriResolver::class);
+        $errorUriResolver->expects($this->once())
+            ->method('resolve')
+            ->with('internal-error')
+            ->willReturn('https://example.com/error#internal');
+
+        /** @var MockObject&WAMPConnection $connection */
+        $connection = $this->createMock(WAMPConnection::class);
+        $connection->expects($this->once())
+            ->method('callError')
+            ->with($this->isString(), 'https://example.com/error#internal');
+
+        $handler = $this->createStub(RPCMessageHandler::class);
+        $handler->method('onCall')
+            ->willThrowException(new \RuntimeException('Testing'));
+
+        $this->createMiddleware(matcher: $this->createMatcher('/testing'), resolver: $this->createResolver($handler), errorUriResolver: $errorUriResolver)->onCall($connection, uniqid(), '/testing', []);
+    }
+
+    private function createMiddleware(?UrlMatcherInterface $matcher = null, ?MessageHandlerResolver $resolver = null, ?EventDispatcherInterface $dispatcher = null, ?ErrorUriResolver $errorUriResolver = null): DispatchMessageToHandler
     {
         return new DispatchMessageToHandler(
             $matcher ?? $this->createStub(UrlMatcherInterface::class),
             $resolver ?? $this->createStub(MessageHandlerResolver::class),
             $dispatcher ?? $this->createStub(EventDispatcherInterface::class),
+            $errorUriResolver ?? new DefaultErrorUriResolver(),
         );
+    }
+
+    private function createMatcher(string $uri): UrlMatcherInterface
+    {
+        $matcher = $this->createStub(UrlMatcherInterface::class);
+        $matcher->method('match')
+            ->willReturnMap([[$uri, ['_controller' => 'rpc.handler']]]);
+
+        return $matcher;
+    }
+
+    private function createResolver(object $handler): MessageHandlerResolver
+    {
+        $resolver = $this->createStub(MessageHandlerResolver::class);
+        $resolver->method('findMessageHandler')
+            ->willReturn($handler);
+
+        return $resolver;
     }
 }

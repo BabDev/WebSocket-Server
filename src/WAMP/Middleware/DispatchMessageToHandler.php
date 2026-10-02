@@ -105,6 +105,7 @@ final readonly class DispatchMessageToHandler implements WAMPServerMiddleware
      * @throws InvalidRequest                  if the request data does not allow a handler to be resolved
      * @throws RouteNotFound                   if there is no route defined for the topic ID
      * @throws UnknownMessageHandler           if the message handler does not exist
+     * @throws \Throwable                      any Throwable raised by the message handler, after a "CALLERROR" message is sent to the client
      */
     public function onCall(WAMPConnection $connection, string $id, string $resolvedUri, array $params): void
     {
@@ -141,10 +142,19 @@ final readonly class DispatchMessageToHandler implements WAMPServerMiddleware
         }
 
         if (!$handler instanceof RPCMessageHandler && !$handler instanceof RPCMessageMiddleware) {
+            $this->sendInternalCallError($connection, $id, $resolvedUri);
+
             throw new InvalidMessageHandler(\sprintf('The message handler for a "CALL" message must be an instance of "%s" or "%s", ensure "%s" implements the right interface.', RPCMessageHandler::class, RPCMessageMiddleware::class, $handler::class));
         }
 
-        $handler->onCall($connection, $id, $request, $params);
+        try {
+            $handler->onCall($connection, $id, $request, $params);
+        } catch (\Throwable $throwable) {
+            // The client is waiting for a "CALLRESULT" or "CALLERROR" message for this call, so it must be told the call failed
+            $this->sendInternalCallError($connection, $id, $resolvedUri);
+
+            throw $throwable;
+        }
     }
 
     /**
@@ -299,6 +309,25 @@ final readonly class DispatchMessageToHandler implements WAMPServerMiddleware
         }
 
         $handler->onPublish($connection, $topic, $request, $event, $exclude, $eligible);
+    }
+
+    /**
+     * Sends a "CALLERROR" message for a call which failed because of an error on the server.
+     *
+     * The details of the error are intentionally not sent to the client to avoid disclosing information about the
+     * server; the error is still forwarded to the middleware stack's error handling.
+     */
+    private function sendInternalCallError(WAMPConnection $connection, string $id, string $resolvedUri): void
+    {
+        $connection->callError(
+            $id,
+            $this->errorUriResolver->resolve('internal-error'),
+            \sprintf('An error occurred while processing the call for URI "%s".', $resolvedUri),
+            [
+                'code' => 500,
+                'uri' => $resolvedUri,
+            ]
+        );
     }
 
     /**
