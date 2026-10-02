@@ -6,6 +6,7 @@ use BabDev\WebSocket\Server\Connection;
 use BabDev\WebSocket\Server\Server;
 use BabDev\WebSocket\Server\WAMP\DefaultWAMPConnection;
 use BabDev\WebSocket\Server\WAMP\Exception\InvalidMessage;
+use BabDev\WebSocket\Server\WAMP\Exception\PrefixLimitExceeded;
 use BabDev\WebSocket\Server\WAMP\Exception\UnsupportedMessageType;
 use BabDev\WebSocket\Server\WAMP\MessageType;
 use BabDev\WebSocket\Server\WAMP\Topic;
@@ -29,6 +30,11 @@ final class ParseWAMPMessage implements WebSocketServerMiddleware
     private readonly \SplObjectStorage $connections;
 
     private string $serverIdentity = Server::VERSION;
+
+    /**
+     * @var positive-int
+     */
+    private int $maxPrefixes = 100;
 
     public function __construct(
         private readonly WAMPServerMiddleware $middleware,
@@ -71,6 +77,7 @@ final class ParseWAMPMessage implements WebSocketServerMiddleware
      * Handles incoming data on the connection.
      *
      * @throws InvalidMessage         if the WAMP message is badly formatted or contains invalid data
+     * @throws PrefixLimitExceeded    if the client has already registered the maximum number of prefixes
      * @throws UnsupportedMessageType if the WAMP message type is not supported
      */
     public function onMessage(Connection $connection, string $data): void
@@ -95,10 +102,22 @@ final class ParseWAMPMessage implements WebSocketServerMiddleware
 
         switch ($message[0]) {
             case MessageType::PREFIX:
-                \assert(isset($message[2]));
+                if (!\is_string($message[1]) || '' === $message[1]) {
+                    throw new InvalidMessage('Invalid prefix, must be a non-empty string.');
+                }
+
+                if (!isset($message[2]) || !\is_string($message[2]) || '' === $message[2]) {
+                    throw new InvalidMessage('Invalid prefix URI, must be a non-empty string.');
+                }
 
                 /** @var array<string, string> $prefixes */
                 $prefixes = $decoratedConnection->getAttributeStore()->get('wamp.prefixes', []);
+
+                // Replacing an already registered prefix is allowed when the limit has been reached
+                if (!isset($prefixes[$message[1]]) && \count($prefixes) >= $this->maxPrefixes) {
+                    throw new PrefixLimitExceeded($this->maxPrefixes, \sprintf('Cannot register prefix "%s", the connection has reached the limit of %d prefixes.', $message[1], $this->maxPrefixes));
+                }
+
                 $prefixes[$message[1]] = $message[2];
 
                 $decoratedConnection->getAttributeStore()->set('wamp.prefixes', $prefixes);
@@ -184,6 +203,22 @@ final class ParseWAMPMessage implements WebSocketServerMiddleware
     public function setServerIdentity(string $serverIdentity): void
     {
         $this->serverIdentity = $serverIdentity;
+    }
+
+    /**
+     * @return positive-int
+     */
+    public function getMaxPrefixes(): int
+    {
+        return $this->maxPrefixes;
+    }
+
+    /**
+     * @param positive-int $maxPrefixes
+     */
+    public function setMaxPrefixes(int $maxPrefixes): void
+    {
+        $this->maxPrefixes = $maxPrefixes;
     }
 
     /**

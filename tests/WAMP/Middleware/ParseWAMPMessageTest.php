@@ -6,6 +6,7 @@ use BabDev\WebSocket\Server\Connection;
 use BabDev\WebSocket\Server\Connection\ArrayAttributeStore;
 use BabDev\WebSocket\Server\Server;
 use BabDev\WebSocket\Server\WAMP\Exception\InvalidMessage;
+use BabDev\WebSocket\Server\WAMP\Exception\PrefixLimitExceeded;
 use BabDev\WebSocket\Server\WAMP\Exception\UnsupportedMessageType;
 use BabDev\WebSocket\Server\WAMP\MessageType;
 use BabDev\WebSocket\Server\WAMP\Middleware\ParseWAMPMessage;
@@ -95,6 +96,101 @@ final class ParseWAMPMessageTest extends TestCase
             $attributeStore->get('wamp.prefixes'),
             "The prefix should be added to the connection's attributes.",
         );
+    }
+
+    #[TestDox('Rejects a WAMP "PREFIX" message once the connection has reached the prefix limit')]
+    public function testOnMessageForPrefixMessageRejectsPrefixesOverTheLimit(): void
+    {
+        [$middleware, $connection, $attributeStore] = $this->createMiddlewareForPrefixMessages();
+        $middleware->setMaxPrefixes(2);
+
+        $middleware->onMessage($connection, json_encode([MessageType::PREFIX, 'one', 'https://example.com/one'], \JSON_THROW_ON_ERROR));
+        $middleware->onMessage($connection, json_encode([MessageType::PREFIX, 'two', 'https://example.com/two'], \JSON_THROW_ON_ERROR));
+
+        try {
+            $middleware->onMessage($connection, json_encode([MessageType::PREFIX, 'three', 'https://example.com/three'], \JSON_THROW_ON_ERROR));
+
+            self::fail(\sprintf('A %s exception should have been thrown.', PrefixLimitExceeded::class));
+        } catch (PrefixLimitExceeded $exception) {
+            $this->assertSame(2, $exception->limit);
+        }
+
+        $this->assertSame(
+            ['one' => 'https://example.com/one', 'two' => 'https://example.com/two'],
+            $attributeStore->get('wamp.prefixes'),
+            'The prefix over the limit should not be added to the connection\'s attributes.',
+        );
+    }
+
+    #[TestDox('Allows a WAMP "PREFIX" message to replace a registered prefix when the connection has reached the prefix limit')]
+    public function testOnMessageForPrefixMessageReplacesPrefixAtTheLimit(): void
+    {
+        [$middleware, $connection, $attributeStore] = $this->createMiddlewareForPrefixMessages();
+        $middleware->setMaxPrefixes(1);
+
+        $middleware->onMessage($connection, json_encode([MessageType::PREFIX, 'one', 'https://example.com/one'], \JSON_THROW_ON_ERROR));
+        $middleware->onMessage($connection, json_encode([MessageType::PREFIX, 'one', 'https://example.com/updated'], \JSON_THROW_ON_ERROR));
+
+        $this->assertSame(
+            ['one' => 'https://example.com/updated'],
+            $attributeStore->get('wamp.prefixes'),
+        );
+    }
+
+    /**
+     * @return \Generator<string, array{list<mixed>}>
+     */
+    public static function dataInvalidPrefixMessage(): \Generator
+    {
+        yield 'Numeric prefix' => [[MessageType::PREFIX, 123, 'https://example.com/testing']];
+
+        yield 'Empty prefix' => [[MessageType::PREFIX, '', 'https://example.com/testing']];
+
+        yield 'Missing URI' => [[MessageType::PREFIX, 'testing']];
+
+        yield 'Empty URI' => [[MessageType::PREFIX, 'testing', '']];
+
+        yield 'Array URI' => [[MessageType::PREFIX, 'testing', ['https://example.com/testing']]];
+
+        yield 'Null URI' => [[MessageType::PREFIX, 'testing', null]];
+    }
+
+    /**
+     * @param list<mixed> $message
+     */
+    #[TestDox('Rejects an invalid WAMP "PREFIX" message')]
+    #[DataProvider('dataInvalidPrefixMessage')]
+    public function testOnMessageForInvalidPrefixMessage(array $message): void
+    {
+        [$middleware, $connection, $attributeStore] = $this->createMiddlewareForPrefixMessages();
+
+        try {
+            $middleware->onMessage($connection, json_encode($message, \JSON_THROW_ON_ERROR));
+
+            self::fail(\sprintf('A %s exception should have been thrown.', InvalidMessage::class));
+        } catch (InvalidMessage $exception) {
+            $this->assertNotInstanceOf(PrefixLimitExceeded::class, $exception);
+        }
+
+        $this->assertSame([], $attributeStore->get('wamp.prefixes'));
+    }
+
+    /**
+     * @return array{ParseWAMPMessage, Connection, ArrayAttributeStore}
+     */
+    private function createMiddlewareForPrefixMessages(): array
+    {
+        $attributeStore = new ArrayAttributeStore();
+
+        /** @var Stub&Connection $connection */
+        $connection = $this->createStub(Connection::class);
+        $connection->method('getAttributeStore')
+            ->willReturn($attributeStore);
+
+        $middleware = new ParseWAMPMessage($this->createStub(WAMPServerMiddleware::class), $this->createStub(TopicRegistry::class));
+        $middleware->onOpen($connection);
+
+        return [$middleware, $connection, $attributeStore];
     }
 
     /**
@@ -650,5 +746,17 @@ final class ParseWAMPMessageTest extends TestCase
         $middleware->setServerIdentity($newIdentity = 'Test-Identity/4.2');
 
         $this->assertSame($newIdentity, $middleware->getServerIdentity());
+    }
+
+    #[TestDox('The prefix limit can be managed')]
+    public function testMaxPrefixes(): void
+    {
+        $middleware = new ParseWAMPMessage($this->createStub(WAMPServerMiddleware::class), $this->createStub(TopicRegistry::class));
+
+        $this->assertSame(100, $middleware->getMaxPrefixes());
+
+        $middleware->setMaxPrefixes(25);
+
+        $this->assertSame(25, $middleware->getMaxPrefixes());
     }
 }
