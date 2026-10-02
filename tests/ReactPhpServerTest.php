@@ -5,6 +5,7 @@ namespace BabDev\WebSocket\Server\Tests;
 use BabDev\WebSocket\Server\Connection;
 use BabDev\WebSocket\Server\ReactPhpServer;
 use BabDev\WebSocket\Server\ServerMiddleware;
+use BabDev\WebSocket\Server\Tests\Fixtures\RecordingLogger;
 use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -17,7 +18,11 @@ final class ReactPhpServerTest extends TestCase
 {
     private readonly MockObject&ServerMiddleware $middleware;
 
+    private readonly RecordingLogger $logger;
+
     private readonly int $port;
+
+    private readonly SocketServer $socket;
 
     public static function setUpBeforeClass(): void
     {
@@ -32,8 +37,9 @@ final class ReactPhpServerTest extends TestCase
     protected function setUp(): void
     {
         $this->middleware = $this->createMock(ServerMiddleware::class);
+        $this->logger = new RecordingLogger();
 
-        $socket = new SocketServer('127.0.0.1:0', [], Loop::get());
+        $this->socket = $socket = new SocketServer('127.0.0.1:0', [], Loop::get());
 
         $uri = $socket->getAddress();
 
@@ -49,12 +55,26 @@ final class ReactPhpServerTest extends TestCase
 
         $this->port = $port;
 
-        new ReactPhpServer($this->middleware, $socket, Loop::get());
+        new ReactPhpServer($this->middleware, $socket, Loop::get(), $this->logger);
     }
 
+    protected function tearDown(): void
+    {
+        // Stop accepting connections so a later test's loop iterations cannot reach this test's middleware
+        $this->socket->close();
+
+        $this->tickLoop(Loop::get());
+    }
+
+    /**
+     * Runs the loop long enough for pending socket I/O to be processed.
+     *
+     * A single tick is not enough, as the loop polls the streams without waiting and data written by the client
+     * may not be readable yet.
+     */
     protected function tickLoop(LoopInterface $loop): void
     {
-        $loop->futureTick(static function () use ($loop): void {
+        $loop->addTimer(0.05, static function () use ($loop): void {
             $loop->stop();
         });
 
@@ -171,5 +191,116 @@ final class ReactPhpServerTest extends TestCase
         socket_close($client);
 
         $this->tickLoop(Loop::get());
+    }
+
+    #[TestDox('Handles an uncaught Throwable while opening the connection')]
+    public function testOnOpenError(): void
+    {
+        $exception = new \RuntimeException('Testing');
+
+        $this->middleware->expects($this->once())
+            ->method('onOpen')
+            ->with($this->isInstanceOf(Connection::class))
+            ->willThrowException($exception);
+
+        $this->middleware->expects($this->once())
+            ->method('onError')
+            ->with($this->isInstanceOf(Connection::class), $exception);
+
+        stream_socket_client("tcp://localhost:{$this->port}");
+
+        $this->tickLoop(Loop::get());
+
+        $this->assertSame([], $this->logger->records);
+    }
+
+    #[TestDox('Logs and closes the connection when the error handler throws while processing incoming data')]
+    public function testOnErrorFailureWhileProcessingData(): void
+    {
+        $exception = new \RuntimeException('Testing');
+        $handlerException = new \LogicException('Error handler failure');
+
+        $message = 'Hello World!';
+
+        $this->middleware->expects($this->once())
+            ->method('onMessage')
+            ->with($this->isInstanceOf(Connection::class), $message)
+            ->willThrowException($exception);
+
+        $this->middleware->expects($this->once())
+            ->method('onError')
+            ->with($this->isInstanceOf(Connection::class), $exception)
+            ->willThrowException($handlerException);
+
+        // The server closes the connection itself, the client never disconnects before the assertions
+        $this->middleware->expects($this->once())
+            ->method('onClose')
+            ->with($this->isInstanceOf(Connection::class));
+
+        $client = $this->connectClient();
+
+        $this->tickLoop(Loop::get());
+
+        socket_write($client, $message);
+
+        $this->tickLoop(Loop::get());
+
+        $this->assertCount(1, $this->logger->records);
+        $this->assertSame('error', $this->logger->records[0]['level']);
+        $this->assertSame($handlerException, $this->logger->records[0]['context']['exception']);
+        $this->assertSame($exception, $this->logger->records[0]['context']['original_exception']);
+
+        socket_close($client);
+
+        $this->tickLoop(Loop::get());
+    }
+
+    #[TestDox('Logs and closes the connection when the error handler throws while opening the connection')]
+    public function testOnErrorFailureWhileOpeningConnection(): void
+    {
+        $exception = new \RuntimeException('Testing');
+        $handlerException = new \LogicException('Error handler failure');
+
+        $this->middleware->expects($this->once())
+            ->method('onOpen')
+            ->with($this->isInstanceOf(Connection::class))
+            ->willThrowException($exception);
+
+        $this->middleware->expects($this->once())
+            ->method('onError')
+            ->with($this->isInstanceOf(Connection::class), $exception)
+            ->willThrowException($handlerException);
+
+        $this->middleware->expects($this->once())
+            ->method('onClose')
+            ->with($this->isInstanceOf(Connection::class));
+
+        $client = $this->connectClient();
+
+        $this->tickLoop(Loop::get());
+
+        $this->assertCount(1, $this->logger->records);
+        $this->assertSame($handlerException, $this->logger->records[0]['context']['exception']);
+        $this->assertSame($exception, $this->logger->records[0]['context']['original_exception']);
+
+        socket_close($client);
+
+        $this->tickLoop(Loop::get());
+    }
+
+    private function connectClient(): \Socket
+    {
+        $client = socket_create(\AF_INET, \SOCK_STREAM, \SOL_TCP);
+
+        if (false === $client) {
+            self::fail(\sprintf('Could not create the socket for testing: %s', socket_strerror(socket_last_error())));
+        }
+
+        socket_set_option($client, \SOL_SOCKET, \SO_REUSEADDR, 1);
+        socket_set_option($client, \SOL_SOCKET, \SO_SNDBUF, 4096);
+        socket_set_block($client);
+        socket_connect($client, 'localhost', $this->port);
+
+        return $client;
     }
 }

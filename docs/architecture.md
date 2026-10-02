@@ -24,6 +24,12 @@ At the root of the WebSocket Server package is the `BabDev\WebSocket\Server\Serv
 
 The default server implementation is based on the [ReactPHP Socket](https://reactphp.org/socket/) component.
 
+### Error Handling
+
+Any `Throwable` raised by the middleware stack while opening a connection, processing incoming data, or closing a connection is forwarded to the stack's `onError()` method, so a failure on one connection does not stop the server for every other connection.
+
+If the `onError()` method itself throws (for example, an event listener for the `ConnectionError` event fails), the server closes the affected connection and reports the failure to an optional [PSR-3](https://www.php-fig.org/psr/psr-3/) logger. The logger can be provided as the fourth argument to the `BabDev\WebSocket\Server\ReactPhpServer` constructor, or with the `withLogger()` method when using the `Application` class. Without a logger, these failures are silently discarded.
+
 ## Middleware Based Design
 
 Similar to [Ratchet](https://github.com/ratchetphp/Ratchet), the WebSocket Server package uses a [middleware based architecture](/open-source/packages/websocket-server/docs/1.x/middleware) to represent the application.

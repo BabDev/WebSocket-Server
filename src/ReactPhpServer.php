@@ -4,6 +4,7 @@ namespace BabDev\WebSocket\Server;
 
 use BabDev\WebSocket\Server\Connection\ArrayAttributeStore;
 use BabDev\WebSocket\Server\Connection\ReactSocketConnection;
+use Psr\Log\LoggerInterface;
 use React\EventLoop\Loop;
 use React\EventLoop\LoopInterface;
 use React\Socket\ConnectionInterface;
@@ -20,7 +21,8 @@ final readonly class ReactPhpServer implements Server
     public function __construct(
         private ServerMiddleware $middleware,
         private ServerInterface $socket,
-        ?LoopInterface $loop = null
+        ?LoopInterface $loop = null,
+        private ?LoggerInterface $logger = null,
     ) {
         gc_enable();
         set_time_limit(0);
@@ -56,8 +58,6 @@ final readonly class ReactPhpServer implements Server
             }
         }
 
-        $this->middleware->onOpen($decoratedConnection);
-
         $connection->on(
             'data',
             function (string $data) use ($decoratedConnection): void {
@@ -78,6 +78,12 @@ final readonly class ReactPhpServer implements Server
                 $this->onError($decoratedConnection, $throwable);
             },
         );
+
+        try {
+            $this->middleware->onOpen($decoratedConnection);
+        } catch (\Throwable $throwable) {
+            $this->onError($decoratedConnection, $throwable);
+        }
     }
 
     /**
@@ -115,6 +121,40 @@ final readonly class ReactPhpServer implements Server
      */
     public function onError(Connection $connection, \Throwable $throwable): void
     {
-        $this->middleware->onError($connection, $throwable);
+        try {
+            $this->middleware->onError($connection, $throwable);
+        } catch (\Throwable $handlerThrowable) {
+            $this->logger?->error(
+                'An uncaught Throwable was raised while handling an error for a connection, the connection will be closed.',
+                [
+                    'exception' => $handlerThrowable,
+                    'original_exception' => $throwable,
+                    'resource_id' => $connection->getAttributeStore()->get('resource_id'),
+                ],
+            );
+
+            $this->closeAfterFailure($connection);
+        }
+    }
+
+    /**
+     * Closes a connection after the middleware stack failed to handle an error for it.
+     *
+     * At this point the state of the connection is unknown, so any failure closing it is reported and otherwise
+     * ignored to protect the event loop.
+     */
+    private function closeAfterFailure(Connection $connection): void
+    {
+        try {
+            $connection->close();
+        } catch (\Throwable $throwable) {
+            $this->logger?->error(
+                'An uncaught Throwable was raised while closing a connection after an error.',
+                [
+                    'exception' => $throwable,
+                    'resource_id' => $connection->getAttributeStore()->get('resource_id'),
+                ],
+            );
+        }
     }
 }

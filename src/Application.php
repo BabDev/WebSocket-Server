@@ -16,6 +16,7 @@ use BabDev\WebSocket\Server\WAMP\Middleware\ParseWAMPMessage;
 use BabDev\WebSocket\Server\WAMP\Middleware\UpdateTopicSubscriptions;
 use BabDev\WebSocket\Server\WebSocket\Middleware\EstablishWebSocketConnection;
 use Psr\EventDispatcher\EventDispatcherInterface;
+use Psr\Log\LoggerInterface;
 use React\EventLoop\Loop;
 use React\EventLoop\LoopInterface;
 use React\Socket\SocketServer;
@@ -46,6 +47,8 @@ final class Application
     private ErrorUriResolver $errorUriResolver;
 
     private ?EventDispatcherInterface $dispatcher = null;
+
+    private ?LoggerInterface $logger = null;
 
     private ?SessionFactoryInterface $sessionFactory = null;
 
@@ -107,7 +110,7 @@ final class Application
 
         $socket = new SocketServer($this->uri, $this->context, $this->loop);
 
-        new ReactPhpServer($middleware, $socket, $this->loop)->run();
+        new ReactPhpServer($middleware, $socket, $this->loop, $this->logger)->run();
     }
 
     public function route(string $path, MessageHandler|MessageMiddleware|string $handler, int $priority = 0): self
@@ -137,6 +140,16 @@ final class Application
     public function withEventDispatcher(EventDispatcherInterface $eventDispatcher): self
     {
         $this->dispatcher = $eventDispatcher;
+
+        return $this;
+    }
+
+    /**
+     * Registers a logger for reporting failures the server middleware stack could not handle.
+     */
+    public function withLogger(LoggerInterface $logger): self
+    {
+        $this->logger = $logger;
 
         return $this;
     }
