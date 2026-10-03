@@ -2,7 +2,6 @@
 
 namespace BabDev\WebSocket\Server\WAMP\Exception;
 
-use BabDev\WebSocket\Server\WAMP\MessageType;
 use BabDev\WebSocket\Server\WebSocketException;
 
 class UnsupportedMessageType extends \RuntimeException implements WebSocketException
