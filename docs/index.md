@@ -12,5 +12,6 @@
   - [Parse HTTP Request](/open-source/packages/websocket-server/docs/1.x/middleware/parse-http-request)
   - [Parse WAMP Message](/open-source/packages/websocket-server/docs/1.x/middleware/parse-wamp-message)
   - [Reject Blocked IP Address](/open-source/packages/websocket-server/docs/1.x/middleware/reject-blocked-ip-address)
+  - [Resolve Forwarded Client Address](/open-source/packages/websocket-server/docs/1.x/middleware/resolve-forwarded-client-address)
   - [Restrict to Allowed Origins](/open-source/packages/websocket-server/docs/1.x/middleware/restrict-to-allowed-origins)
   - [Update Topic Subscriptions](/open-source/packages/websocket-server/docs/1.x/middleware/update-topic-subscriptions)

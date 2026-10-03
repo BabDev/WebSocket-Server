@@ -5,6 +5,7 @@ namespace BabDev\WebSocket\Server;
 use BabDev\WebSocket\Server\Http\Exception\InvalidRequestTimeout;
 use BabDev\WebSocket\Server\Http\Middleware\ParseHttpRequest;
 use BabDev\WebSocket\Server\Http\Middleware\RejectBlockedIpAddress;
+use BabDev\WebSocket\Server\Http\Middleware\ResolveForwardedClientAddress;
 use BabDev\WebSocket\Server\Http\Middleware\RestrictToAllowedOrigins;
 use BabDev\WebSocket\Server\Session\Middleware\InitializeSession;
 use BabDev\WebSocket\Server\WAMP\ArrayTopicRegistry;
@@ -21,6 +22,7 @@ use Psr\Log\LoggerInterface;
 use React\EventLoop\Loop;
 use React\EventLoop\LoopInterface;
 use React\Socket\SocketServer;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Session\SessionFactoryInterface;
 use Symfony\Component\Routing\Matcher\UrlMatcher;
 use Symfony\Component\Routing\Matcher\UrlMatcherInterface;
@@ -73,6 +75,16 @@ final class Application
     private array $blockedAddresses = [];
 
     /**
+     * @var list<string>
+     */
+    private array $trustedProxies = [];
+
+    /**
+     * @var int-mask-of<Request::HEADER_*>
+     */
+    private int $trustedHeaderSet = Request::HEADER_X_FORWARDED_FOR;
+
+    /**
      * Creates the application instance.
      *
      * This class' constructor arguments are forwarded to the underlying {@see SocketServer} instance which handles
@@ -114,14 +126,20 @@ final class Application
             $middleware = new RestrictToAllowedOrigins($middleware, $this->allowedOrigins);
         }
 
+        // The blocked address check runs once the client address is known, which behind a trusted proxy is only after the
+        // HTTP request has been parsed
+        if ([] !== $this->blockedAddresses) {
+            $middleware = new RejectBlockedIpAddress($middleware, $this->blockedAddresses);
+        }
+
+        if ([] !== $this->trustedProxies) {
+            $middleware = new ResolveForwardedClientAddress($middleware, $this->trustedProxies, $this->trustedHeaderSet);
+        }
+
         $middleware = new ParseHttpRequest($middleware);
 
         if (null !== $this->requestTimeout) {
             $middleware->enableRequestTimeout($this->loop, $this->requestTimeout);
-        }
-
-        if ([] !== $this->blockedAddresses) {
-            $middleware = new RejectBlockedIpAddress($middleware, $this->blockedAddresses);
         }
 
         $socket = new SocketServer($this->uri, $this->context, $this->loop);
@@ -184,6 +202,26 @@ final class Application
         }
 
         $this->requestTimeout = $timeout;
+
+        return $this;
+    }
+
+    /**
+     * Sets the reverse proxies which are trusted to report the address of the client.
+     *
+     * When the server is behind a trusted proxy, the {@see ResolveForwardedClientAddress} middleware is registered to
+     * read the client address from the forwarding headers, so blocked addresses are checked against the client address
+     * instead of the proxy's address. This follows the same conventions as Symfony's {@see Request::setTrustedProxies()}.
+     *
+     * @param list<string>                   $proxies          The addresses or subnets of the trusted proxies; the string "REMOTE_ADDR" trusts the
+     *                                                         address of every connection, and "PRIVATE_SUBNETS" trusts all private network ranges
+     * @param int-mask-of<Request::HEADER_*> $trustedHeaderSet A bit field of the headers to trust from the proxies; only the
+     *                                                         {@see Request::HEADER_FORWARDED} and {@see Request::HEADER_X_FORWARDED_FOR} headers are used
+     */
+    public function withTrustedProxies(array $proxies, int $trustedHeaderSet = Request::HEADER_X_FORWARDED_FOR): self
+    {
+        $this->trustedProxies = $proxies;
+        $this->trustedHeaderSet = $trustedHeaderSet;
 
         return $this;
     }

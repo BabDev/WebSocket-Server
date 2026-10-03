@@ -28,6 +28,6 @@ The timeout applies to connections opened after it is enabled. When using the `B
 
 ## Position in Middleware Stack
 
-It is recommended that this middleware is decorated by the `BabDev\WebSocket\Server\Http\Middleware\RejectBlockedIpAddress` middleware in your application (see the [message flow](/open-source/packages/websocket-server/docs/1.x/architecture#message-flow) section from the architecture documentation to see the recommended stack with all optional middleware). As most middleware require the HTTP request to function, this should be one of the first middleware in your stack.
+As most middleware require the HTTP request to function, it is recommended that this is the outermost middleware in your application (see the [message flow](/open-source/packages/websocket-server/docs/1.x/architecture#message-flow) section from the architecture documentation to see the recommended stack with all optional middleware).
 
-It is also recommended that this middleware decorates the `BabDev\WebSocket\Server\WebSocket\Middleware\EstablishWebSocketConnection` middleware, but it can decorate any server middleware.
+It is also recommended that this middleware decorates the `BabDev\WebSocket\Server\Http\Middleware\ResolveForwardedClientAddress` middleware when the server is behind a reverse proxy, or the `BabDev\WebSocket\Server\Http\Middleware\RejectBlockedIpAddress` middleware otherwise, but it can decorate any server middleware.

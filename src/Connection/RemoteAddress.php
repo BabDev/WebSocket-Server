@@ -31,13 +31,25 @@ final class RemoteAddress
             return null;
         }
 
-        $host = trim($host, '[]');
+        return self::normalize($host);
+    }
 
-        if (str_contains($host, '%')) {
-            $host = strstr($host, '%', true);
+    /**
+     * Normalizes an IP address so it can be compared against IP addresses and subnets.
+     *
+     * The same normalization rules as {@see self::fromUri()} are applied.
+     *
+     * @return non-empty-string|null The normalized IP address, or null if the value is not an IP address
+     */
+    public static function normalize(string $address): ?string
+    {
+        $address = trim($address, '[]');
+
+        if (str_contains($address, '%')) {
+            $address = strstr($address, '%', true);
         }
 
-        $address = filter_var($host, \FILTER_VALIDATE_IP);
+        $address = filter_var($address, \FILTER_VALIDATE_IP);
 
         if (false === $address || '' === $address) {
             return null;

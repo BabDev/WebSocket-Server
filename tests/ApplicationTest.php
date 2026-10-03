@@ -89,6 +89,116 @@ final class ApplicationTest extends TestCase
         new Application("unix://{$this->socketPath}", [], $loop)->run();
     }
 
+    #[TestDox('Rejects a blocked client address forwarded by a trusted proxy')]
+    public function testBlocksForwardedClientAddressFromTrustedProxy(): void
+    {
+        $response = $this->sendRequestWithForwardedFor(
+            new Application('127.0.0.1:'.($port = $this->findAvailablePort()), [], $loop = new StreamSelectLoop())
+                ->withTrustedProxies(['127.0.0.1'])
+                ->blockAddress('203.0.113.5'),
+            $loop,
+            $port,
+            '203.0.113.5',
+        );
+
+        $this->assertStringStartsWith('HTTP/1.1 403 ', $response);
+    }
+
+    #[TestDox('Allows a client address forwarded by a trusted proxy which is not blocked')]
+    public function testAllowsForwardedClientAddressFromTrustedProxy(): void
+    {
+        $response = $this->sendRequestWithForwardedFor(
+            new Application('127.0.0.1:'.($port = $this->findAvailablePort()), [], $loop = new StreamSelectLoop())
+                ->withTrustedProxies(['127.0.0.1'])
+                ->blockAddress('203.0.113.5'),
+            $loop,
+            $port,
+            '198.51.100.1',
+        );
+
+        $this->assertStringStartsWith('HTTP/1.1 405 ', $response);
+    }
+
+    #[TestDox('Rejects a blocked client connecting directly to the server')]
+    public function testBlocksDirectClientAddress(): void
+    {
+        $response = $this->sendRequestWithForwardedFor(
+            new Application('127.0.0.1:'.($port = $this->findAvailablePort()), [], $loop = new StreamSelectLoop())
+                ->blockAddress('127.0.0.1'),
+            $loop,
+            $port,
+            '198.51.100.1',
+        );
+
+        $this->assertStringStartsWith('HTTP/1.1 403 ', $response);
+    }
+
+    #[TestDox('Ignores the forwarding header when no proxies are trusted')]
+    public function testIgnoresForwardedClientAddressWithoutTrustedProxies(): void
+    {
+        $response = $this->sendRequestWithForwardedFor(
+            new Application('127.0.0.1:'.($port = $this->findAvailablePort()), [], $loop = new StreamSelectLoop())
+                ->blockAddress('203.0.113.5'),
+            $loop,
+            $port,
+            '203.0.113.5',
+        );
+
+        $this->assertStringStartsWith('HTTP/1.1 405 ', $response);
+    }
+
+    /**
+     * Runs the application and sends a request with an "X-Forwarded-For" header, returning the response.
+     *
+     * The request uses the POST method so a client which passes the blocked address check receives a predictable
+     * "405 Method Not Allowed" response from the WebSocket handshake, while a blocked client receives a "403 Forbidden" response.
+     */
+    private function sendRequestWithForwardedFor(Application $application, LoopInterface $loop, int $port, string $forwardedFor): string
+    {
+        $client = null;
+
+        $loop->addTimer(0.01, static function () use (&$client, $port, $forwardedFor): void {
+            $client = stream_socket_client("tcp://127.0.0.1:{$port}");
+
+            if (\is_resource($client)) {
+                fwrite($client, "POST / HTTP/1.1\r\nHost: localhost\r\nX-Forwarded-For: {$forwardedFor}\r\n\r\n");
+            }
+        });
+
+        $loop->addTimer(0.25, static function () use ($loop): void {
+            $loop->stop();
+        });
+
+        $application->run();
+
+        if (!\is_resource($client)) {
+            self::fail('The client could not connect to the server.');
+        }
+
+        stream_set_blocking($client, false);
+
+        return (string) stream_get_contents($client);
+    }
+
+    private function findAvailablePort(): int
+    {
+        $socket = stream_socket_server('tcp://127.0.0.1:0');
+
+        if (false === $socket) {
+            self::fail('Could not find an available port.');
+        }
+
+        $port = parse_url('tcp://'.stream_socket_get_name($socket, false), \PHP_URL_PORT);
+
+        fclose($socket);
+
+        if (!\is_int($port)) {
+            self::fail('Could not find an available port.');
+        }
+
+        return $port;
+    }
+
     /**
      * Runs the application long enough for a client which never sends a request to connect and be timed out.
      *

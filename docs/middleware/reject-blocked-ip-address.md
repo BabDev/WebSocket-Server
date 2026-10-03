@@ -40,6 +40,8 @@ $middleware->allowAddress('192.168.1.0/24');
 
 ## Position in Middleware Stack
 
-It is recommended that this is the outermost middleware in your application (see the [message flow](/open-source/packages/websocket-server/docs/1.x/architecture#message-flow) section from the architecture documentation to see the recommended stack with all optional middleware), however it can be placed anywhere that does not expect one of the server middleware sub-interfaces.
+It is recommended that this middleware is decorated by the `BabDev\WebSocket\Server\Http\Middleware\ParseHttpRequest` middleware in your application (see the [message flow](/open-source/packages/websocket-server/docs/1.x/architecture#message-flow) section from the architecture documentation to see the recommended stack with all optional middleware). When the server is behind a reverse proxy, the connection's remote address is the proxy's IP address, so this middleware should instead be decorated by the [`BabDev\WebSocket\Server\Http\Middleware\ResolveForwardedClientAddress`](/open-source/packages/websocket-server/docs/1.x/middleware/resolve-forwarded-client-address) middleware, so blocked addresses are checked against the client's IP address.
 
-It is also recommended that this middleware decorates the `BabDev\WebSocket\Server\Http\Middleware\ParseHttpRequest` middleware, but it can decorate any server middleware.
+As this middleware runs after the HTTP request is parsed, a blocked client's request is read before the connection is rejected; this is bounded by the request parser's maximum request size and the `ParseHttpRequest` middleware's request timeout.
+
+It is also recommended that this middleware decorates the `BabDev\WebSocket\Server\Http\Middleware\RestrictToAllowedOrigins` middleware, but it can decorate any server middleware.
