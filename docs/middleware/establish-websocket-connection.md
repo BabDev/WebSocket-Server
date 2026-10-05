@@ -50,4 +50,4 @@ The middleware's `closeAllConnections()` method closes every established WebSock
 
 It is recommended that this middleware is decorated by the `BabDev\WebSocket\Server\Http\Middleware\ParseHttpRequest` middleware in your application (see the [message flow](/open-source/packages/websocket-server/docs/1.x/architecture#message-flow) section from the architecture documentation to see the recommended stack with all optional middleware), however it can be placed anywhere after the HTTP request has been parsed and does not expect one of the server middleware sub-interfaces.
 
-It is also recommended that this middleware decorates the `use BabDev\WebSocket\Server\WAMP\Middleware\ParseWAMPMessage` middleware, but it can decorate any server middleware.
+It is also recommended that this middleware decorates the `BabDev\WebSocket\Server\WAMP\Middleware\ParseWAMPMessage` middleware, but it can decorate any server middleware.

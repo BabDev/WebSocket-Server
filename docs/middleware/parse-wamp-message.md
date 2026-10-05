@@ -2,8 +2,6 @@
 
 The `BabDev\WebSocket\Server\WAMP\Middleware\ParseWAMPMessage` class is a [server middleware](/open-source/packages/websocket-server/docs/1.x/middleware) which parses an incoming WAMP message to be consumed by a [message handler](/open-source/packages/websocket-server/docs/1.x/message-handler).
 
-The middleware also allows enabling a keepalive ping-pong for the server.
-
 ## Message Validation
 
 Incoming messages are validated before they are forwarded to the decorated middleware, and a `BabDev\WebSocket\Server\WAMP\Exception\InvalidMessage` exception is thrown for a message which does not match the [WAMP version 1](https://web.archive.org/web/20150419051041/http://wamp.ws/spec/wamp1/) specification:
@@ -53,4 +51,4 @@ $middleware->setServerIdentity('My-Awesome-Application/1.0');
 
 It is recommended that this middleware is decorated by the `BabDev\WebSocket\Server\WebSocket\Middleware\EstablishWebSocketConnection` middleware in your application (see the [message flow](/open-source/packages/websocket-server/docs/1.x/architecture#message-flow) section from the architecture documentation to see the recommended stack with all optional middleware), however it can be placed anywhere after the HTTP request has been parsed and does not expect one of the server middleware sub-interfaces.
 
-It is also recommended that this middleware decorates the `use BabDev\WebSocket\Server\WAMP\Middleware\UpdateTopicSubscriptions` middleware, but it can decorate any WAMP server middleware.
+It is also recommended that this middleware decorates the `BabDev\WebSocket\Server\WAMP\Middleware\UpdateTopicSubscriptions` middleware, but it can decorate any WAMP server middleware.

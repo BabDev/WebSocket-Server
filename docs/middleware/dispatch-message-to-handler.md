@@ -27,6 +27,6 @@ A message handler which sends its own "CALLERROR" message for an error should do
 
 ## Position in Middleware Stack
 
-It is recommended that this middleware is decorated by the `BabDev\WebSocket\Server\WebSocket\Middleware\UpdateTopicSubscriptions` middleware in your application (see the [message flow](/open-source/packages/websocket-server/docs/1.x/architecture#message-flow) section from the architecture documentation to see the recommended stack with all optional middleware), however it can be decorated by any WAMP server middleware.
+It is recommended that this middleware is decorated by the `BabDev\WebSocket\Server\WAMP\Middleware\UpdateTopicSubscriptions` middleware in your application (see the [message flow](/open-source/packages/websocket-server/docs/1.x/architecture#message-flow) section from the architecture documentation to see the recommended stack with all optional middleware), however it can be decorated by any WAMP server middleware.
 
 This middleware is intended to be the innermost middleware in your application, and as such, does not support decorating other middleware.
