@@ -2,11 +2,14 @@
 
 namespace BabDev\WebSocket\Server;
 
+use BabDev\WebSocket\Server\Http\Exception\InvalidAllowedOrigin;
 use BabDev\WebSocket\Server\Http\Exception\InvalidRequestTimeout;
+use BabDev\WebSocket\Server\Http\GuzzleRequestParser;
 use BabDev\WebSocket\Server\Http\Middleware\ParseHttpRequest;
 use BabDev\WebSocket\Server\Http\Middleware\RejectBlockedIpAddress;
 use BabDev\WebSocket\Server\Http\Middleware\ResolveForwardedClientAddress;
 use BabDev\WebSocket\Server\Http\Middleware\RestrictToAllowedOrigins;
+use BabDev\WebSocket\Server\Http\Origin;
 use BabDev\WebSocket\Server\Session\Middleware\InitializeSession;
 use BabDev\WebSocket\Server\WAMP\ArrayTopicRegistry;
 use BabDev\WebSocket\Server\WAMP\DefaultErrorUriResolver;
@@ -16,6 +19,7 @@ use BabDev\WebSocket\Server\WAMP\MessageHandler\MessageHandlerResolver;
 use BabDev\WebSocket\Server\WAMP\Middleware\DispatchMessageToHandler;
 use BabDev\WebSocket\Server\WAMP\Middleware\ParseWAMPMessage;
 use BabDev\WebSocket\Server\WAMP\Middleware\UpdateTopicSubscriptions;
+use BabDev\WebSocket\Server\WAMP\TopicRegistry;
 use BabDev\WebSocket\Server\WebSocket\Middleware\EstablishWebSocketConnection;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Log\LoggerInterface;
@@ -92,6 +96,32 @@ final class Application
     private int $trustedHeaderSet = Request::HEADER_X_FORWARDED_FOR;
 
     /**
+     * @var positive-int|null
+     */
+    private ?int $maxRequestSize = null;
+
+    private ?string $serverIdentity = null;
+
+    /**
+     * @var positive-int|null
+     */
+    private ?int $maxPrefixes = null;
+
+    private bool $strictSubProtocolCheck = true;
+
+    /**
+     * @var int<0, max>|null
+     */
+    private ?int $maxMessagePayloadSize = null;
+
+    /**
+     * @var int<0, max>|null
+     */
+    private ?int $maxFramePayloadSize = null;
+
+    private ?TopicRegistry $topicRegistry = null;
+
+    /**
      * Creates the application instance.
      *
      * This class' constructor arguments are forwarded to the underlying {@see SocketServer} instance which handles
@@ -113,13 +143,27 @@ final class Application
 
     public function run(): void
     {
-        $topicRegistry = new ArrayTopicRegistry();
+        $topicRegistry = $this->topicRegistry ?? new ArrayTopicRegistry();
 
         $middleware = new DispatchMessageToHandler($this->matcher, $this->messageHandlerResolver, $this->dispatcher, $this->errorUriResolver);
         $middleware = new UpdateTopicSubscriptions($middleware, $topicRegistry);
         $middleware = new ParseWAMPMessage($middleware, $topicRegistry);
 
-        $middleware = $webSocketMiddleware = new EstablishWebSocketConnection($middleware);
+        if (null !== $this->serverIdentity) {
+            $middleware->setServerIdentity($this->serverIdentity);
+        }
+
+        if (null !== $this->maxPrefixes) {
+            $middleware->setMaxPrefixes($this->maxPrefixes);
+        }
+
+        $middleware = $webSocketMiddleware = new EstablishWebSocketConnection(
+            $middleware,
+            maxMessagePayloadSize: $this->maxMessagePayloadSize,
+            maxFramePayloadSize: $this->maxFramePayloadSize,
+        );
+
+        $middleware->setStrictSubProtocolCheck($this->strictSubProtocolCheck);
 
         if (null !== $this->keepAliveInterval) {
             $middleware->enableKeepAlive($this->loop, $this->keepAliveInterval);
@@ -143,7 +187,7 @@ final class Application
             $middleware = new ResolveForwardedClientAddress($middleware, $this->trustedProxies, $this->trustedHeaderSet);
         }
 
-        $middleware = new ParseHttpRequest($middleware);
+        $middleware = new ParseHttpRequest($middleware, null !== $this->maxRequestSize ? new GuzzleRequestParser($this->maxRequestSize) : new GuzzleRequestParser());
 
         if (null !== $this->requestTimeout) {
             $middleware->enableRequestTimeout($this->loop, $this->requestTimeout);
@@ -261,6 +305,74 @@ final class Application
     }
 
     /**
+     * Sets the maximum number of bytes of the HTTP request a client can send to establish the connection.
+     *
+     * @param positive-int $maxRequestSize
+     */
+    public function withMaxRequestSize(int $maxRequestSize): self
+    {
+        $this->maxRequestSize = $maxRequestSize;
+
+        return $this;
+    }
+
+    /**
+     * Sets the identity the server sends to clients in the WAMP "WELCOME" message.
+     */
+    public function withServerIdentity(string $serverIdentity): self
+    {
+        $this->serverIdentity = $serverIdentity;
+
+        return $this;
+    }
+
+    /**
+     * Sets the maximum number of CURIE prefixes a client can register for its connection.
+     *
+     * @param positive-int $maxPrefixes
+     */
+    public function withMaxPrefixes(int $maxPrefixes): self
+    {
+        $this->maxPrefixes = $maxPrefixes;
+
+        return $this;
+    }
+
+    /**
+     * Sets whether a client requesting a WebSocket sub-protocol the server does not support is rejected.
+     */
+    public function withStrictSubProtocolCheck(bool $enable): self
+    {
+        $this->strictSubProtocolCheck = $enable;
+
+        return $this;
+    }
+
+    /**
+     * Sets the maximum number of bytes in a message and in a single frame received from a client.
+     *
+     * @param int<0, max>|null $maxMessagePayloadSize
+     * @param int<0, max>|null $maxFramePayloadSize
+     */
+    public function withMessageSizeLimits(?int $maxMessagePayloadSize, ?int $maxFramePayloadSize = null): self
+    {
+        $this->maxMessagePayloadSize = $maxMessagePayloadSize;
+        $this->maxFramePayloadSize = $maxFramePayloadSize;
+
+        return $this;
+    }
+
+    /**
+     * Sets the topic registry used by the server, allowing application code to access the active topics.
+     */
+    public function withTopicRegistry(TopicRegistry $topicRegistry): self
+    {
+        $this->topicRegistry = $topicRegistry;
+
+        return $this;
+    }
+
+    /**
      * Registers a logger for reporting failures the server middleware stack could not handle.
      */
     public function withLogger(LoggerInterface $logger): self
@@ -336,10 +448,12 @@ final class Application
      * to a list of allowed origins before running the server.
      *
      * @param non-empty-string $origin
+     *
+     * @throws InvalidAllowedOrigin if the origin is not a valid origin or host
      */
     public function allowOrigin(string $origin): self
     {
-        $this->allowedOrigins[] = $origin;
+        $this->allowedOrigins[] = Origin::normalizeAllowedOrigin($origin);
 
         return $this;
     }
@@ -353,9 +467,13 @@ final class Application
      * to a list of allowed origins before running the server.
      *
      * @param non-empty-string $origin
+     *
+     * @throws InvalidAllowedOrigin if the origin is not a valid origin or host
      */
     public function removeAllowedOrigin(string $origin): self
     {
+        $origin = Origin::normalizeAllowedOrigin($origin);
+
         $this->allowedOrigins = array_values(
             array_filter(
                 $this->allowedOrigins,

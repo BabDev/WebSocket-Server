@@ -81,3 +81,7 @@ The below represents the message flow for an application using all middleware av
 ## Application
 
 The `BabDev\WebSocket\Server\Application` class is available to help with bootstrapping the server application. It is instantiated with the arguments for a `React\Socket\SocketServer` instance (please see the [ReactPHP Socket](https://reactphp.org/socket/) component documentation for details) and allows all optional features to be configured before running the server.
+
+The application builds a fixed middleware stack (see the [message flow](#message-flow) section) and does not support adding custom middleware; applications needing their own middleware should build the middleware stack themselves, such as with the [WebSocket bundle](https://github.com/BabDev/WebSocketBundle) for Symfony applications.
+
+To access the active topics from application code (for example, to broadcast a message from a timer), create a topic registry and provide it to the application with the `withTopicRegistry()` method.

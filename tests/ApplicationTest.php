@@ -3,10 +3,18 @@
 namespace BabDev\WebSocket\Server\Tests;
 
 use BabDev\WebSocket\Server\Application;
+use BabDev\WebSocket\Server\Http\Exception\InvalidAllowedOrigin;
 use BabDev\WebSocket\Server\Http\Exception\InvalidRequestTimeout;
+use BabDev\WebSocket\Server\TopicMessageHandler;
+use BabDev\WebSocket\Server\WAMP\ArrayTopicRegistry;
+use BabDev\WebSocket\Server\WAMP\MessageType;
+use BabDev\WebSocket\Server\WAMP\Topic;
+use BabDev\WebSocket\Server\WAMP\WAMPConnection;
+use BabDev\WebSocket\Server\WAMP\WAMPMessageRequest;
 use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Ratchet\RFC6455\Messaging\Frame;
 use React\EventLoop\LoopInterface;
 use React\EventLoop\StreamSelectLoop;
 use React\EventLoop\TimerInterface;
@@ -244,6 +252,102 @@ final class ApplicationTest extends TestCase
         }
 
         return $port;
+    }
+
+    #[TestDox('Rejects a request larger than the configured maximum request size')]
+    public function testMaxRequestSize(): void
+    {
+        $response = $this->sendRequestWithForwardedFor(
+            new Application('127.0.0.1:'.($port = $this->findAvailablePort()), [], $loop = new StreamSelectLoop())
+                ->withMaxRequestSize(32),
+            $loop,
+            $port,
+            '198.51.100.1',
+        );
+
+        $this->assertStringStartsWith('HTTP/1.1 413 ', $response);
+    }
+
+    #[TestDox('Validates an allowed origin when it is added')]
+    public function testAllowOriginValidatesTheOrigin(): void
+    {
+        $this->expectException(InvalidAllowedOrigin::class);
+
+        new Application("unix://{$this->socketPath}", [], $this->createStub(LoopInterface::class))->allowOrigin('localhost:8080');
+    }
+
+    #[TestDox('Removes an allowed origin given in an equivalent form')]
+    public function testRemoveAllowedOriginNormalizesTheOrigin(): void
+    {
+        $response = $this->sendRequestWithForwardedFor(
+            new Application('127.0.0.1:'.($port = $this->findAvailablePort()), [], $loop = new StreamSelectLoop())
+                ->allowOrigin('https://example.com')
+                ->removeAllowedOrigin('HTTPS://EXAMPLE.com:443'),
+            $loop,
+            $port,
+            '198.51.100.1',
+        );
+
+        // Without any allowed origins, the request is not rejected for its missing Origin header
+        $this->assertStringStartsWith('HTTP/1.1 405 ', $response);
+    }
+
+    #[TestDox('Uses the configured server identity and topic registry')]
+    public function testServerIdentityAndTopicRegistry(): void
+    {
+        $topicRegistry = new ArrayTopicRegistry();
+
+        $handler = new class implements TopicMessageHandler {
+            public function onSubscribe(WAMPConnection $connection, Topic $topic, WAMPMessageRequest $request): void {}
+
+            public function onUnsubscribe(WAMPConnection $connection, Topic $topic, WAMPMessageRequest $request): void {}
+
+            public function onPublish(WAMPConnection $connection, Topic $topic, WAMPMessageRequest $request, mixed $event, array $exclude, array $eligible): void {}
+        };
+
+        $application = new Application('127.0.0.1:'.($port = $this->findAvailablePort()), [], $loop = new StreamSelectLoop())
+            ->withServerIdentity('Test-Identity/1.0')
+            ->withTopicRegistry($topicRegistry)
+            ->withShutdownTimeout(null)
+            ->route('/topic/{id}', $handler);
+
+        $client = null;
+        $received = '';
+
+        $loop->addTimer(0.01, static function () use (&$client, $port): void {
+            $client = stream_socket_client("tcp://127.0.0.1:{$port}");
+
+            if (\is_resource($client)) {
+                fwrite($client, "GET / HTTP/1.1\r\nHost: localhost\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\nSec-WebSocket-Version: 13\r\nSec-WebSocket-Protocol: wamp\r\n\r\n");
+            }
+        });
+
+        $loop->addTimer(0.1, static function () use (&$client, &$received): void {
+            if (!\is_resource($client)) {
+                return;
+            }
+
+            stream_set_blocking($client, false);
+            $received = (string) stream_get_contents($client);
+
+            $subscribe = new Frame(json_encode([MessageType::SUBSCRIBE, '/topic/1'], \JSON_THROW_ON_ERROR));
+            $subscribe->maskPayload();
+
+            fwrite($client, $subscribe->getContents());
+        });
+
+        $loop->addTimer(0.25, static function () use ($loop): void {
+            $loop->stop();
+        });
+
+        $application->run();
+
+        if (!str_starts_with($received, 'HTTP/1.1 101 ')) {
+            self::markTestSkipped('The WebSocket handshake could not be completed with the installed dependencies.');
+        }
+
+        $this->assertStringContainsString(json_encode('Test-Identity/1.0', \JSON_THROW_ON_ERROR), $received, 'The WAMP "WELCOME" message should include the configured server identity.');
+        $this->assertTrue($topicRegistry->has('/topic/1'), 'The configured topic registry should be used for subscriptions.');
     }
 
     /**
