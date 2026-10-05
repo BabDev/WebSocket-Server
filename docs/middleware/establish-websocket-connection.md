@@ -4,6 +4,21 @@ The `BabDev\WebSocket\Server\WebSocket\Middleware\EstablishWebSocketConnection` 
 
 The middleware also allows enabling a keepalive ping-pong for the server.
 
+## Sub-Protocol Negotiation
+
+When the decorated middleware supports WebSocket sub-protocols (the `BabDev\WebSocket\Server\WAMP\Middleware\ParseWAMPMessage` middleware supports the `wamp` sub-protocol), the middleware negotiates the sub-protocol with the client during the handshake. By default, the check is strict: a client which does not request a supported sub-protocol in its `Sec-WebSocket-Protocol` header, including a client which does not request any sub-protocol, is rejected with a `426 Upgrade Required` response.
+
+The strict check can be disabled with the middleware's `setStrictSubProtocolCheck()` method, which allows clients to connect without requesting a supported sub-protocol:
+
+```php
+<?php declare(strict_types=1);
+
+use BabDev\WebSocket\Server\WebSocket\Middleware\EstablishWebSocketConnection;
+
+$middleware = new EstablishWebSocketConnection($decoratedMiddleware);
+$middleware->setStrictSubProtocolCheck(false);
+```
+
 ## Enabling keepalive
 
 The keepalive sends a ping to every connected client at the given interval, and closes connections which have not responded to the previous ping by the time the next one is sent. This removes connections whose client has disappeared without closing the connection (for example, after a network failure).

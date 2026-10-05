@@ -8,6 +8,19 @@ The middleware requires a `BabDev\WebSocket\Server\Http\RequestParser` to transf
 
 By default, the middleware will use the `BabDev\WebSocket\Server\Http\GuzzleRequestParser` class which relies on the [`guzzlehttp/psr7` package](https://docs.guzzlephp.org/en/stable/psr7.html). You can use your own parser by implementing the interface and passing your class as the second parameter to the middleware's constructor.
 
+### Maximum Request Size
+
+The `BabDev\WebSocket\Server\Http\GuzzleRequestParser` limits the size of the HTTP request to 4096 bytes by default; a client sending a larger request receives a `413 Request Entity Too Large` response and the connection is closed. The limit can be changed with the parser's constructor:
+
+```php
+<?php declare(strict_types=1);
+
+use BabDev\WebSocket\Server\Http\GuzzleRequestParser;
+use BabDev\WebSocket\Server\Http\Middleware\ParseHttpRequest;
+
+$middleware = new ParseHttpRequest($decoratedMiddleware, new GuzzleRequestParser(maxRequestSize: 8192));
+```
+
 ## Request Timeout
 
 To protect the server from clients which open a connection and never send a complete HTTP request, the middleware can close connections which do not send their request within a set time. Once the timeout expires, the client receives a `408 Request Timeout` response and the connection is closed. The timeout measures the total time to receive the request, so a client sending its request slowly is also closed.
