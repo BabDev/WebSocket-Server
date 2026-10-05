@@ -2,8 +2,10 @@
 
 namespace BabDev\WebSocket\Server\Tests\Session\Reader;
 
+use BabDev\WebSocket\Server\Session\Exception\InvalidSession;
 use BabDev\WebSocket\Server\Session\Reader\PhpReader;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\TestCase;
 
 final class PhpReaderTest extends TestCase
@@ -28,6 +30,40 @@ final class PhpReaderTest extends TestCase
 
         $this->assertArrayHasKey('_sf2_attributes', $output);
         $this->assertArrayHasKey('_sf2_meta', $output);
+    }
+
+    #[TestDox('Reads data with scalar values, including a null value at the end of the data')]
+    public function testReadsScalarValues(): void
+    {
+        $this->assertSame(
+            ['bool' => false, 'int' => 42, 'string' => 'a|b', 'null' => null],
+            new PhpReader()->read('bool|b:0;int|i:42;string|s:3:"a|b";null|N;'),
+        );
+    }
+
+    /**
+     * @return \Generator<string, array{string}>
+     */
+    public static function dataInvalidData(): \Generator
+    {
+        yield 'Missing delimiter' => ['foo'];
+
+        yield 'Missing value' => ['foo|'];
+
+        yield 'Truncated value' => ['foo|s:5:"hel'];
+
+        yield 'String with an incorrect length' => ['foo|s:3:"hello";'];
+
+        yield 'Reference' => ['foo|R:1;'];
+    }
+
+    #[TestDox('Throws an exception when the session data is invalid')]
+    #[DataProvider('dataInvalidData')]
+    public function testRejectsInvalidData(string $input): void
+    {
+        $this->expectException(InvalidSession::class);
+
+        new PhpReader()->read($input);
     }
 }
 

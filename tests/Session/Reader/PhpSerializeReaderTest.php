@@ -2,8 +2,10 @@
 
 namespace BabDev\WebSocket\Server\Tests\Session\Reader;
 
+use BabDev\WebSocket\Server\Session\Exception\InvalidSession;
 use BabDev\WebSocket\Server\Session\Reader\PhpSerializeReader;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\TestCase;
 
 final class PhpSerializeReaderTest extends TestCase
@@ -28,5 +30,28 @@ final class PhpSerializeReaderTest extends TestCase
 
         $this->assertArrayHasKey('_sf2_attributes', $output);
         $this->assertArrayHasKey('_sf2_meta', $output);
+    }
+
+    /**
+     * @return \Generator<string, array{string}>
+     */
+    public static function dataInvalidData(): \Generator
+    {
+        yield 'Invalid serialized data' => ['not serialized'];
+
+        yield 'Truncated data' => ['a:1:{s:3:"foo";'];
+
+        yield 'Serialized value which is not an array' => ['i:42;'];
+
+        yield 'Serialized false value' => ['b:0;'];
+    }
+
+    #[TestDox('Throws an exception when the session data is invalid')]
+    #[DataProvider('dataInvalidData')]
+    public function testRejectsInvalidData(string $input): void
+    {
+        $this->expectException(InvalidSession::class);
+
+        new PhpSerializeReader()->read($input);
     }
 }

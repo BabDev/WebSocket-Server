@@ -19,18 +19,6 @@ parameters:
 			path: src/Session/Middleware/InitializeSession.php
 
 		-
-			message: '#^Offset 1 might not exist on array\{0\: non\-falsy\-string, 1\?\: numeric\-string\}\.$#'
-			identifier: offsetAccess.notFound
-			count: 1
-			path: src/Session/Reader/PhpReader.php
-
-		-
-			message: '#^Method BabDev\\WebSocket\\Server\\Session\\Reader\\PhpSerializeReader\:\:read\(\) should return array but returns mixed\.$#'
-			identifier: return.type
-			count: 1
-			path: src/Session/Reader/PhpSerializeReader.php
-
-		-
 			message: '#^Property BabDev\\WebSocket\\Server\\Session\\Storage\\Proxy\\ReadOnlySessionHandlerProxy\:\:\$sessionName \(string\) does not accept string\|false\.$#'
 			identifier: assign.propertyType
 			count: 1
