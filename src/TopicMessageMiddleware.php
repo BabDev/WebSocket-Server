@@ -28,5 +28,5 @@ interface TopicMessageMiddleware extends MessageMiddleware
      * @param list<string> $exclude  A list of session IDs the message should be excluded from
      * @param list<string> $eligible A list of session IDs the message should be sent to
      */
-    public function onPublish(Connection $connection, Topic $topic, WAMPMessageRequest $request, mixed $event, array $exclude, array $eligible): void;
+    public function onPublish(WAMPConnection $connection, Topic $topic, WAMPMessageRequest $request, mixed $event, array $exclude, array $eligible): void;
 }
