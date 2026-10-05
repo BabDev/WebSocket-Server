@@ -19,26 +19,15 @@ use Symfony\Component\HttpFoundation\Session\SessionInterface;
 
 final class InitializeSessionTest extends TestCase
 {
-    private readonly MockObject&ServerMiddleware $decoratedMiddleware;
-
-    private readonly MockObject&SessionFactoryInterface $sessionFactory;
-
-    private readonly OptionsHandler $optionsHandler;
-
-    private readonly InitializeSession $middleware;
-
-    protected function setUp(): void
-    {
-        $this->decoratedMiddleware = $this->createMock(ServerMiddleware::class);
-        $this->sessionFactory = $this->createMock(SessionFactoryInterface::class);
-        $this->optionsHandler = $this->createOptionsHandler();
-
-        $this->middleware = new InitializeSession($this->decoratedMiddleware, $this->sessionFactory, $this->optionsHandler);
-    }
-
     #[TestDox('Handles a new connection being opened without any cookies')]
     public function testOnOpenWithoutRequestCookies(): void
     {
+        /** @var MockObject&ServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(ServerMiddleware::class);
+
+        /** @var MockObject&SessionFactoryInterface $sessionFactory */
+        $sessionFactory = $this->createMock(SessionFactoryInterface::class);
+
         /** @var MockObject&RequestInterface $request */
         $request = $this->createMock(RequestInterface::class);
         $request->expects($this->once())
@@ -60,7 +49,7 @@ final class InitializeSessionTest extends TestCase
             ->method('set')
             ->with('session', $session);
 
-        $this->sessionFactory->expects($this->once())
+        $sessionFactory->expects($this->once())
             ->method('createSession')
             ->willReturn($session);
 
@@ -70,16 +59,22 @@ final class InitializeSessionTest extends TestCase
             ->method('getAttributeStore')
             ->willReturn($attributeStore);
 
-        $this->decoratedMiddleware->expects($this->once())
+        $decoratedMiddleware->expects($this->once())
             ->method('onOpen')
             ->with($connection);
 
-        $this->middleware->onOpen($connection);
+        $this->createMiddleware($decoratedMiddleware, $sessionFactory)->onOpen($connection);
     }
 
     #[TestDox('Handles a new connection being opened with a session cookie')]
     public function testOnOpenWithRequestCookies(): void
     {
+        /** @var MockObject&ServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(ServerMiddleware::class);
+
+        /** @var MockObject&SessionFactoryInterface $sessionFactory */
+        $sessionFactory = $this->createMock(SessionFactoryInterface::class);
+
         /** @var MockObject&RequestInterface $request */
         $request = $this->createMock(RequestInterface::class);
         $request->expects($this->once())
@@ -116,7 +111,7 @@ final class InitializeSessionTest extends TestCase
             ->method('set')
             ->with('session', $session);
 
-        $this->sessionFactory->expects($this->once())
+        $sessionFactory->expects($this->once())
             ->method('createSession')
             ->willReturn($session);
 
@@ -126,18 +121,25 @@ final class InitializeSessionTest extends TestCase
             ->method('getAttributeStore')
             ->willReturn($attributeStore);
 
-        $this->decoratedMiddleware->expects($this->once())
+        $decoratedMiddleware->expects($this->once())
             ->method('onOpen')
             ->with($connection);
 
-        $this->optionsHandler->set('session.auto_start', 1);
+        $optionsHandler = $this->createOptionsHandler();
+        $optionsHandler->set('session.auto_start', 1);
 
-        $this->middleware->onOpen($connection);
+        $this->createMiddleware($decoratedMiddleware, $sessionFactory, $optionsHandler)->onOpen($connection);
     }
 
     #[TestDox('Handles a new connection being opened with an invalid cookie header')]
     public function testOnOpenWithInvalidCookieHeader(): void
     {
+        /** @var MockObject&ServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(ServerMiddleware::class);
+
+        /** @var MockObject&SessionFactoryInterface $sessionFactory */
+        $sessionFactory = $this->createMock(SessionFactoryInterface::class);
+
         $this->expectException(InvalidRequestHeader::class);
 
         /** @var MockObject&RequestInterface $request */
@@ -171,7 +173,7 @@ final class InitializeSessionTest extends TestCase
         $attributeStore->expects($this->never())
             ->method('set');
 
-        $this->sessionFactory->expects($this->once())
+        $sessionFactory->expects($this->once())
             ->method('createSession')
             ->willReturn($session);
 
@@ -181,15 +183,21 @@ final class InitializeSessionTest extends TestCase
             ->method('getAttributeStore')
             ->willReturn($attributeStore);
 
-        $this->decoratedMiddleware->expects($this->never())
+        $decoratedMiddleware->expects($this->never())
             ->method('onOpen');
 
-        $this->middleware->onOpen($connection);
+        $this->createMiddleware($decoratedMiddleware, $sessionFactory)->onOpen($connection);
     }
 
     #[TestDox('Handles a new connection being opened when required middleware have not run before this middleware')]
     public function testOnOpenWithoutRequest(): void
     {
+        /** @var MockObject&ServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(ServerMiddleware::class);
+
+        /** @var MockObject&SessionFactoryInterface $sessionFactory */
+        $sessionFactory = $this->createMock(SessionFactoryInterface::class);
+
         $this->expectException(MissingRequest::class);
 
         /** @var MockObject&AttributeStore $attributeStore */
@@ -199,7 +207,7 @@ final class InitializeSessionTest extends TestCase
             ->with('http.request')
             ->willReturn(null);
 
-        $this->sessionFactory->expects($this->never())
+        $sessionFactory->expects($this->never())
             ->method('createSession');
 
         /** @var MockObject&Connection $connection */
@@ -208,53 +216,71 @@ final class InitializeSessionTest extends TestCase
             ->method('getAttributeStore')
             ->willReturn($attributeStore);
 
-        $this->decoratedMiddleware->expects($this->never())
+        $decoratedMiddleware->expects($this->never())
             ->method('onOpen');
 
-        $this->middleware->onOpen($connection);
+        $this->createMiddleware($decoratedMiddleware, $sessionFactory)->onOpen($connection);
     }
 
     #[TestDox('Handles incoming data on the connection')]
     public function testOnMessage(): void
     {
+        /** @var MockObject&ServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(ServerMiddleware::class);
+
         $data = 'Testing';
 
         /** @var Stub&Connection $connection */
         $connection = $this->createStub(Connection::class);
 
-        $this->decoratedMiddleware->expects($this->once())
+        $decoratedMiddleware->expects($this->once())
             ->method('onMessage')
             ->with($connection, $data);
 
-        $this->middleware->onMessage($connection, $data);
+        $this->createMiddleware($decoratedMiddleware)->onMessage($connection, $data);
     }
 
     #[TestDox('Closes the connection')]
     public function testOnClose(): void
     {
+        /** @var MockObject&ServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(ServerMiddleware::class);
+
         /** @var Stub&Connection $connection */
         $connection = $this->createStub(Connection::class);
 
-        $this->decoratedMiddleware->expects($this->once())
+        $decoratedMiddleware->expects($this->once())
             ->method('onClose')
             ->with($connection);
 
-        $this->middleware->onClose($connection);
+        $this->createMiddleware($decoratedMiddleware)->onClose($connection);
     }
 
     #[TestDox('Handles an error')]
     public function testOnError(): void
     {
+        /** @var MockObject&ServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(ServerMiddleware::class);
+
         /** @var Stub&Connection $connection */
         $connection = $this->createStub(Connection::class);
 
         $error = new \Exception('Testing');
 
-        $this->decoratedMiddleware->expects($this->once())
+        $decoratedMiddleware->expects($this->once())
             ->method('onError')
             ->with($connection, $error);
 
-        $this->middleware->onError($connection, $error);
+        $this->createMiddleware($decoratedMiddleware)->onError($connection, $error);
+    }
+
+    private function createMiddleware(?ServerMiddleware $decoratedMiddleware = null, ?SessionFactoryInterface $sessionFactory = null, ?OptionsHandler $optionsHandler = null): InitializeSession
+    {
+        return new InitializeSession(
+            $decoratedMiddleware ?? $this->createStub(ServerMiddleware::class),
+            $sessionFactory ?? $this->createStub(SessionFactoryInterface::class),
+            $optionsHandler ?? $this->createOptionsHandler(),
+        );
     }
 
     private function createOptionsHandler(): OptionsHandler

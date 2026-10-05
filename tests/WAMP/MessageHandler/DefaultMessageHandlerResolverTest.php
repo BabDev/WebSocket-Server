@@ -2,7 +2,6 @@
 
 namespace BabDev\WebSocket\Server\Tests\WAMP\MessageHandler;
 
-use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use BabDev\WebSocket\Server\Tests\WAMP\MessageHandler\Fixtures\AdvancedMessageHandler;
 use BabDev\WebSocket\Server\Tests\WAMP\MessageHandler\Fixtures\BasicMessageHandler;
 use BabDev\WebSocket\Server\Tests\WAMP\MessageHandler\Fixtures\MissingInterfaceMessageHandler;
@@ -12,6 +11,7 @@ use BabDev\WebSocket\Server\WAMP\Exception\InvalidRequest;
 use BabDev\WebSocket\Server\WAMP\Exception\UnknownMessageHandler;
 use BabDev\WebSocket\Server\WAMP\MessageHandler\DefaultMessageHandlerResolver;
 use BabDev\WebSocket\Server\WAMP\WAMPMessageRequest;
+use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\ParameterBag;

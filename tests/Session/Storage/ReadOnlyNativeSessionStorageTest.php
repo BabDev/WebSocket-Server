@@ -23,44 +23,25 @@ final class ReadOnlyNativeSessionStorageTest extends TestCase
 
     private const string SESSION_ID = 'k9q2v7m4x1c8b5n3z6w0r2t4ya';
 
-    private readonly MockObject&Reader $reader;
-
-    private readonly MockObject&\SessionHandlerInterface $handler;
-
-    private readonly ReadOnlyNativeSessionStorage $storage;
-
-    protected function setUp(): void
-    {
-        $optionsHandler = $this->createOptionsHandler();
-        $optionsHandler->set('session.save_handler', 'user');
-        $optionsHandler->set('session.name', self::SESSION_NAME);
-
-        $this->reader = $this->createMock(Reader::class);
-        $this->handler = $this->createMock(\SessionHandlerInterface::class);
-
-        $this->storage = new ReadOnlyNativeSessionStorage(
-            optionsHandler: $optionsHandler,
-            reader: $this->reader,
-            handler: $this->handler,
-        );
-    }
-
     public function testStartsAndClearsTheSession(): void
     {
+        $handler = $this->createMock(\SessionHandlerInterface::class);
+        $reader = $this->createMock(Reader::class);
+
         $now = time();
         $id = self::SESSION_ID;
 
-        $this->handler->expects($this->once())
+        $handler->expects($this->once())
             ->method('open')
             ->with($this->isString(), self::SESSION_NAME)
             ->willReturn(true);
 
-        $this->handler->expects($this->once())
+        $handler->expects($this->once())
             ->method('read')
             ->with($id)
             ->willReturn('serialized_session_data');
 
-        $this->reader->expects($this->once())
+        $reader->expects($this->once())
             ->method('read')
             ->willReturn(
                 [
@@ -77,15 +58,16 @@ final class ReadOnlyNativeSessionStorageTest extends TestCase
                 ],
             );
 
-        $this->storage->setId($id);
-        $this->storage->registerBag($bag = new AttributeBag('_sf2_attributes'));
-        $this->storage->start();
+        $storage = $this->createStorage($reader, $handler);
+        $storage->setId($id);
+        $storage->registerBag($bag = new AttributeBag('_sf2_attributes'));
+        $storage->start();
 
-        $this->assertTrue($this->storage->isStarted());
+        $this->assertTrue($storage->isStarted());
 
         $this->assertSame('bar', $bag->get('foo'));
 
-        $this->storage->clear();
+        $storage->clear();
 
         $this->assertNull($bag->get('foo'));
     }
@@ -94,34 +76,36 @@ final class ReadOnlyNativeSessionStorageTest extends TestCase
     {
         $id = 'a1b2c3';
 
-        $this->storage->setId($id);
+        $storage = $this->createStorage();
 
-        $this->assertSame($id, $this->storage->getId());
+        $storage->setId($id);
+
+        $this->assertSame($id, $storage->getId());
     }
 
     public function testFetchesTheSessionName(): void
     {
-        $this->assertSame(self::SESSION_NAME, $this->storage->getName());
+        $this->assertSame(self::SESSION_NAME, $this->createStorage()->getName());
     }
 
     public function testForbidsSettingTheSessionName(): never
     {
         $this->expectException(ReadOnlySession::class);
 
-        $this->storage->setName('invalid');
+        $this->createStorage()->setName('invalid');
     }
 
     public function testForbidsRegeneratingTheSession(): never
     {
         $this->expectException(ReadOnlySession::class);
 
-        $this->storage->regenerate();
+        $this->createStorage()->regenerate();
     }
 
     #[DoesNotPerformAssertions]
     public function testSavesTheSession(): void
     {
-        $this->storage->save();
+        $this->createStorage()->save();
     }
 
     #[DoesNotPerformAssertions]
@@ -146,7 +130,7 @@ final class ReadOnlyNativeSessionStorageTest extends TestCase
             }
         };
 
-        $this->storage->registerBag($bag);
+        $this->createStorage()->registerBag($bag);
     }
 
     /**
@@ -169,23 +153,28 @@ final class ReadOnlyNativeSessionStorageTest extends TestCase
     #[DataProvider('dataUnreadableSessionId')]
     public function testStartsAnEmptySessionForAnUnreadableSessionId(?string $id): void
     {
-        $this->handler->expects($this->never())
+        $handler = $this->createMock(\SessionHandlerInterface::class);
+        $reader = $this->createMock(Reader::class);
+
+        $handler->expects($this->never())
             ->method('open');
 
-        $this->handler->expects($this->never())
+        $handler->expects($this->never())
             ->method('read');
 
-        $this->reader->expects($this->never())
+        $reader->expects($this->never())
             ->method('read');
+
+        $storage = $this->createStorage($reader, $handler);
 
         if (null !== $id) {
-            $this->storage->setId($id);
+            $storage->setId($id);
         }
 
-        $this->storage->registerBag($bag = new AttributeBag('_sf2_attributes'));
+        $storage->registerBag($bag = new AttributeBag('_sf2_attributes'));
 
-        $this->assertTrue($this->storage->start());
-        $this->assertTrue($this->storage->isStarted());
+        $this->assertTrue($storage->start());
+        $this->assertTrue($storage->isStarted());
         $this->assertSame([], $bag->all());
     }
 
@@ -206,13 +195,11 @@ final class ReadOnlyNativeSessionStorageTest extends TestCase
         $handler->expects($this->never())
             ->method('read');
 
-        $this->handler->expects($this->never())
+        $reader = $this->createMock(Reader::class);
+        $reader->expects($this->never())
             ->method('read');
 
-        $this->reader->expects($this->never())
-            ->method('read');
-
-        $storage = $this->createStorage($handler, strictMode: true);
+        $storage = $this->createStorage($reader, $handler, strictMode: true);
         $storage->setId(self::SESSION_ID);
         $storage->registerBag($bag = new AttributeBag('_sf2_attributes'));
 
@@ -237,15 +224,13 @@ final class ReadOnlyNativeSessionStorageTest extends TestCase
             ->with(self::SESSION_ID)
             ->willReturn('');
 
-        $this->handler->expects($this->never())
-            ->method('read');
-
-        $this->reader->expects($this->once())
+        $reader = $this->createMock(Reader::class);
+        $reader->expects($this->once())
             ->method('read')
             ->with('')
             ->willReturn([]);
 
-        $storage = $this->createStorage($handler, strictMode: false);
+        $storage = $this->createStorage($reader, $handler, strictMode: false);
         $storage->setId(self::SESSION_ID);
 
         $this->assertTrue($storage->start());
@@ -254,29 +239,23 @@ final class ReadOnlyNativeSessionStorageTest extends TestCase
     #[TestDox('Opens the save handler with the save path from the options handler')]
     public function testOpensTheSaveHandlerWithTheConfiguredSavePath(): void
     {
-        $this->handler->expects($this->once())
+        $handler = $this->createMock(\SessionHandlerInterface::class);
+        $reader = $this->createMock(Reader::class);
+
+        $handler->expects($this->once())
             ->method('open')
             ->with('/var/lib/websocket-sessions', self::SESSION_NAME)
             ->willReturn(true);
 
-        $this->handler->expects($this->once())
+        $handler->expects($this->once())
             ->method('read')
             ->willReturn('');
 
-        $this->reader->expects($this->once())
+        $reader->expects($this->once())
             ->method('read')
             ->willReturn([]);
 
-        $optionsHandler = $this->createOptionsHandler();
-        $optionsHandler->set('session.save_handler', 'user');
-        $optionsHandler->set('session.name', self::SESSION_NAME);
-        $optionsHandler->set('session.save_path', '/var/lib/websocket-sessions');
-
-        $storage = new ReadOnlyNativeSessionStorage(
-            optionsHandler: $optionsHandler,
-            reader: $this->reader,
-            handler: $this->handler,
-        );
+        $storage = $this->createStorage($reader, $handler, savePath: '/var/lib/websocket-sessions');
         $storage->setId(self::SESSION_ID);
         $storage->start();
     }
@@ -284,34 +263,42 @@ final class ReadOnlyNativeSessionStorageTest extends TestCase
     #[TestDox('Throws an exception when the save handler cannot read the session data')]
     public function testThrowsAnExceptionWhenTheSessionDataCannotBeRead(): void
     {
-        $this->handler->expects($this->once())
+        $handler = $this->createMock(\SessionHandlerInterface::class);
+        $reader = $this->createMock(Reader::class);
+
+        $handler->expects($this->once())
             ->method('open')
             ->willReturn(true);
 
-        $this->handler->expects($this->once())
+        $handler->expects($this->once())
             ->method('read')
             ->willReturn(false);
 
-        $this->reader->expects($this->never())
+        $reader->expects($this->never())
             ->method('read');
 
         $this->expectException(InvalidSession::class);
 
-        $this->storage->setId(self::SESSION_ID);
-        $this->storage->start();
+        $storage = $this->createStorage($reader, $handler);
+        $storage->setId(self::SESSION_ID);
+        $storage->start();
     }
 
-    private function createStorage(\SessionHandlerInterface $handler, bool $strictMode): ReadOnlyNativeSessionStorage
+    private function createStorage(?Reader $reader = null, ?\SessionHandlerInterface $handler = null, ?bool $strictMode = null, ?string $savePath = null): ReadOnlyNativeSessionStorage
     {
         $optionsHandler = $this->createOptionsHandler();
         $optionsHandler->set('session.save_handler', 'user');
         $optionsHandler->set('session.name', self::SESSION_NAME);
 
+        if (null !== $savePath) {
+            $optionsHandler->set('session.save_path', $savePath);
+        }
+
         return new ReadOnlyNativeSessionStorage(
             optionsHandler: $optionsHandler,
-            reader: $this->reader,
-            options: ['use_strict_mode' => $strictMode ? 1 : 0],
-            handler: $handler,
+            reader: $reader ?? $this->createStub(Reader::class),
+            options: null !== $strictMode ? ['use_strict_mode' => $strictMode ? 1 : 0] : [],
+            handler: $handler ?? $this->createStub(\SessionHandlerInterface::class),
         );
     }
 

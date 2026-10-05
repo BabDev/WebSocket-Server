@@ -22,18 +22,6 @@ use React\EventLoop\TimerInterface;
 
 final class ParseHttpRequestTest extends TestCase
 {
-    private readonly MockObject&ServerMiddleware $decoratedMiddleware;
-    private readonly MockObject&RequestParser $requestParser;
-    private readonly ParseHttpRequest $middleware;
-
-    protected function setUp(): void
-    {
-        $this->decoratedMiddleware = $this->createMock(ServerMiddleware::class);
-        $this->requestParser = $this->createMock(RequestParser::class);
-
-        $this->middleware = new ParseHttpRequest($this->decoratedMiddleware, $this->requestParser);
-    }
-
     #[TestDox('Handles a new connection being opened')]
     public function testOnOpen(): void
     {
@@ -45,7 +33,7 @@ final class ParseHttpRequestTest extends TestCase
             ->method('getAttributeStore')
             ->willReturn($attributeStore);
 
-        $this->middleware->onOpen($connection);
+        $this->createMiddleware()->onOpen($connection);
 
         $this->assertFalse($attributeStore->get('http.headers_received'));
     }
@@ -53,6 +41,12 @@ final class ParseHttpRequestTest extends TestCase
     #[TestDox('Handles incoming data on the connection when the HTTP message has not yet been parsed')]
     public function testOnMessageWhenHttpMessageNotYetParsed(): void
     {
+        /** @var MockObject&ServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(ServerMiddleware::class);
+
+        /** @var MockObject&RequestParser $requestParser */
+        $requestParser = $this->createMock(RequestParser::class);
+
         $message = 'Testing';
 
         /** @var Stub&RequestInterface $request */
@@ -67,16 +61,16 @@ final class ParseHttpRequestTest extends TestCase
             ->method('getAttributeStore')
             ->willReturn($attributeStore);
 
-        $this->requestParser->expects($this->once())
+        $requestParser->expects($this->once())
             ->method('parse')
             ->with($connection, $message)
             ->willReturn($request);
 
-        $this->decoratedMiddleware->expects($this->once())
+        $decoratedMiddleware->expects($this->once())
             ->method('onOpen')
             ->with($connection);
 
-        $this->middleware->onMessage($connection, $message);
+        $this->createMiddleware($decoratedMiddleware, $requestParser)->onMessage($connection, $message);
 
         $this->assertTrue($attributeStore->get('http.headers_received'));
         $this->assertSame($request, $attributeStore->get('http.request'));
@@ -85,6 +79,12 @@ final class ParseHttpRequestTest extends TestCase
     #[TestDox('Handles incoming data on the connection when the HTTP message has been parsed')]
     public function testOnMessageWhenHttpMessageHasBeenParsed(): void
     {
+        /** @var MockObject&ServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(ServerMiddleware::class);
+
+        /** @var MockObject&RequestParser $requestParser */
+        $requestParser = $this->createMock(RequestParser::class);
+
         $message = 'Testing';
 
         $attributeStore = new ArrayAttributeStore();
@@ -96,19 +96,25 @@ final class ParseHttpRequestTest extends TestCase
             ->method('getAttributeStore')
             ->willReturn($attributeStore);
 
-        $this->requestParser->expects($this->never())
+        $requestParser->expects($this->never())
             ->method('parse');
 
-        $this->decoratedMiddleware->expects($this->once())
+        $decoratedMiddleware->expects($this->once())
             ->method('onMessage')
             ->with($connection, $message);
 
-        $this->middleware->onMessage($connection, $message);
+        $this->createMiddleware($decoratedMiddleware, $requestParser)->onMessage($connection, $message);
     }
 
     #[TestDox('Closes the connection when a malformed request body is received')]
     public function testOnMessageWhenHttpMessageIsInvalid(): void
     {
+        /** @var MockObject&ServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(ServerMiddleware::class);
+
+        /** @var MockObject&RequestParser $requestParser */
+        $requestParser = $this->createMock(RequestParser::class);
+
         $message = 'Testing';
 
         $attributeStore = new ArrayAttributeStore();
@@ -126,22 +132,28 @@ final class ParseHttpRequestTest extends TestCase
         $connection->expects($this->once())
             ->method('close');
 
-        $this->requestParser->expects($this->once())
+        $requestParser->expects($this->once())
             ->method('parse')
             ->with($connection, $message)
             ->willThrowException(new MalformedRequest('Testing'));
 
-        $this->decoratedMiddleware->expects($this->never())
+        $decoratedMiddleware->expects($this->never())
             ->method('onOpen');
 
         $this->expectException(MalformedRequest::class);
 
-        $this->middleware->onMessage($connection, $message);
+        $this->createMiddleware($decoratedMiddleware, $requestParser)->onMessage($connection, $message);
     }
 
     #[TestDox('Closes the connection when a buffer overflow is reached while processing incoming data')]
     public function testOnMessageWhenHttpMessageOverflows(): void
     {
+        /** @var MockObject&ServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(ServerMiddleware::class);
+
+        /** @var MockObject&RequestParser $requestParser */
+        $requestParser = $this->createMock(RequestParser::class);
+
         $message = 'Testing';
 
         $attributeStore = new ArrayAttributeStore();
@@ -159,22 +171,25 @@ final class ParseHttpRequestTest extends TestCase
         $connection->expects($this->once())
             ->method('close');
 
-        $this->requestParser->expects($this->once())
+        $requestParser->expects($this->once())
             ->method('parse')
             ->with($connection, $message)
             ->willThrowException(new MessageTooLarge('Testing'));
 
-        $this->decoratedMiddleware->expects($this->never())
+        $decoratedMiddleware->expects($this->never())
             ->method('onOpen');
 
         $this->expectException(MessageTooLarge::class);
 
-        $this->middleware->onMessage($connection, $message);
+        $this->createMiddleware($decoratedMiddleware, $requestParser)->onMessage($connection, $message);
     }
 
     #[TestDox('Closes the connection when the request has been parsed')]
     public function testOnCloseWhenRequestParsed(): void
     {
+        /** @var MockObject&ServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(ServerMiddleware::class);
+
         $attributeStore = new ArrayAttributeStore();
         $attributeStore->set('http.headers_received', true);
 
@@ -184,16 +199,19 @@ final class ParseHttpRequestTest extends TestCase
             ->method('getAttributeStore')
             ->willReturn($attributeStore);
 
-        $this->decoratedMiddleware->expects($this->once())
+        $decoratedMiddleware->expects($this->once())
             ->method('onClose')
             ->with($connection);
 
-        $this->middleware->onClose($connection);
+        $this->createMiddleware($decoratedMiddleware)->onClose($connection);
     }
 
     #[TestDox('Handles an error when the request has been parsed')]
     public function testOnErrorWhenRequestParsed(): void
     {
+        /** @var MockObject&ServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(ServerMiddleware::class);
+
         $exception = new \RuntimeException('Testing');
 
         $attributeStore = new ArrayAttributeStore();
@@ -205,16 +223,19 @@ final class ParseHttpRequestTest extends TestCase
             ->method('getAttributeStore')
             ->willReturn($attributeStore);
 
-        $this->decoratedMiddleware->expects($this->once())
+        $decoratedMiddleware->expects($this->once())
             ->method('onError')
             ->with($connection, $exception);
 
-        $this->middleware->onError($connection, $exception);
+        $this->createMiddleware($decoratedMiddleware)->onError($connection, $exception);
     }
 
     #[TestDox('Handles an error when the request has not been parsed')]
     public function testOnErrorWhenRequestNotParsed(): void
     {
+        /** @var MockObject&ServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(ServerMiddleware::class);
+
         $exception = new \RuntimeException('Testing');
 
         $attributeStore = new ArrayAttributeStore();
@@ -226,7 +247,7 @@ final class ParseHttpRequestTest extends TestCase
             ->method('getAttributeStore')
             ->willReturn($attributeStore);
 
-        $this->decoratedMiddleware->expects($this->never())
+        $decoratedMiddleware->expects($this->never())
             ->method('onError');
 
         $connection->expects($this->once())
@@ -235,12 +256,15 @@ final class ParseHttpRequestTest extends TestCase
         $connection->expects($this->once())
             ->method('close');
 
-        $this->middleware->onError($connection, $exception);
+        $this->createMiddleware($decoratedMiddleware)->onError($connection, $exception);
     }
 
     #[TestDox('Closes the connection with a 408 response when the request is not received before the request timeout')]
     public function testRequestTimeoutClosesConnection(): void
     {
+        /** @var MockObject&ServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(ServerMiddleware::class);
+
         $timerCallback = null;
 
         /** @var MockObject&LoopInterface $loop */
@@ -254,17 +278,15 @@ final class ParseHttpRequestTest extends TestCase
                 return $this->createStub(TimerInterface::class);
             });
 
-        $this->decoratedMiddleware->expects($this->never())
+        $decoratedMiddleware->expects($this->never())
             ->method('onOpen');
-
-        $this->requestParser->expects($this->never())
-            ->method('parse');
 
         $connection = new RecordingConnection();
         $connection->getAttributeStore()->set('http.buffer', 'GET / HTTP/1.1');
 
-        $this->middleware->enableRequestTimeout($loop, 5.0);
-        $this->middleware->onOpen($connection);
+        $middleware = $this->createMiddleware($decoratedMiddleware);
+        $middleware->enableRequestTimeout($loop, 5.0);
+        $middleware->onOpen($connection);
 
         $this->assertIsCallable($timerCallback);
 
@@ -279,6 +301,12 @@ final class ParseHttpRequestTest extends TestCase
     #[TestDox('Cancels the request timeout once the request has been received')]
     public function testRequestTimeoutIsCanceledWhenRequestParsed(): void
     {
+        /** @var MockObject&ServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(ServerMiddleware::class);
+
+        /** @var MockObject&RequestParser $requestParser */
+        $requestParser = $this->createMock(RequestParser::class);
+
         $timer = $this->createStub(TimerInterface::class);
 
         /** @var MockObject&LoopInterface $loop */
@@ -293,22 +321,26 @@ final class ParseHttpRequestTest extends TestCase
 
         $connection = new RecordingConnection();
 
-        $this->requestParser->expects($this->once())
+        $requestParser->expects($this->once())
             ->method('parse')
             ->willReturn($this->createStub(RequestInterface::class));
 
-        $this->decoratedMiddleware->expects($this->once())
+        $decoratedMiddleware->expects($this->once())
             ->method('onOpen')
             ->with($connection);
 
-        $this->middleware->enableRequestTimeout($loop);
-        $this->middleware->onOpen($connection);
-        $this->middleware->onMessage($connection, "GET / HTTP/1.1\r\n\r\n");
+        $middleware = $this->createMiddleware($decoratedMiddleware, $requestParser);
+        $middleware->enableRequestTimeout($loop);
+        $middleware->onOpen($connection);
+        $middleware->onMessage($connection, "GET / HTTP/1.1\r\n\r\n");
     }
 
     #[TestDox('Cancels the request timeout when the connection is closed before the request is received')]
     public function testRequestTimeoutIsCanceledWhenConnectionClosed(): void
     {
+        /** @var MockObject&ServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(ServerMiddleware::class);
+
         $timer = $this->createStub(TimerInterface::class);
 
         /** @var MockObject&LoopInterface $loop */
@@ -321,17 +353,15 @@ final class ParseHttpRequestTest extends TestCase
             ->method('cancelTimer')
             ->with($timer);
 
-        $this->decoratedMiddleware->expects($this->never())
+        $decoratedMiddleware->expects($this->never())
             ->method('onClose');
-
-        $this->requestParser->expects($this->never())
-            ->method('parse');
 
         $connection = new RecordingConnection();
 
-        $this->middleware->enableRequestTimeout($loop);
-        $this->middleware->onOpen($connection);
-        $this->middleware->onClose($connection);
+        $middleware = $this->createMiddleware($decoratedMiddleware);
+        $middleware->enableRequestTimeout($loop);
+        $middleware->onOpen($connection);
+        $middleware->onClose($connection);
     }
 
     /**
@@ -348,14 +378,16 @@ final class ParseHttpRequestTest extends TestCase
     #[DataProvider('dataInvalidRequestTimeout')]
     public function testRequestTimeoutMustBePositive(float $timeout): void
     {
-        $this->decoratedMiddleware->expects($this->never())
-            ->method('onOpen');
-
-        $this->requestParser->expects($this->never())
-            ->method('parse');
-
         $this->expectException(InvalidRequestTimeout::class);
 
-        $this->middleware->enableRequestTimeout($this->createStub(LoopInterface::class), $timeout);
+        $this->createMiddleware()->enableRequestTimeout($this->createStub(LoopInterface::class), $timeout);
+    }
+
+    private function createMiddleware(?ServerMiddleware $decoratedMiddleware = null, ?RequestParser $requestParser = null): ParseHttpRequest
+    {
+        return new ParseHttpRequest(
+            $decoratedMiddleware ?? $this->createStub(ServerMiddleware::class),
+            $requestParser ?? $this->createStub(RequestParser::class),
+        );
     }
 }

@@ -6,65 +6,63 @@ use BabDev\WebSocket\Server\Connection\AttributeStore;
 use BabDev\WebSocket\Server\Connection\ReactSocketConnection;
 use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use React\Socket\ConnectionInterface as ReactSocketConnectionInterface;
 
 final class ReactSocketConnectionTest extends TestCase
 {
-    private readonly MockObject&ReactSocketConnectionInterface $reactConnection;
-
-    private readonly Stub&AttributeStore $attributeStore;
-
-    private readonly ReactSocketConnection $connection;
-
-    protected function setUp(): void
-    {
-        $this->reactConnection = $this->createMock(ReactSocketConnectionInterface::class);
-        $this->attributeStore = $this->createStub(AttributeStore::class);
-
-        $this->connection = new ReactSocketConnection($this->reactConnection, $this->attributeStore);
-    }
-
     public function testProvidesTheAttributeStore(): void
     {
-        $this->assertSame($this->attributeStore, $this->connection->getAttributeStore());
+        $attributeStore = $this->createStub(AttributeStore::class);
+
+        $this->assertSame($attributeStore, $this->createConnection(attributeStore: $attributeStore)->getAttributeStore());
     }
 
     public function testProvidesTheReactConnection(): void
     {
-        $this->assertSame($this->reactConnection, $this->connection->getConnection());
+        $reactConnection = $this->createStub(ReactSocketConnectionInterface::class);
+
+        $this->assertSame($reactConnection, $this->createConnection($reactConnection)->getConnection());
     }
 
     public function testSendsAMessage(): void
     {
+        /** @var MockObject&ReactSocketConnectionInterface $reactConnection */
+        $reactConnection = $this->createMock(ReactSocketConnectionInterface::class);
+
         $message = 'Hello World!';
 
-        $this->reactConnection->expects($this->once())
+        $reactConnection->expects($this->once())
             ->method('write')
             ->with($message);
 
-        $this->connection->send($message);
+        $this->createConnection($reactConnection)->send($message);
     }
 
     public function testClosesAConnection(): void
     {
-        $this->reactConnection->expects($this->once())
+        /** @var MockObject&ReactSocketConnectionInterface $reactConnection */
+        $reactConnection = $this->createMock(ReactSocketConnectionInterface::class);
+
+        $reactConnection->expects($this->once())
             ->method('end');
 
-        $this->connection->close();
+        $this->createConnection($reactConnection)->close();
     }
 
     #[TestDox('Closes the connection when too much data is written after the write buffer is full')]
     public function testClosesTheConnectionWhenTheWriteBufferLimitIsExceeded(): void
     {
+        /** @var MockObject&ReactSocketConnectionInterface $reactConnection */
+        $reactConnection = $this->createMock(ReactSocketConnectionInterface::class);
+
         $writes = [];
 
-        $this->reactConnection->expects($this->once())
+        $reactConnection->expects($this->once())
             ->method('on')
             ->with('drain', $this->isCallable());
 
-        $this->reactConnection->expects($this->exactly(2))
+        $reactConnection->expects($this->exactly(2))
             ->method('write')
             ->willReturnCallback(static function (string $data) use (&$writes): bool {
                 $writes[] = $data;
@@ -73,10 +71,10 @@ final class ReactSocketConnectionTest extends TestCase
                 return false;
             });
 
-        $this->reactConnection->expects($this->once())
+        $reactConnection->expects($this->once())
             ->method('close');
 
-        $connection = new ReactSocketConnection($this->reactConnection, $this->attributeStore, 10);
+        $connection = $this->createConnection($reactConnection, writeBufferLimit: 10);
         $connection->send('first');
         $connection->send('second');
         $connection->send('third');
@@ -87,23 +85,26 @@ final class ReactSocketConnectionTest extends TestCase
     #[TestDox('Resets the write buffer limit once the write buffer is drained')]
     public function testResetsTheWriteBufferLimitWhenDrained(): void
     {
+        /** @var MockObject&ReactSocketConnectionInterface $reactConnection */
+        $reactConnection = $this->createMock(ReactSocketConnectionInterface::class);
+
         $onDrain = null;
 
-        $this->reactConnection->expects($this->once())
+        $reactConnection->expects($this->once())
             ->method('on')
             ->with('drain', $this->isCallable())
             ->willReturnCallback(static function (string $event, callable $listener) use (&$onDrain): void {
                 $onDrain = $listener;
             });
 
-        $this->reactConnection->expects($this->exactly(4))
+        $reactConnection->expects($this->exactly(4))
             ->method('write')
             ->willReturn(false);
 
-        $this->reactConnection->expects($this->never())
+        $reactConnection->expects($this->never())
             ->method('close');
 
-        $connection = new ReactSocketConnection($this->reactConnection, $this->attributeStore, 10);
+        $connection = $this->createConnection($reactConnection, writeBufferLimit: 10);
         $connection->send('first');
         $connection->send('second');
 
@@ -119,18 +120,34 @@ final class ReactSocketConnectionTest extends TestCase
     #[TestDox('Does not limit the data written when the write buffer limit is disabled')]
     public function testDoesNotLimitTheWriteBufferWithoutALimit(): void
     {
-        $this->reactConnection->expects($this->never())
+        /** @var MockObject&ReactSocketConnectionInterface $reactConnection */
+        $reactConnection = $this->createMock(ReactSocketConnectionInterface::class);
+
+        $reactConnection->expects($this->never())
             ->method('on');
 
-        $this->reactConnection->expects($this->exactly(3))
+        $reactConnection->expects($this->exactly(3))
             ->method('write')
             ->willReturn(false);
 
-        $this->reactConnection->expects($this->never())
+        $reactConnection->expects($this->never())
             ->method('close');
 
-        $this->connection->send(str_repeat('a', 1024));
-        $this->connection->send(str_repeat('b', 1024));
-        $this->connection->send(str_repeat('c', 1024));
+        $connection = $this->createConnection($reactConnection);
+        $connection->send(str_repeat('a', 1024));
+        $connection->send(str_repeat('b', 1024));
+        $connection->send(str_repeat('c', 1024));
+    }
+
+    /**
+     * @param int<1, max>|null $writeBufferLimit
+     */
+    private function createConnection(?ReactSocketConnectionInterface $reactConnection = null, ?AttributeStore $attributeStore = null, ?int $writeBufferLimit = null): ReactSocketConnection
+    {
+        return new ReactSocketConnection(
+            $reactConnection ?? $this->createStub(ReactSocketConnectionInterface::class),
+            $attributeStore ?? $this->createStub(AttributeStore::class),
+            $writeBufferLimit,
+        );
     }
 }

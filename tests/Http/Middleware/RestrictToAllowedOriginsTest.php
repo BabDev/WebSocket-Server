@@ -20,19 +20,14 @@ use Psr\Http\Message\RequestInterface;
 
 final class RestrictToAllowedOriginsTest extends TestCase
 {
-    private readonly MockObject&ServerMiddleware $decoratedMiddleware;
-    private readonly RestrictToAllowedOrigins $middleware;
-
-    protected function setUp(): void
-    {
-        $this->decoratedMiddleware = $this->createMock(ServerMiddleware::class);
-
-        $this->middleware = new RestrictToAllowedOrigins($this->decoratedMiddleware);
-    }
-
     #[TestDox('Handles a new connection being opened with no origin restrictions')]
     public function testOnOpenWithNoOriginRestrictions(): void
     {
+        /** @var MockObject&ServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(ServerMiddleware::class);
+
+        $middleware = $this->createMiddleware($decoratedMiddleware);
+
         /** @var MockObject&RequestInterface $request */
         $request = $this->createStub(RequestInterface::class);
 
@@ -49,16 +44,21 @@ final class RestrictToAllowedOriginsTest extends TestCase
             ->method('getAttributeStore')
             ->willReturn($attributeStore);
 
-        $this->decoratedMiddleware->expects($this->once())
+        $decoratedMiddleware->expects($this->once())
             ->method('onOpen')
             ->with($connection);
 
-        $this->middleware->onOpen($connection);
+        $middleware->onOpen($connection);
     }
 
     #[TestDox('Handles a new connection being opened with restricted origins and no Origin header')]
     public function testOnOpenWithRestrictedOriginsAndNoOriginHeader(): void
     {
+        /** @var MockObject&ServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(ServerMiddleware::class);
+
+        $middleware = $this->createMiddleware($decoratedMiddleware);
+
         /** @var MockObject&RequestInterface $request */
         $request = $this->createMock(RequestInterface::class);
         $request->expects($this->once())
@@ -85,17 +85,22 @@ final class RestrictToAllowedOriginsTest extends TestCase
         $connection->expects($this->once())
             ->method('close');
 
-        $this->decoratedMiddleware->expects($this->never())
+        $decoratedMiddleware->expects($this->never())
             ->method('onOpen');
 
-        $this->middleware->allowOrigin('localhost');
+        $middleware->allowOrigin('localhost');
 
-        $this->middleware->onOpen($connection);
+        $middleware->onOpen($connection);
     }
 
     #[TestDox('Handles a new connection being opened with restricted origins and a Origin header with an allowed origin')]
     public function testOnOpenWithRestrictedOriginsAndOriginHeaderWithAllowedOrigin(): void
     {
+        /** @var MockObject&ServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(ServerMiddleware::class);
+
+        $middleware = $this->createMiddleware($decoratedMiddleware);
+
         /** @var MockObject&RequestInterface $request */
         $request = $this->createMock(RequestInterface::class);
         $request->expects($this->once())
@@ -121,18 +126,23 @@ final class RestrictToAllowedOriginsTest extends TestCase
             ->method('getAttributeStore')
             ->willReturn($attributeStore);
 
-        $this->decoratedMiddleware->expects($this->once())
+        $decoratedMiddleware->expects($this->once())
             ->method('onOpen')
             ->with($connection);
 
-        $this->middleware->allowOrigin('localhost');
+        $middleware->allowOrigin('localhost');
 
-        $this->middleware->onOpen($connection);
+        $middleware->onOpen($connection);
     }
 
     #[TestDox('Handles a new connection being opened with restricted origins and a Origin header with a disallowed origin')]
     public function testOnOpenWithRestrictedOriginsAndOriginHeaderWithDisallowedOrigin(): void
     {
+        /** @var MockObject&ServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(ServerMiddleware::class);
+
+        $middleware = $this->createMiddleware($decoratedMiddleware);
+
         /** @var MockObject&RequestInterface $request */
         $request = $this->createMock(RequestInterface::class);
         $request->expects($this->once())
@@ -164,17 +174,22 @@ final class RestrictToAllowedOriginsTest extends TestCase
         $connection->expects($this->once())
             ->method('close');
 
-        $this->decoratedMiddleware->expects($this->never())
+        $decoratedMiddleware->expects($this->never())
             ->method('onOpen');
 
-        $this->middleware->allowOrigin('localhost');
+        $middleware->allowOrigin('localhost');
 
-        $this->middleware->onOpen($connection);
+        $middleware->onOpen($connection);
     }
 
     #[TestDox('Handles a new connection being opened with restricted origins and a malformed Origin header')]
     public function testOnOpenWithRestrictedOriginsAndMalformedOriginHeader(): void
     {
+        /** @var MockObject&ServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(ServerMiddleware::class);
+
+        $middleware = $this->createMiddleware($decoratedMiddleware);
+
         $this->expectException(MalformedRequest::class);
 
         /** @var MockObject&RequestInterface $request */
@@ -202,17 +217,22 @@ final class RestrictToAllowedOriginsTest extends TestCase
             ->method('getAttributeStore')
             ->willReturn($attributeStore);
 
-        $this->decoratedMiddleware->expects($this->never())
+        $decoratedMiddleware->expects($this->never())
             ->method('onOpen');
 
-        $this->middleware->allowOrigin('localhost');
+        $middleware->allowOrigin('localhost');
 
-        $this->middleware->onOpen($connection);
+        $middleware->onOpen($connection);
     }
 
     #[TestDox('Handles a new connection being opened when required middleware have not run before this middleware')]
     public function testOnOpenWithoutRequest(): void
     {
+        /** @var MockObject&ServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(ServerMiddleware::class);
+
+        $middleware = $this->createMiddleware($decoratedMiddleware);
+
         $this->expectException(MissingRequest::class);
 
         /** @var MockObject&AttributeStore $attributeStore */
@@ -228,72 +248,89 @@ final class RestrictToAllowedOriginsTest extends TestCase
             ->method('getAttributeStore')
             ->willReturn($attributeStore);
 
-        $this->decoratedMiddleware->expects($this->never())
+        $decoratedMiddleware->expects($this->never())
             ->method('onOpen');
 
-        $this->middleware->onOpen($connection);
+        $middleware->onOpen($connection);
     }
 
     #[TestDox('Handles incoming data on the connection')]
     public function testOnMessage(): void
     {
+        /** @var MockObject&ServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(ServerMiddleware::class);
+
+        $middleware = $this->createMiddleware($decoratedMiddleware);
+
         $message = 'Testing';
 
         /** @var Stub&Connection $connection */
         $connection = $this->createStub(Connection::class);
 
-        $this->decoratedMiddleware->expects($this->once())
+        $decoratedMiddleware->expects($this->once())
             ->method('onMessage')
             ->with($connection, $message);
 
-        $this->middleware->onMessage($connection, $message);
+        $middleware->onMessage($connection, $message);
     }
 
     #[TestDox('Closes the connection')]
     public function testOnClose(): void
     {
+        /** @var MockObject&ServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(ServerMiddleware::class);
+
+        $middleware = $this->createMiddleware($decoratedMiddleware);
+
         /** @var Stub&Connection $connection */
         $connection = $this->createStub(Connection::class);
 
-        $this->decoratedMiddleware->expects($this->once())
+        $decoratedMiddleware->expects($this->once())
             ->method('onClose')
             ->with($connection);
 
-        $this->middleware->onClose($connection);
+        $middleware->onClose($connection);
     }
 
     #[TestDox('Handles an error')]
     public function testOnError(): void
     {
+        /** @var MockObject&ServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(ServerMiddleware::class);
+
+        $middleware = $this->createMiddleware($decoratedMiddleware);
+
         $exception = new \RuntimeException('Testing');
 
         /** @var Stub&Connection $connection */
         $connection = $this->createStub(Connection::class);
 
-        $this->decoratedMiddleware->expects($this->once())
+        $decoratedMiddleware->expects($this->once())
             ->method('onError')
             ->with($connection, $exception);
 
-        $this->middleware->onError($connection, $exception);
+        $middleware->onError($connection, $exception);
     }
 
     public function testManagesAllowedOriginList(): void
     {
-        $allowedOrigins = new \ReflectionClass($this->middleware)->getProperty('allowedOrigins');
+        $middleware = $this->createMiddleware();
 
-        $this->middleware->allowOrigin('192.168.1.1');
-        $this->middleware->allowOrigin('localhost');
+        $allowedOrigins = new \ReflectionClass($middleware)->getProperty('allowedOrigins');
+
+        $middleware->allowOrigin('192.168.1.1');
+        $middleware->allowOrigin('localhost');
 
         /** @var list<non-empty-string> $origins */
-        $origins = $allowedOrigins->getValue($this->middleware);
+        $origins = $allowedOrigins->getValue($middleware);
 
         $this->assertContains('192.168.1.1', $origins);
         $this->assertContains('localhost', $origins);
 
-        $this->middleware->removeAllowedOrigin('192.168.1.1');
+        $middleware->removeAllowedOrigin('192.168.1.1');
 
         /** @var list<non-empty-string> $origins */
-        $origins = $allowedOrigins->getValue($this->middleware);
+        $origins = $allowedOrigins->getValue($middleware);
 
         $this->assertNotContains('192.168.1.1', $origins);
         $this->assertContains('localhost', $origins);
@@ -345,14 +382,17 @@ final class RestrictToAllowedOriginsTest extends TestCase
     #[DataProvider('dataOriginMatching')]
     public function testOriginMatching(array $allowedOrigins, string $originHeader, bool $expectedAllowed): void
     {
+        /** @var MockObject&ServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(ServerMiddleware::class);
+
         $connection = new RecordingConnection();
         $connection->getAttributeStore()->set('http.request', new Request('GET', '/', ['Origin' => $originHeader]));
 
-        $this->decoratedMiddleware->expects($expectedAllowed ? $this->once() : $this->never())
+        $decoratedMiddleware->expects($expectedAllowed ? $this->once() : $this->never())
             ->method('onOpen')
             ->with($connection);
 
-        new RestrictToAllowedOrigins($this->decoratedMiddleware, $allowedOrigins)->onOpen($connection);
+        $this->createMiddleware($decoratedMiddleware, $allowedOrigins)->onOpen($connection);
 
         if ($expectedAllowed) {
             $this->assertSame([], $connection->sent);
@@ -388,11 +428,10 @@ final class RestrictToAllowedOriginsTest extends TestCase
     #[DataProvider('dataInvalidAllowedOrigin')]
     public function testRejectsInvalidAllowedOrigin(string $origin): void
     {
-        $this->decoratedMiddleware->expects($this->never())
-            ->method('onOpen');
+        $middleware = $this->createMiddleware();
 
         try {
-            $this->middleware->allowOrigin($origin); // @phpstan-ignore argument.type
+            $middleware->allowOrigin($origin); // @phpstan-ignore argument.type
 
             self::fail(\sprintf('A %s exception should have been thrown.', InvalidAllowedOrigin::class));
         } catch (InvalidAllowedOrigin $exception) {
@@ -403,29 +442,39 @@ final class RestrictToAllowedOriginsTest extends TestCase
     #[TestDox('Rejects an invalid allowed origin given to the constructor')]
     public function testRejectsInvalidAllowedOriginInConstructor(): void
     {
-        $this->decoratedMiddleware->expects($this->never())
-            ->method('onOpen');
-
         $this->expectException(InvalidAllowedOrigin::class);
 
-        new RestrictToAllowedOrigins($this->decoratedMiddleware, ['localhost:8080']);
+        $this->createMiddleware(allowedOrigins: ['localhost:8080']);
     }
 
     #[TestDox('Removes an allowed origin given in an equivalent form')]
     public function testRemovesEquivalentAllowedOrigin(): void
     {
+        /** @var MockObject&ServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(ServerMiddleware::class);
+
+        $middleware = $this->createMiddleware($decoratedMiddleware);
+
         $connection = new RecordingConnection();
         $connection->getAttributeStore()->set('http.request', new Request('GET', '/', ['Origin' => 'https://example.com']));
 
-        $this->decoratedMiddleware->expects($this->never())
+        $decoratedMiddleware->expects($this->never())
             ->method('onOpen');
 
-        $this->middleware->allowOrigin('https://example.com');
-        $this->middleware->allowOrigin('localhost');
-        $this->middleware->removeAllowedOrigin('HTTPS://EXAMPLE.com:443');
+        $middleware->allowOrigin('https://example.com');
+        $middleware->allowOrigin('localhost');
+        $middleware->removeAllowedOrigin('HTTPS://EXAMPLE.com:443');
 
-        $this->middleware->onOpen($connection);
+        $middleware->onOpen($connection);
 
         $this->assertStringStartsWith('HTTP/1.1 403 ', $connection->sent[0] ?? '');
+    }
+
+    /**
+     * @param list<non-empty-string> $allowedOrigins
+     */
+    private function createMiddleware(?ServerMiddleware $decoratedMiddleware = null, array $allowedOrigins = []): RestrictToAllowedOrigins
+    {
+        return new RestrictToAllowedOrigins($decoratedMiddleware ?? $this->createStub(ServerMiddleware::class), $allowedOrigins);
     }
 }

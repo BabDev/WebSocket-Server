@@ -12,19 +12,14 @@ use PHPUnit\Framework\TestCase;
 
 final class RejectBlockedIpAddressTest extends TestCase
 {
-    private readonly MockObject&ServerMiddleware $decoratedMiddleware;
-    private readonly RejectBlockedIpAddress $middleware;
-
-    protected function setUp(): void
-    {
-        $this->decoratedMiddleware = $this->createMock(ServerMiddleware::class);
-
-        $this->middleware = new RejectBlockedIpAddress($this->decoratedMiddleware);
-    }
-
     #[TestDox('Handles a new connection being opened with no remote address')]
     public function testOnOpenWithNoRemoteAddress(): void
     {
+        /** @var MockObject&ServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(ServerMiddleware::class);
+
+        $middleware = $this->createMiddleware($decoratedMiddleware);
+
         /** @var MockObject&AttributeStore $attributeStore */
         $attributeStore = $this->createMock(AttributeStore::class);
         $attributeStore->expects($this->once())
@@ -38,16 +33,21 @@ final class RejectBlockedIpAddressTest extends TestCase
             ->method('getAttributeStore')
             ->willReturn($attributeStore);
 
-        $this->decoratedMiddleware->expects($this->once())
+        $decoratedMiddleware->expects($this->once())
             ->method('onOpen')
             ->with($connection);
 
-        $this->middleware->onOpen($connection);
+        $middleware->onOpen($connection);
     }
 
     #[TestDox('Handles a new connection being opened with no blocked addresses')]
     public function testOnOpenWithNoBlockedAddresses(): void
     {
+        /** @var MockObject&ServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(ServerMiddleware::class);
+
+        $middleware = $this->createMiddleware($decoratedMiddleware);
+
         /** @var MockObject&AttributeStore $attributeStore */
         $attributeStore = $this->createMock(AttributeStore::class);
         $attributeStore->expects($this->once())
@@ -61,16 +61,21 @@ final class RejectBlockedIpAddressTest extends TestCase
             ->method('getAttributeStore')
             ->willReturn($attributeStore);
 
-        $this->decoratedMiddleware->expects($this->once())
+        $decoratedMiddleware->expects($this->once())
             ->method('onOpen')
             ->with($connection);
 
-        $this->middleware->onOpen($connection);
+        $middleware->onOpen($connection);
     }
 
     #[TestDox('Handles a new connection being opened with blocked addresses')]
     public function testOnOpenWithBlockedAddresses(): void
     {
+        /** @var MockObject&ServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(ServerMiddleware::class);
+
+        $middleware = $this->createMiddleware($decoratedMiddleware);
+
         /** @var MockObject&AttributeStore $attributeStore */
         $attributeStore = $this->createMock(AttributeStore::class);
         $attributeStore->expects($this->once())
@@ -84,18 +89,23 @@ final class RejectBlockedIpAddressTest extends TestCase
             ->method('getAttributeStore')
             ->willReturn($attributeStore);
 
-        $this->decoratedMiddleware->expects($this->once())
+        $decoratedMiddleware->expects($this->once())
             ->method('onOpen')
             ->with($connection);
 
-        $this->middleware->blockAddress('127.0.0.1');
+        $middleware->blockAddress('127.0.0.1');
 
-        $this->middleware->onOpen($connection);
+        $middleware->onOpen($connection);
     }
 
     #[TestDox('Handles a new connection being opened when the remote address is blocked')]
     public function testOnOpenWithBlockedRemoteAddress(): void
     {
+        /** @var MockObject&ServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(ServerMiddleware::class);
+
+        $middleware = $this->createMiddleware($decoratedMiddleware);
+
         /** @var MockObject&AttributeStore $attributeStore */
         $attributeStore = $this->createMock(AttributeStore::class);
         $attributeStore->expects($this->once())
@@ -115,17 +125,22 @@ final class RejectBlockedIpAddressTest extends TestCase
         $connection->expects($this->once())
             ->method('close');
 
-        $this->decoratedMiddleware->expects($this->never())
+        $decoratedMiddleware->expects($this->never())
             ->method('onOpen');
 
-        $this->middleware->blockAddress('192.168.1.1');
+        $middleware->blockAddress('192.168.1.1');
 
-        $this->middleware->onOpen($connection);
+        $middleware->onOpen($connection);
     }
 
     #[TestDox('Handles a new connection being opened when the remote IPv6 address is in a blocked subnet')]
     public function testOnOpenWithBlockedRemoteIpv6Address(): void
     {
+        /** @var MockObject&ServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(ServerMiddleware::class);
+
+        $middleware = $this->createMiddleware($decoratedMiddleware);
+
         /** @var MockObject&AttributeStore $attributeStore */
         $attributeStore = $this->createMock(AttributeStore::class);
         $attributeStore->expects($this->once())
@@ -145,17 +160,22 @@ final class RejectBlockedIpAddressTest extends TestCase
         $connection->expects($this->once())
             ->method('close');
 
-        $this->decoratedMiddleware->expects($this->never())
+        $decoratedMiddleware->expects($this->never())
             ->method('onOpen');
 
-        $this->middleware->blockAddress('2001:db8::/32');
+        $middleware->blockAddress('2001:db8::/32');
 
-        $this->middleware->onOpen($connection);
+        $middleware->onOpen($connection);
     }
 
     #[TestDox('Handles incoming data on the connection')]
     public function testOnMessage(): void
     {
+        /** @var MockObject&ServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(ServerMiddleware::class);
+
+        $middleware = $this->createMiddleware($decoratedMiddleware);
+
         $message = 'Testing';
 
         /** @var MockObject&AttributeStore $attributeStore */
@@ -171,16 +191,21 @@ final class RejectBlockedIpAddressTest extends TestCase
             ->method('getAttributeStore')
             ->willReturn($attributeStore);
 
-        $this->decoratedMiddleware->expects($this->once())
+        $decoratedMiddleware->expects($this->once())
             ->method('onMessage')
             ->with($connection, $message);
 
-        $this->middleware->onMessage($connection, $message);
+        $middleware->onMessage($connection, $message);
     }
 
     #[TestDox('Closes the connection')]
     public function testOnClose(): void
     {
+        /** @var MockObject&ServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(ServerMiddleware::class);
+
+        $middleware = $this->createMiddleware($decoratedMiddleware);
+
         /** @var MockObject&AttributeStore $attributeStore */
         $attributeStore = $this->createMock(AttributeStore::class);
         $attributeStore->expects($this->once())
@@ -194,16 +219,21 @@ final class RejectBlockedIpAddressTest extends TestCase
             ->method('getAttributeStore')
             ->willReturn($attributeStore);
 
-        $this->decoratedMiddleware->expects($this->once())
+        $decoratedMiddleware->expects($this->once())
             ->method('onClose')
             ->with($connection);
 
-        $this->middleware->onClose($connection);
+        $middleware->onClose($connection);
     }
 
     #[TestDox('Handles an error')]
     public function testOnError(): void
     {
+        /** @var MockObject&ServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(ServerMiddleware::class);
+
+        $middleware = $this->createMiddleware($decoratedMiddleware);
+
         $exception = new \RuntimeException('Testing');
 
         /** @var MockObject&AttributeStore $attributeStore */
@@ -219,32 +249,42 @@ final class RejectBlockedIpAddressTest extends TestCase
             ->method('getAttributeStore')
             ->willReturn($attributeStore);
 
-        $this->decoratedMiddleware->expects($this->once())
+        $decoratedMiddleware->expects($this->once())
             ->method('onError')
             ->with($connection, $exception);
 
-        $this->middleware->onError($connection, $exception);
+        $middleware->onError($connection, $exception);
     }
 
     public function testManagesBlockedAddressList(): void
     {
-        $blockedAddresses = new \ReflectionClass($this->middleware)->getProperty('blockedAddresses');
+        $middleware = $this->createMiddleware();
 
-        $this->middleware->blockAddress('192.168.1.1');
-        $this->middleware->blockAddress('192.168.0.0/24');
+        $blockedAddresses = new \ReflectionClass($middleware)->getProperty('blockedAddresses');
+
+        $middleware->blockAddress('192.168.1.1');
+        $middleware->blockAddress('192.168.0.0/24');
 
         /** @var list<non-empty-string> $addresses */
-        $addresses = $blockedAddresses->getValue($this->middleware);
+        $addresses = $blockedAddresses->getValue($middleware);
 
         $this->assertContains('192.168.1.1', $addresses);
         $this->assertContains('192.168.0.0/24', $addresses);
 
-        $this->middleware->allowAddress('192.168.1.1');
+        $middleware->allowAddress('192.168.1.1');
 
         /** @var list<non-empty-string> $addresses */
-        $addresses = $blockedAddresses->getValue($this->middleware);
+        $addresses = $blockedAddresses->getValue($middleware);
 
         $this->assertNotContains('192.168.1.1', $addresses);
         $this->assertContains('192.168.0.0/24', $addresses);
+    }
+
+    /**
+     * @param list<non-empty-string> $blockedAddresses
+     */
+    private function createMiddleware(?ServerMiddleware $decoratedMiddleware = null, array $blockedAddresses = []): RejectBlockedIpAddress
+    {
+        return new RejectBlockedIpAddress($decoratedMiddleware ?? $this->createStub(ServerMiddleware::class), $blockedAddresses);
     }
 }

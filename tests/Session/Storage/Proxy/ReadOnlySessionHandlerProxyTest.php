@@ -5,82 +5,73 @@ namespace BabDev\WebSocket\Server\Tests\Session\Storage\Proxy;
 use BabDev\WebSocket\Server\OptionsHandler;
 use BabDev\WebSocket\Server\Session\Exception\ReadOnlySession;
 use BabDev\WebSocket\Server\Session\Storage\Proxy\ReadOnlySessionHandlerProxy;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 final class ReadOnlySessionHandlerProxyTest extends TestCase
 {
     private const string SESSION_NAME = 'TestSession';
 
-    private readonly MockObject&\SessionHandlerInterface $handler;
-
-    private readonly ReadOnlySessionHandlerProxy $proxy;
-
-    protected function setUp(): void
-    {
-        $this->handler = $this->createMock(\SessionHandlerInterface::class);
-
-        $optionsHandler = $this->createOptionsHandler();
-        $optionsHandler->set('session.save_handler', 'user');
-        $optionsHandler->set('session.name', self::SESSION_NAME);
-
-        $this->proxy = new ReadOnlySessionHandlerProxy($this->handler, $optionsHandler);
-    }
-
     public function testRetrievesSessionIdAfterBeingSet(): void
     {
         $sessionId = 'a1b2c3';
 
-        $this->proxy->setId($sessionId);
+        $proxy = $this->createProxy();
+        $proxy->setId($sessionId);
 
-        $this->assertSame($sessionId, $this->proxy->getId());
+        $this->assertSame($sessionId, $proxy->getId());
     }
 
     public function testRetrievesSessionName(): void
     {
-        $this->assertSame(self::SESSION_NAME, $this->proxy->getName());
+        $this->assertSame(self::SESSION_NAME, $this->createProxy()->getName());
     }
 
     public function testRaisesAnErrorIfTryingToChangeTheSessionName(): never
     {
         $this->expectException(ReadOnlySession::class);
 
-        $this->proxy->setName('invalid');
+        $this->createProxy()->setName('invalid');
     }
 
     public function testOpensTheSession(): void
     {
+        $handler = $this->createMock(\SessionHandlerInterface::class);
+
         $path = '/path/to/session';
         $name = self::SESSION_NAME;
 
-        $this->handler->expects($this->once())
+        $handler->expects($this->once())
             ->method('open')
             ->with($path, $name)
             ->willReturn(true);
 
-        $this->assertTrue($this->proxy->open($path, $name));
+        $this->assertTrue($this->createProxy($handler)->open($path, $name));
     }
 
     public function testClosesTheSession(): void
     {
-        $this->handler->expects($this->once())
+        $handler = $this->createMock(\SessionHandlerInterface::class);
+
+        $handler->expects($this->once())
             ->method('close')
             ->willReturn(true);
 
-        $this->assertTrue($this->proxy->close());
+        $this->assertTrue($this->createProxy($handler)->close());
     }
 
     public function testReadsTheSessionData(): void
     {
+        $handler = $this->createMock(\SessionHandlerInterface::class);
+
         $data = 'serialized_session_data';
         $id = 'a1b2c3';
 
-        $this->handler->expects($this->once())
+        $handler->expects($this->once())
             ->method('read')
             ->with($id)
             ->willReturn($data);
 
-        $this->assertSame($data, $this->proxy->read($id));
+        $this->assertSame($data, $this->createProxy($handler)->read($id));
     }
 
     public function testForbidsWritingSessionData(): never
@@ -90,34 +81,38 @@ final class ReadOnlySessionHandlerProxyTest extends TestCase
         $data = 'serialized_session_data';
         $id = 'a1b2c3';
 
-        $this->proxy->write($id, $data);
+        $this->createProxy()->write($id, $data);
     }
 
     public function testForbidsDestroyingTheSession(): never
     {
-        $this->handler->expects($this->never())
+        $handler = $this->createMock(\SessionHandlerInterface::class);
+
+        $handler->expects($this->never())
             ->method('destroy');
 
         $this->expectException(ReadOnlySession::class);
 
-        $this->proxy->destroy('a1b2c3');
+        $this->createProxy($handler)->destroy('a1b2c3');
     }
 
     public function testForbidsRunningGarbageCollectionOnTheSession(): never
     {
-        $this->handler->expects($this->never())
+        $handler = $this->createMock(\SessionHandlerInterface::class);
+
+        $handler->expects($this->never())
             ->method('gc');
 
         $this->expectException(ReadOnlySession::class);
 
-        $this->proxy->gc(1000);
+        $this->createProxy($handler)->gc(1000);
     }
 
     public function testCanValidateASessionId(): void
     {
         $id = 'a1b2c3';
 
-        $this->assertTrue($this->proxy->validateId($id));
+        $this->assertTrue($this->createProxy()->validateId($id));
     }
 
     public function testForbidsUpdatingTheSessionTimestamp(): never
@@ -127,7 +122,16 @@ final class ReadOnlySessionHandlerProxyTest extends TestCase
         $data = 'serialized_session_data';
         $id = 'a1b2c3';
 
-        $this->proxy->updateTimestamp($id, $data);
+        $this->createProxy()->updateTimestamp($id, $data);
+    }
+
+    private function createProxy(?\SessionHandlerInterface $handler = null): ReadOnlySessionHandlerProxy
+    {
+        $optionsHandler = $this->createOptionsHandler();
+        $optionsHandler->set('session.save_handler', 'user');
+        $optionsHandler->set('session.name', self::SESSION_NAME);
+
+        return new ReadOnlySessionHandlerProxy($handler ?? $this->createStub(\SessionHandlerInterface::class), $optionsHandler);
     }
 
     private function createOptionsHandler(): OptionsHandler
