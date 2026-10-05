@@ -135,9 +135,8 @@ final readonly class DefaultWAMPConnection implements WAMPConnection
 
     public function getUri(string $uri): string
     {
-        $hasHttpProtocol = preg_match('/http(s*)\:\/\//', $uri);
-
-        if (false !== $hasHttpProtocol && 0 !== $hasHttpProtocol) {
+        // A full HTTP(S) URI is used as is, even though it contains the CURIE separator
+        if (1 === preg_match('/^https?:\/\//i', $uri)) {
             return $uri;
         }
 
@@ -145,13 +144,15 @@ final readonly class DefaultWAMPConnection implements WAMPConnection
             return $uri;
         }
 
-        [$prefix, $action] = explode(self::CURIE_SEPARATOR, $uri);
+        // Only the first separator divides the prefix from the reference, which may contain the separator itself
+        [$prefix, $reference] = explode(self::CURIE_SEPARATOR, $uri, 2);
 
         /** @var array<string, string> $prefixes */
         $prefixes = $this->getAttributeStore()->get(AttributeKey::WAMP_PREFIXES, []);
 
         if (isset($prefixes[$prefix])) {
-            return $prefixes[$prefix].'#'.$action;
+            // Per the WAMP v1 specification, the reference is appended to the prefix URI as is
+            return $prefixes[$prefix].$reference;
         }
 
         return $uri;

@@ -3,13 +3,18 @@
 namespace BabDev\WebSocket\Server\Tests\WAMP;
 
 use BabDev\WebSocket\Server\Connection;
+use BabDev\WebSocket\Server\Connection\ArrayAttributeStore;
 use BabDev\WebSocket\Server\Connection\AttributeStore;
 use BabDev\WebSocket\Server\WAMP\DefaultWAMPConnection;
 use BabDev\WebSocket\Server\WAMP\MessageType;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
+#[AllowMockObjectsWithoutExpectations]
 final class DefaultWAMPConnectionTest extends TestCase
 {
     private readonly MockObject&Connection $decoratedConnection;
@@ -191,7 +196,7 @@ final class DefaultWAMPConnectionTest extends TestCase
     public function testGetUriWithCurieAndRegisteredPrefix(): void
     {
         $prefix = 'testing';
-        $uri = 'https://example.com/testing';
+        $uri = 'https://example.com/testing#';
 
         /** @var MockObject&AttributeStore $attributeStore */
         $attributeStore = $this->createMock(AttributeStore::class);
@@ -204,6 +209,37 @@ final class DefaultWAMPConnectionTest extends TestCase
             ->method('getAttributeStore')
             ->willReturn($attributeStore);
 
-        $this->assertSame($uri.'#curie', $this->connection->getUri('testing:curie'));
+        $this->assertSame('https://example.com/testing#curie', $this->connection->getUri('testing:curie'));
+    }
+
+    /**
+     * @return \Generator<string, array{string, string}>
+     */
+    public static function dataUriResolution(): \Generator
+    {
+        yield 'WAMP v1 specification example' => ['calc:square', 'http://example.com/simple/calc#square'];
+
+        yield 'Reference containing the CURIE separator' => ['calc:square:extra', 'http://example.com/simple/calc#square:extra'];
+
+        yield 'Full HTTP URI' => ['http://example.com/simple/calc#square', 'http://example.com/simple/calc#square'];
+
+        yield 'Full HTTPS URI with an uppercase scheme' => ['HTTPS://example.com/simple/calc#square', 'HTTPS://example.com/simple/calc#square'];
+
+        yield 'CURIE whose reference contains an HTTP URI' => ['calc:http://example.com', 'http://example.com/simple/calc#http://example.com'];
+
+        yield 'Unregistered prefix' => ['other:square', 'other:square'];
+    }
+
+    #[TestDox('Resolves URIs and CURIEs using the registered prefixes')]
+    #[DataProvider('dataUriResolution')]
+    public function testUriResolution(string $uri, string $expected): void
+    {
+        $attributeStore = new ArrayAttributeStore();
+        $attributeStore->set('wamp.prefixes', ['calc' => 'http://example.com/simple/calc#']);
+
+        $this->decoratedConnection->method('getAttributeStore')
+            ->willReturn($attributeStore);
+
+        $this->assertSame($expected, $this->connection->getUri($uri));
     }
 }
