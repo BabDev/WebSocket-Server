@@ -18,6 +18,7 @@ use BabDev\WebSocket\Server\WAMP\Middleware\DispatchMessageToHandler;
 use BabDev\WebSocket\Server\WAMP\Topic;
 use BabDev\WebSocket\Server\WAMP\WAMPConnection;
 use BabDev\WebSocket\Server\WAMP\WAMPMessageRequest;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
@@ -507,6 +508,47 @@ final class DispatchMessageToHandlerTest extends TestCase
             ->willThrowException(new \RuntimeException('Testing'));
 
         $this->createMiddleware(matcher: $this->createMatcher('/testing'), resolver: $this->createResolver($handler), errorUriResolver: $errorUriResolver)->onCall($connection, uniqid(), '/testing', []);
+    }
+
+    /**
+     * @return \Generator<string, array{'SUBSCRIBE'|'UNSUBSCRIBE'|'PUBLISH'}>
+     */
+    public static function dataTopicMessageType(): \Generator
+    {
+        yield '"SUBSCRIBE" message' => ['SUBSCRIBE'];
+
+        yield '"UNSUBSCRIBE" message' => ['UNSUBSCRIBE'];
+
+        yield '"PUBLISH" message' => ['PUBLISH'];
+    }
+
+    /**
+     * @param 'SUBSCRIBE'|'UNSUBSCRIBE'|'PUBLISH' $messageType
+     */
+    #[TestDox('Rejects a resolved handler for a topic message which is not a topic handler')]
+    #[DataProvider('dataTopicMessageType')]
+    public function testTopicMessageWithNonTopicHandler(string $messageType): void
+    {
+        $topic = new Topic('/testing');
+
+        /** @var MockObject&WAMPConnection $connection */
+        $connection = $this->createMock(WAMPConnection::class);
+        $connection->expects($this->never())
+            ->method('event');
+
+        $middleware = $this->createMiddleware(matcher: $this->createMatcher($topic->id), resolver: $this->createResolver($this->createStub(RPCMessageHandler::class)));
+
+        try {
+            match ($messageType) {
+                'SUBSCRIBE' => $middleware->onSubscribe($connection, $topic),
+                'UNSUBSCRIBE' => $middleware->onUnsubscribe($connection, $topic),
+                'PUBLISH' => $middleware->onPublish($connection, $topic, 'Testing', [], []),
+            };
+
+            self::fail(\sprintf('A %s exception should have been thrown.', InvalidMessageHandler::class));
+        } catch (InvalidMessageHandler $exception) {
+            $this->assertStringContainsString(\sprintf('The message handler for a "%s" message must be an instance of', $messageType), $exception->getMessage());
+        }
     }
 
     private function createMiddleware(?UrlMatcherInterface $matcher = null, ?MessageHandlerResolver $resolver = null, ?EventDispatcherInterface $dispatcher = null, ?ErrorUriResolver $errorUriResolver = null): DispatchMessageToHandler

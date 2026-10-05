@@ -7,6 +7,8 @@ use BabDev\WebSocket\Server\Connection\Event\ConnectionClosed;
 use BabDev\WebSocket\Server\Connection\Event\ConnectionError;
 use BabDev\WebSocket\Server\Connection\Event\ConnectionOpened;
 use BabDev\WebSocket\Server\Http\Exception\MissingRequest;
+use BabDev\WebSocket\Server\MessageHandler;
+use BabDev\WebSocket\Server\MessageMiddleware;
 use BabDev\WebSocket\Server\RPCMessageHandler;
 use BabDev\WebSocket\Server\RPCMessageMiddleware;
 use BabDev\WebSocket\Server\TopicMessageHandler;
@@ -109,37 +111,20 @@ final readonly class DispatchMessageToHandler implements WAMPServerMiddleware
      */
     public function onCall(WAMPConnection $connection, string $id, string $resolvedUri, array $params): void
     {
-        try {
-            $request = $this->route($resolvedUri);
-        } catch (RouteNotFound $exception) {
-            $connection->callError(
-                $id,
-                $this->errorUriResolver->resolve('not-found'),
-                \sprintf('Could not find a message handler for URI "%s".', $resolvedUri),
-                [
-                    'code' => 404,
-                    'uri' => $resolvedUri,
-                ]
-            );
-
-            throw $exception;
-        }
-
-        try {
-            $handler = $this->resolver->findMessageHandler($request);
-        } catch (WebSocketException $exception) {
-            $connection->callError(
-                $id,
-                $this->errorUriResolver->resolve('not-found'),
-                \sprintf('Could not find a message handler for URI "%s".', $resolvedUri),
-                [
-                    'code' => 404,
-                    'uri' => $resolvedUri,
-                ]
-            );
-
-            throw $exception;
-        }
+        [$request, $handler] = $this->findHandler(
+            $resolvedUri,
+            function () use ($connection, $id, $resolvedUri): void {
+                $connection->callError(
+                    $id,
+                    $this->errorUriResolver->resolve('not-found'),
+                    \sprintf('Could not find a message handler for URI "%s".', $resolvedUri),
+                    [
+                        'code' => 404,
+                        'uri' => $resolvedUri,
+                    ]
+                );
+            },
+        );
 
         if (!$handler instanceof RPCMessageHandler && !$handler instanceof RPCMessageMiddleware) {
             $this->sendInternalCallError($connection, $id, $resolvedUri);
@@ -168,41 +153,7 @@ final readonly class DispatchMessageToHandler implements WAMPServerMiddleware
      */
     public function onSubscribe(WAMPConnection $connection, Topic $topic): void
     {
-        try {
-            $request = $this->route($topic->id);
-        } catch (RouteNotFound $exception) {
-            $connection->event(
-                $topic->id,
-                [
-                    'error' => true,
-                    'message' => \sprintf('Could not find a message handler for URI "%s".', $topic->id),
-                    'code' => 404,
-                    'uri' => $topic->id,
-                ]
-            );
-
-            throw $exception;
-        }
-
-        try {
-            $handler = $this->resolver->findMessageHandler($request);
-        } catch (WebSocketException $exception) {
-            $connection->event(
-                $topic->id,
-                [
-                    'error' => true,
-                    'message' => \sprintf('Could not find a message handler for URI "%s".', $topic->id),
-                    'code' => 404,
-                    'uri' => $topic->id,
-                ]
-            );
-
-            throw $exception;
-        }
-
-        if (!$handler instanceof TopicMessageHandler && !$handler instanceof TopicMessageMiddleware) {
-            throw new InvalidMessageHandler(\sprintf('The message handler for a "SUBSCRIBE" message must be an instance of "%s" or "%s", ensure "%s" implements the right interface.', TopicMessageHandler::class, TopicMessageMiddleware::class, $handler::class));
-        }
+        [$request, $handler] = $this->findTopicHandler($connection, $topic, 'SUBSCRIBE');
 
         $handler->onSubscribe($connection, $topic, $request);
     }
@@ -218,41 +169,7 @@ final readonly class DispatchMessageToHandler implements WAMPServerMiddleware
      */
     public function onUnsubscribe(WAMPConnection $connection, Topic $topic): void
     {
-        try {
-            $request = $this->route($topic->id);
-        } catch (RouteNotFound $exception) {
-            $connection->event(
-                $topic->id,
-                [
-                    'error' => true,
-                    'message' => \sprintf('Could not find a message handler for URI "%s".', $topic->id),
-                    'code' => 404,
-                    'uri' => $topic->id,
-                ]
-            );
-
-            throw $exception;
-        }
-
-        try {
-            $handler = $this->resolver->findMessageHandler($request);
-        } catch (WebSocketException $exception) {
-            $connection->event(
-                $topic->id,
-                [
-                    'error' => true,
-                    'message' => \sprintf('Could not find a message handler for URI "%s".', $topic->id),
-                    'code' => 404,
-                    'uri' => $topic->id,
-                ]
-            );
-
-            throw $exception;
-        }
-
-        if (!$handler instanceof TopicMessageHandler && !$handler instanceof TopicMessageMiddleware) {
-            throw new InvalidMessageHandler(\sprintf('The message handler for a "UNSUBSCRIBE" message must be an instance of "%s" or "%s", ensure "%s" implements the right interface.', TopicMessageHandler::class, TopicMessageMiddleware::class, $handler::class));
-        }
+        [$request, $handler] = $this->findTopicHandler($connection, $topic, 'UNSUBSCRIBE');
 
         $handler->onUnsubscribe($connection, $topic, $request);
     }
@@ -272,43 +189,68 @@ final readonly class DispatchMessageToHandler implements WAMPServerMiddleware
      */
     public function onPublish(WAMPConnection $connection, Topic $topic, mixed $event, array $exclude, array $eligible): void
     {
-        try {
-            $request = $this->route($topic->id);
-        } catch (RouteNotFound $exception) {
-            $connection->event(
-                $topic->id,
-                [
-                    'error' => true,
-                    'message' => \sprintf('Could not find a message handler for URI "%s".', $topic->id),
-                    'code' => 404,
-                    'uri' => $topic->id,
-                ]
-            );
-
-            throw $exception;
-        }
-
-        try {
-            $handler = $this->resolver->findMessageHandler($request);
-        } catch (WebSocketException $exception) {
-            $connection->event(
-                $topic->id,
-                [
-                    'error' => true,
-                    'message' => \sprintf('Could not find a message handler for URI "%s".', $topic->id),
-                    'code' => 404,
-                    'uri' => $topic->id,
-                ]
-            );
-
-            throw $exception;
-        }
-
-        if (!$handler instanceof TopicMessageHandler && !$handler instanceof TopicMessageMiddleware) {
-            throw new InvalidMessageHandler(\sprintf('The message handler for a "PUBLISH" message must be an instance of "%s" or "%s", ensure "%s" implements the right interface.', TopicMessageHandler::class, TopicMessageMiddleware::class, $handler::class));
-        }
+        [$request, $handler] = $this->findTopicHandler($connection, $topic, 'PUBLISH');
 
         $handler->onPublish($connection, $topic, $request, $event, $exclude, $eligible);
+    }
+
+    /**
+     * @param \Closure(): void $onNotFound Called before rethrowing the exception when a message handler cannot be found
+     *
+     * @return array{WAMPMessageRequest, MessageHandler|MessageMiddleware}
+     *
+     * @throws CannotInstantiateMessageHandler if the message handler cannot be instantiated by the resolver
+     * @throws InvalidMessageHandler           if the resolved object is not a valid message handler
+     * @throws InvalidRequest                  if the request data does not allow a handler to be resolved
+     * @throws RouteNotFound                   if there is no route defined for the URI
+     * @throws UnknownMessageHandler           if the message handler does not exist
+     */
+    private function findHandler(string $uri, \Closure $onNotFound): array
+    {
+        try {
+            $request = $this->route($uri);
+
+            return [$request, $this->resolver->findMessageHandler($request)];
+        } catch (WebSocketException $exception) {
+            $onNotFound();
+
+            throw $exception;
+        }
+    }
+
+    /**
+     * @param 'SUBSCRIBE'|'UNSUBSCRIBE'|'PUBLISH' $messageType
+     *
+     * @return array{WAMPMessageRequest, TopicMessageHandler|TopicMessageMiddleware}
+     *
+     * @throws CannotInstantiateMessageHandler if the message handler cannot be instantiated by the resolver
+     * @throws InvalidMessageHandler           if the resolved object is not a valid topic message handler
+     * @throws InvalidRequest                  if the request data does not allow a handler to be resolved
+     * @throws RouteNotFound                   if there is no route defined for the topic ID
+     * @throws UnknownMessageHandler           if the message handler does not exist
+     */
+    private function findTopicHandler(WAMPConnection $connection, Topic $topic, string $messageType): array
+    {
+        [$request, $handler] = $this->findHandler(
+            $topic->id,
+            static function () use ($connection, $topic): void {
+                $connection->event(
+                    $topic->id,
+                    [
+                        'error' => true,
+                        'message' => \sprintf('Could not find a message handler for URI "%s".', $topic->id),
+                        'code' => 404,
+                        'uri' => $topic->id,
+                    ]
+                );
+            },
+        );
+
+        if (!$handler instanceof TopicMessageHandler && !$handler instanceof TopicMessageMiddleware) {
+            throw new InvalidMessageHandler(\sprintf('The message handler for a "%s" message must be an instance of "%s" or "%s", ensure "%s" implements the right interface.', $messageType, TopicMessageHandler::class, TopicMessageMiddleware::class, $handler::class));
+        }
+
+        return [$request, $handler];
     }
 
     /**
