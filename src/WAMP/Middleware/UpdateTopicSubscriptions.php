@@ -53,7 +53,15 @@ final readonly class UpdateTopicSubscriptions implements WAMPServerMiddleware
     {
         $this->middleware->onClose($connection);
 
-        foreach ($this->topicRegistry->all() as $topic) {
+        /** @var \SplObjectStorage<Topic, null>|null $subscriptions */
+        $subscriptions = $connection->getAttributeStore()->get('wamp.subscriptions');
+
+        if (!$subscriptions instanceof \SplObjectStorage) {
+            return;
+        }
+
+        // Cleaning a topic removes it from the subscriptions, so the subscriptions are copied before iterating
+        foreach (iterator_to_array($subscriptions, false) as $topic) {
             $this->cleanTopic($topic, $connection);
         }
     }

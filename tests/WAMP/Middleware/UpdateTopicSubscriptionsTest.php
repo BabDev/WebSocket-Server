@@ -7,6 +7,7 @@ use BabDev\WebSocket\Server\Connection\ArrayAttributeStore;
 use BabDev\WebSocket\Server\WAMP\ArrayTopicRegistry;
 use BabDev\WebSocket\Server\WAMP\Middleware\UpdateTopicSubscriptions;
 use BabDev\WebSocket\Server\WAMP\Topic;
+use BabDev\WebSocket\Server\WAMP\TopicRegistry;
 use BabDev\WebSocket\Server\WAMP\WAMPConnection;
 use BabDev\WebSocket\Server\WAMPServerMiddleware;
 use PHPUnit\Framework\Attributes\TestDox;
@@ -123,6 +124,44 @@ final class UpdateTopicSubscriptionsTest extends TestCase
         $this->assertFalse($this->topicRegistry->has($topic1->id));
         $this->assertFalse($this->topicRegistry->has($topic2->id));
         $this->assertTrue($this->topicRegistry->has($topic3->id));
+    }
+
+    #[TestDox('Only cleans the topics the connection is subscribed to when the connection is closed')]
+    public function testOnCloseOnlyCleansSubscribedTopics(): void
+    {
+        $subscribedTopic = new Topic('testing/subscribed');
+
+        $attributeStore = new ArrayAttributeStore();
+
+        /** @var \SplObjectStorage<Topic, null> $subscriptions */
+        $subscriptions = new \SplObjectStorage();
+        $subscriptions->offsetSet($subscribedTopic);
+
+        $attributeStore->set('wamp.subscriptions', $subscriptions);
+
+        $connection = $this->createStub(WAMPConnection::class);
+        $connection->method('getAttributeStore')
+            ->willReturn($attributeStore);
+
+        $subscribedTopic->add($connection);
+
+        /** @var MockObject&TopicRegistry $topicRegistry */
+        $topicRegistry = $this->createMock(TopicRegistry::class);
+        $topicRegistry->expects($this->never())
+            ->method('all');
+
+        $topicRegistry->expects($this->once())
+            ->method('remove')
+            ->with($subscribedTopic);
+
+        $this->decoratedMiddleware->expects($this->once())
+            ->method('onClose')
+            ->with($connection);
+
+        new UpdateTopicSubscriptions($this->decoratedMiddleware, $topicRegistry)->onClose($connection);
+
+        $this->assertCount(0, $subscriptions);
+        $this->assertFalse($subscribedTopic->has($connection));
     }
 
     #[TestDox('Handles an error')]
