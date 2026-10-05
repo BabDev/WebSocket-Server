@@ -49,8 +49,9 @@ final readonly class DefaultWebSocketConnection implements WebSocketConnection
             $this->send(new Frame(pack('n', $data), true, Frame::OP_CLOSE));
         }
 
-        $this->connection->close();
-
+        // Closing the connection can synchronously trigger the close event, so the connection must be marked as closing first
         $this->getAttributeStore()->set(AttributeKey::WEBSOCKET_CLOSING, true);
+
+        $this->connection->close();
     }
 }

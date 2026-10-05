@@ -6,10 +6,12 @@ use BabDev\WebSocket\Server\Connection;
 use BabDev\WebSocket\Server\Connection\ArrayAttributeStore;
 use BabDev\WebSocket\Server\Connection\AttributeStore;
 use BabDev\WebSocket\Server\WebSocket\DefaultWebSocketConnection;
+use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Ratchet\RFC6455\Messaging\DataInterface;
+use Ratchet\RFC6455\Messaging\Frame;
 
 final class DefaultWebSocketConnectionTest extends TestCase
 {
@@ -143,5 +145,38 @@ final class DefaultWebSocketConnectionTest extends TestCase
             ->method('close');
 
         new DefaultWebSocketConnection($decoratedConnection)->close(1000);
+    }
+
+    #[TestDox('Does not send data or close again when the connection is used while it is being closed')]
+    public function testDoesNotSendOrCloseAgainWhenUsedWhileClosing(): void
+    {
+        $attributeStore = new ArrayAttributeStore();
+
+        $sent = [];
+
+        /** @var MockObject&Connection $decoratedConnection */
+        $decoratedConnection = $this->createMock(Connection::class);
+        $decoratedConnection->method('getAttributeStore')
+            ->willReturn($attributeStore);
+
+        $decoratedConnection->method('send')
+            ->willReturnCallback(static function (string $data) use (&$sent): void {
+                $sent[] = $data;
+            });
+
+        $connection = new DefaultWebSocketConnection($decoratedConnection);
+
+        // Simulates the close event being emitted synchronously, with a listener using the connection being closed
+        $decoratedConnection->expects($this->once())
+            ->method('close')
+            ->willReturnCallback(static function () use ($connection): void {
+                $connection->send('Goodbye');
+                $connection->close();
+            });
+
+        $connection->close();
+
+        $this->assertCount(1, $sent, 'Only the close frame should be sent.');
+        $this->assertSame(Frame::OP_CLOSE, \ord($sent[0][0]) & 0x0F);
     }
 }
