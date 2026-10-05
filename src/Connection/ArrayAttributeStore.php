@@ -22,7 +22,7 @@ final class ArrayAttributeStore implements AttributeStore
 
     public function get(string $name, mixed $default = null): mixed
     {
-        return $this->attributes[$name] ?? $default;
+        return \array_key_exists($name, $this->attributes) ? $this->attributes[$name] : $default;
     }
 
     public function has(string $name): bool

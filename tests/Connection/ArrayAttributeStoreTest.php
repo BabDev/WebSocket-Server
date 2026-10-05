@@ -3,6 +3,7 @@
 namespace BabDev\WebSocket\Server\Tests\Connection;
 
 use BabDev\WebSocket\Server\Connection\ArrayAttributeStore;
+use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\TestCase;
 
 final class ArrayAttributeStoreTest extends TestCase
@@ -49,5 +50,16 @@ final class ArrayAttributeStoreTest extends TestCase
         $store->set('foo', 'bar');
 
         $this->assertTrue($store->has('foo'), 'The store reports an attribute is stored.');
+    }
+
+    #[TestDox('Returns a stored null value instead of the default value')]
+    public function testGetReturnsStoredNullValue(): void
+    {
+        $store = new ArrayAttributeStore();
+        $store->set('nullable', null);
+
+        $this->assertTrue($store->has('nullable'));
+        $this->assertNull($store->get('nullable', 'default'));
+        $this->assertSame('default', $store->get('missing', 'default'));
     }
 }
