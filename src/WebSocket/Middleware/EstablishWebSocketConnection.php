@@ -48,11 +48,16 @@ final class EstablishWebSocketConnection implements ServerMiddleware
     private ?TimerInterface $keepAliveTimer = null;
 
     /**
+     * @param int<0, max>|null $maxMessagePayloadSize
+     * @param int<0, max>|null $maxFramePayloadSize
+     *
      * @throws InvalidEncoding if UTF-8 support is not available
      */
     public function __construct(
         private readonly ServerMiddleware $middleware,
         private readonly NegotiatorInterface $negotiator = new ServerNegotiator(new RequestVerifier(), new HttpFactory()),
+        public ?int $maxMessagePayloadSize = null,
+        public ?int $maxFramePayloadSize = null,
     ) {
         if ('e29c93' !== bin2hex('✓')) {
             throw new InvalidEncoding('Invalid encoding, ensure the UTF-8 charset is active.');
@@ -120,6 +125,8 @@ final class EstablishWebSocketConnection implements ServerMiddleware
                         break;
                 }
             },
+            maxMessagePayloadSize: $this->maxMessagePayloadSize,
+            maxFramePayloadSize: $this->maxFramePayloadSize,
         );
 
         $this->connections->offsetSet($connection, new WebSocketConnectionContext($decoratedConnection, $buffer));

@@ -30,6 +30,10 @@ Any `Throwable` raised by the middleware stack while opening a connection, proce
 
 If the `onError()` method itself throws (for example, an event listener for the `ConnectionError` event fails), the server closes the affected connection and reports the failure to an optional [PSR-3](https://www.php-fig.org/psr/psr-3/) logger. The logger can be provided as the fourth argument to the `BabDev\WebSocket\Server\ReactPhpServer` constructor, or with the `withLogger()` method when using the `Application` class. Without a logger, these failures are silently discarded.
 
+### Slow Clients
+
+Data sent to a client which is not reading it is buffered in memory. To prevent a slow or unresponsive client from exhausting the server's memory, the server closes the connection once 1 MiB of data has been written to it after its write buffer is full. The limit can be changed with the fifth argument to the `BabDev\WebSocket\Server\ReactPhpServer` constructor, or with the `withWriteBufferLimit()` method when using the `Application` class; pass `null` to disable it.
+
 ## Middleware Based Design
 
 Similar to [Ratchet](https://github.com/ratchetphp/Ratchet), the WebSocket Server package uses a [middleware based architecture](/open-source/packages/websocket-server/docs/1.x/middleware) to represent the application.

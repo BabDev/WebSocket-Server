@@ -17,13 +17,23 @@ use React\Socket\ServerInterface;
  */
 final readonly class ReactPhpServer implements Server
 {
+    /**
+     * The default number of bytes which can be written to a connection after its write buffer is full before the
+     * connection is closed.
+     */
+    public const int DEFAULT_WRITE_BUFFER_LIMIT = 1_048_576;
+
     private LoopInterface $loop;
 
+    /**
+     * @param int<1, max>|null $writeBufferLimit
+     */
     public function __construct(
         private ServerMiddleware $middleware,
         private ServerInterface $socket,
         ?LoopInterface $loop = null,
         private ?LoggerInterface $logger = null,
+        private ?int $writeBufferLimit = self::DEFAULT_WRITE_BUFFER_LIMIT,
     ) {
         gc_enable();
         set_time_limit(0);
@@ -48,7 +58,7 @@ final readonly class ReactPhpServer implements Server
     {
         $uri = $connection->getRemoteAddress();
 
-        $decoratedConnection = new ReactSocketConnection($connection, new ArrayAttributeStore());
+        $decoratedConnection = new ReactSocketConnection($connection, new ArrayAttributeStore(), $this->writeBufferLimit);
         $decoratedConnection->getAttributeStore()->set('resource_id', (int) $connection->stream);
 
         if (null !== $uri && null !== $remoteAddress = RemoteAddress::fromUri($uri)) {

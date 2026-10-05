@@ -10,6 +10,8 @@ use BabDev\WebSocket\Server\Tests\Fixtures\RecordingConnection;
 use BabDev\WebSocket\Server\WebSocket\Middleware\EstablishWebSocketConnection;
 use BabDev\WebSocket\Server\WebSocket\WebSocketConnection;
 use GuzzleHttp\Psr7\Response;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
@@ -22,6 +24,7 @@ use Ratchet\RFC6455\Messaging\Frame;
 use React\EventLoop\LoopInterface;
 use React\EventLoop\TimerInterface;
 
+#[AllowMockObjectsWithoutExpectations]
 final class EstablishWebSocketConnectionTest extends TestCase
 {
     #[TestDox('Handles activity during the lifecycle of a connection')]
@@ -317,6 +320,75 @@ final class EstablishWebSocketConnectionTest extends TestCase
         $sendPings();
 
         $this->assertCount($sentBeforeNextPing, $connection->sent, 'Nothing should be sent to a closed connection.');
+        $this->assertSame(0, $connection->closeCount);
+    }
+
+    /**
+     * @return \Generator<string, array{int|null, int|null, string}>
+     */
+    public static function dataOversizedMessage(): \Generator
+    {
+        yield 'Frame over the frame size limit' => [null, 16, 'Maximum frame size exceeded'];
+
+        yield 'Message over the message size limit' => [16, null, 'Maximum message size exceeded'];
+    }
+
+    /**
+     * @param int<0, max>|null $maxMessagePayloadSize
+     * @param int<0, max>|null $maxFramePayloadSize
+     */
+    #[TestDox('Closes the connection with a "1009 Message Too Big" close frame when a message exceeds the size limits')]
+    #[DataProvider('dataOversizedMessage')]
+    public function testClosesConnectionForOversizedMessage(?int $maxMessagePayloadSize, ?int $maxFramePayloadSize, string $expectedReason): void
+    {
+        /** @var MockObject&ServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(ServerMiddleware::class);
+        $decoratedMiddleware->expects($this->never())
+            ->method('onMessage');
+
+        $negotiator = $this->createStub(NegotiatorInterface::class);
+        $negotiator->method('handshake')
+            ->willReturn(new Response(101, ['Upgrade' => 'websocket', 'Connection' => 'Upgrade']));
+
+        $middleware = new EstablishWebSocketConnection($decoratedMiddleware, $negotiator, $maxMessagePayloadSize, $maxFramePayloadSize);
+
+        $connection = $this->openConnection($middleware);
+
+        $frame = new Frame(str_repeat('a', 32));
+        $frame->maskPayload();
+
+        $middleware->onMessage($connection, $frame->getContents());
+
+        $closeFrame = $this->lastSent($connection);
+
+        $this->assertSame(Frame::OP_CLOSE, $this->getOpcode($closeFrame));
+        $this->assertSame(Frame::CLOSE_TOO_BIG, unpack('n', substr($this->getPayload($closeFrame), 0, 2))[1] ?? null);
+        $this->assertStringContainsString($expectedReason, $this->getPayload($closeFrame));
+        $this->assertSame(1, $connection->closeCount);
+    }
+
+    #[TestDox('Accepts a message within the size limits')]
+    public function testAcceptsMessageWithinSizeLimits(): void
+    {
+        /** @var MockObject&ServerMiddleware $decoratedMiddleware */
+        $decoratedMiddleware = $this->createMock(ServerMiddleware::class);
+        $decoratedMiddleware->expects($this->once())
+            ->method('onMessage')
+            ->with($this->isInstanceOf(WebSocketConnection::class), str_repeat('a', 16));
+
+        $negotiator = $this->createStub(NegotiatorInterface::class);
+        $negotiator->method('handshake')
+            ->willReturn(new Response(101, ['Upgrade' => 'websocket', 'Connection' => 'Upgrade']));
+
+        $middleware = new EstablishWebSocketConnection($decoratedMiddleware, $negotiator, 16, 16);
+
+        $connection = $this->openConnection($middleware);
+
+        $frame = new Frame(str_repeat('a', 16));
+        $frame->maskPayload();
+
+        $middleware->onMessage($connection, $frame->getContents());
+
         $this->assertSame(0, $connection->closeCount);
     }
 

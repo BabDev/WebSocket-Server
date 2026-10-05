@@ -53,6 +53,11 @@ final class Application
 
     private ?LoggerInterface $logger = null;
 
+    /**
+     * @var int<1, max>|null
+     */
+    private ?int $writeBufferLimit = ReactPhpServer::DEFAULT_WRITE_BUFFER_LIMIT;
+
     private ?SessionFactoryInterface $sessionFactory = null;
 
     private ?OptionsHandler $optionsHandler = null;
@@ -144,7 +149,7 @@ final class Application
 
         $socket = new SocketServer($this->uri, $this->context, $this->loop);
 
-        new ReactPhpServer($middleware, $socket, $this->loop, $this->logger)->run();
+        new ReactPhpServer($middleware, $socket, $this->loop, $this->logger, $this->writeBufferLimit)->run();
     }
 
     public function route(string $path, MessageHandler|MessageMiddleware|string $handler, int $priority = 0): self
@@ -222,6 +227,16 @@ final class Application
     {
         $this->trustedProxies = $proxies;
         $this->trustedHeaderSet = $trustedHeaderSet;
+
+        return $this;
+    }
+
+    /**
+     * @param int<1, max>|null $limit
+     */
+    public function withWriteBufferLimit(?int $limit): self
+    {
+        $this->writeBufferLimit = $limit;
 
         return $this;
     }

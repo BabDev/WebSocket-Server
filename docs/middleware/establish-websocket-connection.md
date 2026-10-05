@@ -22,6 +22,26 @@ $middleware->enableKeepAlive(Loop::get(), 60);
 
 When using the `BabDev\WebSocket\Server\Application` class, the keepalive is disabled by default and can be enabled with the `withKeepAlive()` method.
 
+## Message Size Limits
+
+To help prevent a client from exhausting the server's memory, the middleware can limit the size of the messages received from clients. A connection sending a message or frame over the limit is closed with a "1009 Message Too Big" close frame.
+
+The limits are set with the third and fourth arguments to the middleware's constructor, or by updating the public `$maxMessagePayloadSize` and `$maxFramePayloadSize` properties (changes apply to connections opened afterwards):
+
+```php
+<?php declare(strict_types=1);
+
+use BabDev\WebSocket\Server\WebSocket\Middleware\EstablishWebSocketConnection;
+
+$middleware = new EstablishWebSocketConnection(
+    $decoratedMiddleware,
+    maxMessagePayloadSize: 1_048_576, // 1 MiB for a complete message
+    maxFramePayloadSize: 65_536, // 64 KiB for a single frame
+);
+```
+
+When a limit is `null` (the default), the default of the `ratchet/rfc6455` package is used, which is a quarter of the `memory_limit` setting. This means there is no limit when the memory limit is disabled (`memory_limit = -1`, which is common for long-running CLI processes), so setting explicit limits is recommended. A limit of `0` disables the limit.
+
 ## Position in Middleware Stack
 
 It is recommended that this middleware is decorated by the `BabDev\WebSocket\Server\Http\Middleware\ParseHttpRequest` middleware in your application (see the [message flow](/open-source/packages/websocket-server/docs/1.x/architecture#message-flow) section from the architecture documentation to see the recommended stack with all optional middleware), however it can be placed anywhere after the HTTP request has been parsed and does not expect one of the server middleware sub-interfaces.

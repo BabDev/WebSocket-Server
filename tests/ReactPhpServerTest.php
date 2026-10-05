@@ -356,6 +356,79 @@ final class ReactPhpServerTest extends TestCase
         $this->assertSame($expectedAddress, $remoteAddress);
     }
 
+    #[TestDox('Closes the connection when a client does not read the data sent to it')]
+    public function testClosesSlowConnection(): void
+    {
+        $closed = $this->runServerSendingDataToIdleClient(65536);
+
+        $this->assertTrue($closed, 'The connection should be closed once the write buffer limit is exceeded.');
+    }
+
+    #[TestDox('Keeps the connection open when a client does not read the data sent to it and the write buffer limit is disabled')]
+    public function testKeepsSlowConnectionWithoutWriteBufferLimit(): void
+    {
+        $closed = $this->runServerSendingDataToIdleClient(null);
+
+        $this->assertFalse($closed, 'The connection should remain open without a write buffer limit.');
+    }
+
+    /**
+     * Runs a server which sends 4 MiB of data to a connected client which never reads it.
+     *
+     * @param int<1, max>|null $writeBufferLimit
+     *
+     * @return bool Whether the server closed the connection
+     */
+    private function runServerSendingDataToIdleClient(?int $writeBufferLimit): bool
+    {
+        // The connection is made to this test's server, not the one created in setUp()
+        $this->middleware->expects($this->never())
+            ->method('onOpen');
+
+        $socket = new SocketServer('127.0.0.1:0', [], Loop::get());
+
+        $port = parse_url((string) $socket->getAddress(), \PHP_URL_PORT);
+
+        if (!\is_int($port)) {
+            $socket->close();
+
+            self::fail('Could not extract port from socket server address');
+        }
+
+        $closed = false;
+
+        $middleware = $this->createStub(ServerMiddleware::class);
+        $middleware->method('onOpen')
+            ->willReturnCallback(static function (Connection $connection): void {
+                for ($i = 0; $i < 64; ++$i) {
+                    $connection->send(str_repeat('a', 65536));
+                }
+            });
+
+        $middleware->method('onClose')
+            ->willReturnCallback(static function () use (&$closed): void {
+                $closed = true;
+            });
+
+        new ReactPhpServer($middleware, $socket, Loop::get(), $this->logger, $writeBufferLimit);
+
+        $client = stream_socket_client("tcp://127.0.0.1:{$port}");
+
+        $this->tickLoop(Loop::get());
+
+        $wasClosed = $closed;
+
+        $socket->close();
+
+        if (\is_resource($client)) {
+            fclose($client);
+        }
+
+        $this->tickLoop(Loop::get());
+
+        return $wasClosed;
+    }
+
     private function connectClient(): \Socket
     {
         $client = socket_create(\AF_INET, \SOCK_STREAM, \SOL_TCP);
