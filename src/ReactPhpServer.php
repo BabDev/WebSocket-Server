@@ -45,10 +45,6 @@ final class ReactPhpServer implements Server
         private readonly ?LoggerInterface $logger = null,
         private readonly ?int $writeBufferLimit = self::DEFAULT_WRITE_BUFFER_LIMIT,
     ) {
-        gc_enable();
-        set_time_limit(0);
-        ob_implicit_flush();
-
         $this->loop = $loop ?? Loop::get();
         $this->connections = new \SplObjectStorage();
 
@@ -57,6 +53,10 @@ final class ReactPhpServer implements Server
 
     public function run(): void
     {
+        gc_enable();
+        set_time_limit(0);
+        ob_implicit_flush();
+
         $this->loop->run();
     }
 

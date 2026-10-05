@@ -13,6 +13,7 @@ use PHPUnit\Framework\TestCase;
 use React\EventLoop\Loop;
 use React\EventLoop\LoopInterface;
 use React\EventLoop\StreamSelectLoop;
+use React\Socket\ServerInterface;
 use React\Socket\SocketServer;
 
 final class ReactPhpServerTest extends TestCase
@@ -80,6 +81,39 @@ final class ReactPhpServerTest extends TestCase
         });
 
         $loop->run();
+    }
+
+    #[TestDox('Configures the PHP runtime when the server is run instead of when it is created')]
+    public function testConfiguresRuntimeWhenRun(): void
+    {
+        $this->middleware->expects($this->never())
+            ->method('onOpen');
+
+        $gcEnabled = gc_enabled();
+        $maxExecutionTime = \ini_get('max_execution_time');
+
+        try {
+            gc_disable();
+            set_time_limit(30);
+
+            /** @var MockObject&LoopInterface $loop */
+            $loop = $this->createMock(LoopInterface::class);
+            $loop->expects($this->once())
+                ->method('run');
+
+            $server = new ReactPhpServer($this->createStub(ServerMiddleware::class), $this->createStub(ServerInterface::class), $loop);
+
+            $this->assertFalse(gc_enabled(), 'Creating the server should not change the runtime configuration.');
+            $this->assertSame('30', \ini_get('max_execution_time'), 'Creating the server should not change the runtime configuration.');
+
+            $server->run();
+
+            $this->assertTrue(gc_enabled());
+            $this->assertSame('0', \ini_get('max_execution_time'));
+        } finally {
+            $gcEnabled ? gc_enable() : gc_disable();
+            set_time_limit((int) $maxExecutionTime);
+        }
     }
 
     #[TestDox('Handles a new connection being opened')]
