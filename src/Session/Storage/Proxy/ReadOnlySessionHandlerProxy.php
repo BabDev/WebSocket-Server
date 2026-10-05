@@ -79,14 +79,20 @@ final class ReadOnlySessionHandlerProxy extends AbstractProxy implements \Sessio
         throw new ReadOnlySession('Cannot write updated session data with a read-only session.');
     }
 
-    public function destroy(string $id): bool
+    /**
+     * @throws ReadOnlySession
+     */
+    public function destroy(string $id): never
     {
-        return $this->handler->destroy($id);
+        throw new ReadOnlySession('Cannot destroy the session data with a read-only session.');
     }
 
-    public function gc(int $max_lifetime): int|false
+    /**
+     * @throws ReadOnlySession
+     */
+    public function gc(int $max_lifetime): never
     {
-        return $this->handler->gc($max_lifetime);
+        throw new ReadOnlySession('Cannot run garbage collection on the session data with a read-only session.');
     }
 
     public function validateId(string $id): bool

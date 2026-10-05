@@ -93,28 +93,24 @@ final class ReadOnlySessionHandlerProxyTest extends TestCase
         $this->proxy->write($id, $data);
     }
 
-    public function testDestroysTheSession(): void
+    public function testForbidsDestroyingTheSession(): never
     {
-        $id = 'a1b2c3';
+        $this->handler->expects($this->never())
+            ->method('destroy');
 
-        $this->handler->expects($this->once())
-            ->method('destroy')
-            ->with($id)
-            ->willReturn(true);
+        $this->expectException(ReadOnlySession::class);
 
-        $this->assertTrue($this->proxy->destroy($id));
+        $this->proxy->destroy('a1b2c3');
     }
 
-    public function testRunsGarbageCollectionOnTheSession(): void
+    public function testForbidsRunningGarbageCollectionOnTheSession(): never
     {
-        $lifetime = 1000;
+        $this->handler->expects($this->never())
+            ->method('gc');
 
-        $this->handler->expects($this->once())
-            ->method('gc')
-            ->with($lifetime)
-            ->willReturn(20);
+        $this->expectException(ReadOnlySession::class);
 
-        $this->assertSame(20, $this->proxy->gc($lifetime));
+        $this->proxy->gc(1000);
     }
 
     public function testCanValidateASessionId(): void
