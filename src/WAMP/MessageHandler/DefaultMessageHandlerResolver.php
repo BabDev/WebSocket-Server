@@ -12,10 +12,15 @@ use BabDev\WebSocket\Server\WAMP\WAMPMessageRequest;
 
 /**
  * The default message handler resolver is a message handler resolver which returns a message handler set on the route's
- * "_controller" attribute or attempts to create a new instance of a handler class.
+ * "_controller" attribute or creates an instance of a handler class, which is reused for all later messages.
  */
 final class DefaultMessageHandlerResolver implements MessageHandlerResolver
 {
+    /**
+     * @var array<lowercase-string, MessageHandler|MessageMiddleware>
+     */
+    private array $handlers = [];
+
     /**
      * @throws CannotInstantiateMessageHandler if the message handler cannot be instantiated by the resolver
      * @throws InvalidMessageHandler           if the resolved object is not a valid message handler
@@ -36,6 +41,12 @@ final class DefaultMessageHandlerResolver implements MessageHandlerResolver
             throw new InvalidRequest(\sprintf('The "%s" class only supports strings or an instance of "%s" or "%s" as the "_controller" parameter in the request attributes, "%s" given.', self::class, MessageHandler::class, MessageMiddleware::class, get_debug_type($handler)));
         }
 
+        $cacheKey = strtolower(ltrim($handler, '\\'));
+
+        if (isset($this->handlers[$cacheKey])) {
+            return $this->handlers[$cacheKey];
+        }
+
         if (!class_exists($handler)) {
             throw new UnknownMessageHandler(\sprintf('Message handler "%s" does not exist.', $handler));
         }
@@ -50,6 +61,6 @@ final class DefaultMessageHandlerResolver implements MessageHandlerResolver
             throw new InvalidMessageHandler(\sprintf('A message handler resolver can only return instances of "%s" or "%s", ensure "%s" implements the right interface.', MessageHandler::class, MessageMiddleware::class, $handler::class));
         }
 
-        return $handler;
+        return $this->handlers[$cacheKey] = $handler;
     }
 }

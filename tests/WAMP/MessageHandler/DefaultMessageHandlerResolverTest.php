@@ -2,6 +2,7 @@
 
 namespace BabDev\WebSocket\Server\Tests\WAMP\MessageHandler;
 
+use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use BabDev\WebSocket\Server\Tests\WAMP\MessageHandler\Fixtures\AdvancedMessageHandler;
 use BabDev\WebSocket\Server\Tests\WAMP\MessageHandler\Fixtures\BasicMessageHandler;
 use BabDev\WebSocket\Server\Tests\WAMP\MessageHandler\Fixtures\MissingInterfaceMessageHandler;
@@ -11,6 +12,7 @@ use BabDev\WebSocket\Server\WAMP\Exception\InvalidRequest;
 use BabDev\WebSocket\Server\WAMP\Exception\UnknownMessageHandler;
 use BabDev\WebSocket\Server\WAMP\MessageHandler\DefaultMessageHandlerResolver;
 use BabDev\WebSocket\Server\WAMP\WAMPMessageRequest;
+use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\ParameterBag;
 
@@ -45,6 +47,36 @@ final class DefaultMessageHandlerResolverTest extends TestCase
             BasicMessageHandler::class,
             new DefaultMessageHandlerResolver()->findMessageHandler(new WAMPMessageRequest($attributes)),
         );
+    }
+
+    #[TestDox('Reuses the message handler instance created for a class string')]
+    public function testReusesTheMessageHandlerInstanceForAClassString(): void
+    {
+        $resolver = new DefaultMessageHandlerResolver();
+
+        $handler = $resolver->findMessageHandler($this->createRequest(BasicMessageHandler::class));
+
+        $this->assertSame($handler, $resolver->findMessageHandler($this->createRequest(BasicMessageHandler::class)));
+        $this->assertSame($handler, $resolver->findMessageHandler($this->createRequest('\\'.BasicMessageHandler::class)), 'A leading namespace separator should resolve the same instance.');
+        $this->assertSame($handler, $resolver->findMessageHandler($this->createRequest(strtoupper(BasicMessageHandler::class))), 'Class names are case-insensitive.');
+        $this->assertNotSame($handler, new DefaultMessageHandlerResolver()->findMessageHandler($this->createRequest(BasicMessageHandler::class)), 'Each resolver should create its own instances.');
+    }
+
+    #[TestDox('Does not reuse a failed attempt to resolve a message handler')]
+    #[DoesNotPerformAssertions]
+    public function testDoesNotCacheInvalidMessageHandlers(): void
+    {
+        $resolver = new DefaultMessageHandlerResolver();
+
+        for ($i = 0; $i < 2; ++$i) {
+            try {
+                $resolver->findMessageHandler($this->createRequest(MissingInterfaceMessageHandler::class));
+
+                self::fail(\sprintf('A %s exception should have been thrown.', InvalidMessageHandler::class));
+            } catch (InvalidMessageHandler) {
+                // Expected
+            }
+        }
     }
 
     public function testCannotResolveAMessageHandlerWhenTheControllerRequestAttributeIsNotAStringOrHandlerClass(): void
@@ -85,5 +117,13 @@ final class DefaultMessageHandlerResolverTest extends TestCase
         $attributes->set('_controller', MissingInterfaceMessageHandler::class);
 
         new DefaultMessageHandlerResolver()->findMessageHandler(new WAMPMessageRequest($attributes));
+    }
+
+    private function createRequest(string $handler): WAMPMessageRequest
+    {
+        $attributes = new ParameterBag();
+        $attributes->set('_controller', $handler);
+
+        return new WAMPMessageRequest($attributes);
     }
 }
