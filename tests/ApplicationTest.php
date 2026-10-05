@@ -89,6 +89,52 @@ final class ApplicationTest extends TestCase
         new Application("unix://{$this->socketPath}", [], $loop)->run();
     }
 
+    #[TestDox('Registers handlers for the SIGTERM and SIGINT signals')]
+    public function testRegistersShutdownSignals(): void
+    {
+        if (!\defined('SIGTERM') || !\defined('SIGINT')) {
+            self::markTestSkipped('The "pcntl" extension is required to test signal handling.');
+        }
+
+        $handlers = [];
+
+        /** @var MockObject&LoopInterface $loop */
+        $loop = $this->createMock(LoopInterface::class);
+        $loop->expects($this->exactly(2))
+            ->method('addSignal')
+            ->willReturnCallback(static function (int $signal, callable $listener) use (&$handlers): void {
+                $handlers[$signal] = $listener;
+            });
+
+        $loop->expects($this->exactly(2))
+            ->method('removeSignal')
+            ->with($this->logicalOr(\SIGTERM, \SIGINT), $this->isCallable());
+
+        // With no open connections, the server stops the loop immediately when shut down
+        $loop->expects($this->once())
+            ->method('stop');
+
+        new Application("unix://{$this->socketPath}", [], $loop)->run();
+
+        $this->assertSame([\SIGTERM, \SIGINT], array_keys($handlers));
+
+        $handlers[\SIGTERM]();
+    }
+
+    #[TestDox('Does not register signal handlers when the shutdown timeout is disabled')]
+    public function testDoesNotRegisterShutdownSignalsWhenDisabled(): void
+    {
+        /** @var MockObject&LoopInterface $loop */
+        $loop = $this->createMock(LoopInterface::class);
+        $loop->expects($this->never())
+            ->method('addSignal');
+
+        $loop->expects($this->once())
+            ->method('run');
+
+        new Application("unix://{$this->socketPath}", [], $loop)->withShutdownTimeout(null)->run();
+    }
+
     #[TestDox('Rejects a blocked client address forwarded by a trusted proxy')]
     public function testBlocksForwardedClientAddressFromTrustedProxy(): void
     {
@@ -169,7 +215,8 @@ final class ApplicationTest extends TestCase
             $loop->stop();
         });
 
-        $application->run();
+        // Signal handlers are process-wide and would outlive this test's event loop
+        $application->withShutdownTimeout(null)->run();
 
         if (!\is_resource($client)) {
             self::fail('The client could not connect to the server.');
@@ -216,7 +263,8 @@ final class ApplicationTest extends TestCase
             $loop->stop();
         });
 
-        $application->run();
+        // Signal handlers are process-wide and would outlive this test's event loop
+        $application->withShutdownTimeout(null)->run();
 
         if (!\is_resource($client)) {
             self::fail('The client could not connect to the server.');

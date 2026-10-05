@@ -172,6 +172,23 @@ final class EstablishWebSocketConnection implements ServerMiddleware
         }
     }
 
+    /**
+     * Closes all established WebSocket connections with a close frame.
+     */
+    public function closeAllConnections(int $code = Frame::CLOSE_GOING_AWAY): void
+    {
+        // Closing a connection can synchronously trigger onClose(), so the connections are copied before iterating
+        $openConnections = [];
+
+        foreach ($this->connections as $connection) {
+            $openConnections[] = $this->connections[$connection]->connection;
+        }
+
+        foreach ($openConnections as $webSocketConnection) {
+            $webSocketConnection->close($code);
+        }
+    }
+
     public function setStrictSubProtocolCheck(bool $enable): void
     {
         $this->negotiator->setStrictSubProtocolCheck($enable);

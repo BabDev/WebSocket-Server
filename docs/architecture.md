@@ -34,6 +34,12 @@ If the `onError()` method itself throws (for example, an event listener for the 
 
 Data sent to a client which is not reading it is buffered in memory. To prevent a slow or unresponsive client from exhausting the server's memory, the server closes the connection once 1 MiB of data has been written to it after its write buffer is full. The limit can be changed with the fifth argument to the `BabDev\WebSocket\Server\ReactPhpServer` constructor, or with the `withWriteBufferLimit()` method when using the `Application` class; pass `null` to disable it.
 
+### Graceful Shutdown
+
+The `BabDev\WebSocket\Server\ReactPhpServer::shutdown()` method stops the server: it stops accepting new connections, closes all open connections, and stops the event loop once they are closed. Connections which have not closed when the timeout expires (5 seconds by default) are forcibly closed. To close WebSocket connections with a "1001 Going Away" close frame first, call the `closeAllConnections()` method of the `BabDev\WebSocket\Server\WebSocket\Middleware\EstablishWebSocketConnection` middleware before shutting down the server.
+
+When using the `Application` class, the server is shut down this way when the process receives a `SIGTERM` or `SIGINT` signal (for example, when a container is stopped or Ctrl+C is pressed), provided the event loop supports signals (which for the default event loop requires the `pcntl` extension). A second signal stops the process immediately. The timeout can be changed with the `withShutdownTimeout()` method; pass `null` to not handle these signals.
+
 ## Middleware Based Design
 
 Similar to [Ratchet](https://github.com/ratchetphp/Ratchet), the WebSocket Server package uses a [middleware based architecture](/open-source/packages/websocket-server/docs/1.x/middleware) to represent the application.

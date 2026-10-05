@@ -58,6 +58,8 @@ final class Application
      */
     private ?int $writeBufferLimit = ReactPhpServer::DEFAULT_WRITE_BUFFER_LIMIT;
 
+    private ?float $shutdownTimeout = 5.0;
+
     private ?SessionFactoryInterface $sessionFactory = null;
 
     private ?OptionsHandler $optionsHandler = null;
@@ -117,7 +119,7 @@ final class Application
         $middleware = new UpdateTopicSubscriptions($middleware, $topicRegistry);
         $middleware = new ParseWAMPMessage($middleware, $topicRegistry);
 
-        $middleware = new EstablishWebSocketConnection($middleware);
+        $middleware = $webSocketMiddleware = new EstablishWebSocketConnection($middleware);
 
         if (null !== $this->keepAliveInterval) {
             $middleware->enableKeepAlive($this->loop, $this->keepAliveInterval);
@@ -149,7 +151,13 @@ final class Application
 
         $socket = new SocketServer($this->uri, $this->context, $this->loop);
 
-        new ReactPhpServer($middleware, $socket, $this->loop, $this->logger, $this->writeBufferLimit)->run();
+        $server = new ReactPhpServer($middleware, $socket, $this->loop, $this->logger, $this->writeBufferLimit);
+
+        if (null !== $this->shutdownTimeout) {
+            $this->registerShutdownSignals($webSocketMiddleware, $server, $this->shutdownTimeout);
+        }
+
+        $server->run();
     }
 
     public function route(string $path, MessageHandler|MessageMiddleware|string $handler, int $priority = 0): self
@@ -237,6 +245,17 @@ final class Application
     public function withWriteBufferLimit(?int $limit): self
     {
         $this->writeBufferLimit = $limit;
+
+        return $this;
+    }
+
+    /**
+     * Sets the number of seconds to wait for connections to close when the server is stopped by a SIGTERM or SIGINT
+     * signal, or null to not handle these signals.
+     */
+    public function withShutdownTimeout(?float $timeout): self
+    {
+        $this->shutdownTimeout = $timeout;
 
         return $this;
     }
@@ -346,5 +365,32 @@ final class Application
         );
 
         return $this;
+    }
+
+    private function registerShutdownSignals(EstablishWebSocketConnection $webSocketMiddleware, ReactPhpServer $server, float $timeout): void
+    {
+        if (!\defined('SIGTERM') || !\defined('SIGINT')) {
+            return;
+        }
+
+        $signals = [\SIGTERM, \SIGINT];
+
+        $handler = function () use (&$handler, $signals, $webSocketMiddleware, $server, $timeout): void {
+            // Restore the default signal handling so a second signal stops the server immediately
+            foreach ($signals as $signal) {
+                $this->loop->removeSignal($signal, $handler);
+            }
+
+            $webSocketMiddleware->closeAllConnections();
+            $server->shutdown($timeout);
+        };
+
+        try {
+            foreach ($signals as $signal) {
+                $this->loop->addSignal($signal, $handler);
+            }
+        } catch (\BadMethodCallException) {
+            // The event loop does not support signals
+        }
     }
 }

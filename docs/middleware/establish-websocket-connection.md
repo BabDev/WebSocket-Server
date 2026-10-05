@@ -42,6 +42,10 @@ $middleware = new EstablishWebSocketConnection(
 
 When a limit is `null` (the default), the default of the `ratchet/rfc6455` package is used, which is a quarter of the `memory_limit` setting. This means there is no limit when the memory limit is disabled (`memory_limit = -1`, which is common for long-running CLI processes), so setting explicit limits is recommended. A limit of `0` disables the limit.
 
+## Closing All Connections
+
+The middleware's `closeAllConnections()` method closes every established WebSocket connection with a close frame, using the "1001 Going Away" status code by default. This is used to close connections cleanly when the server is shutting down (see the [graceful shutdown](/open-source/packages/websocket-server/docs/1.x/architecture#graceful-shutdown) section from the architecture documentation).
+
 ## Position in Middleware Stack
 
 It is recommended that this middleware is decorated by the `BabDev\WebSocket\Server\Http\Middleware\ParseHttpRequest` middleware in your application (see the [message flow](/open-source/packages/websocket-server/docs/1.x/architecture#message-flow) section from the architecture documentation to see the recommended stack with all optional middleware), however it can be placed anywhere after the HTTP request has been parsed and does not expect one of the server middleware sub-interfaces.

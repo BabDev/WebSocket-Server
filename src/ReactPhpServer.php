@@ -8,6 +8,7 @@ use BabDev\WebSocket\Server\Connection\RemoteAddress;
 use Psr\Log\LoggerInterface;
 use React\EventLoop\Loop;
 use React\EventLoop\LoopInterface;
+use React\EventLoop\TimerInterface;
 use React\Socket\ConnectionInterface;
 use React\Socket\ServerInterface;
 
@@ -15,7 +16,7 @@ use React\Socket\ServerInterface;
  * The {@see ReactPhpServer} is an implementation of the server interface which runs a WebSocket server stack using
  * the ReactPHP library.
  */
-final readonly class ReactPhpServer implements Server
+final class ReactPhpServer implements Server
 {
     /**
      * The default number of bytes which can be written to a connection after its write buffer is full before the
@@ -23,23 +24,33 @@ final readonly class ReactPhpServer implements Server
      */
     public const int DEFAULT_WRITE_BUFFER_LIMIT = 1_048_576;
 
-    private LoopInterface $loop;
+    private readonly LoopInterface $loop;
+
+    /**
+     * @var \SplObjectStorage<ConnectionInterface, null>
+     */
+    private readonly \SplObjectStorage $connections;
+
+    private ?TimerInterface $shutdownTimer = null;
+
+    private bool $shuttingDown = false;
 
     /**
      * @param int<1, max>|null $writeBufferLimit
      */
     public function __construct(
-        private ServerMiddleware $middleware,
-        private ServerInterface $socket,
+        private readonly ServerMiddleware $middleware,
+        private readonly ServerInterface $socket,
         ?LoopInterface $loop = null,
-        private ?LoggerInterface $logger = null,
-        private ?int $writeBufferLimit = self::DEFAULT_WRITE_BUFFER_LIMIT,
+        private readonly ?LoggerInterface $logger = null,
+        private readonly ?int $writeBufferLimit = self::DEFAULT_WRITE_BUFFER_LIMIT,
     ) {
         gc_enable();
         set_time_limit(0);
         ob_implicit_flush();
 
         $this->loop = $loop ?? Loop::get();
+        $this->connections = new \SplObjectStorage();
 
         $socket->on('connection', $this->onConnection(...));
     }
@@ -47,6 +58,38 @@ final readonly class ReactPhpServer implements Server
     public function run(): void
     {
         $this->loop->run();
+    }
+
+    public function shutdown(float $timeout = 5.0): void
+    {
+        if ($this->shuttingDown) {
+            return;
+        }
+
+        $this->shuttingDown = true;
+
+        $this->socket->close();
+
+        // Closing a connection removes it from the storage, so the connections are copied before iterating
+        foreach (iterator_to_array($this->connections, false) as $connection) {
+            $connection->end();
+        }
+
+        if (0 === $this->connections->count()) {
+            $this->loop->stop();
+
+            return;
+        }
+
+        $this->shutdownTimer = $this->loop->addTimer($timeout, function (): void {
+            $this->shutdownTimer = null;
+
+            foreach (iterator_to_array($this->connections, false) as $connection) {
+                $connection->close();
+            }
+
+            $this->loop->stop();
+        });
     }
 
     /**
@@ -72,10 +115,18 @@ final readonly class ReactPhpServer implements Server
             },
         );
 
+        $this->connections->offsetSet($connection);
+
         $connection->on(
             'close',
-            function () use ($decoratedConnection): void {
+            function () use ($connection, $decoratedConnection): void {
+                $this->connections->offsetUnset($connection);
+
                 $this->onEnd($decoratedConnection);
+
+                if ($this->shuttingDown && 0 === $this->connections->count()) {
+                    $this->stopAfterShutdown();
+                }
             },
         );
 
@@ -142,6 +193,16 @@ final readonly class ReactPhpServer implements Server
 
             $this->closeAfterFailure($connection);
         }
+    }
+
+    private function stopAfterShutdown(): void
+    {
+        if ($this->shutdownTimer instanceof TimerInterface) {
+            $this->loop->cancelTimer($this->shutdownTimer);
+            $this->shutdownTimer = null;
+        }
+
+        $this->loop->stop();
     }
 
     /**

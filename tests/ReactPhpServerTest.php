@@ -372,6 +372,119 @@ final class ReactPhpServerTest extends TestCase
         $this->assertFalse($closed, 'The connection should remain open without a write buffer limit.');
     }
 
+    #[TestDox('Shuts down the server by closing all connections and stopping the event loop')]
+    public function testShutdownClosesConnectionsAndStopsTheLoop(): void
+    {
+        [$server, $port, $closedCount] = $this->createServerForShutdown(sendOnOpen: false);
+
+        $firstClient = stream_socket_client("tcp://127.0.0.1:{$port}");
+        $secondClient = stream_socket_client("tcp://127.0.0.1:{$port}");
+
+        $this->assertIsResource($firstClient);
+        $this->assertIsResource($secondClient);
+
+        $this->tickLoop(Loop::get());
+
+        $elapsed = $this->runLoopUntilStopped(static function () use ($server): void {
+            $server->shutdown(1.0);
+        });
+
+        $this->assertSame(2, $closedCount->value, 'All connections should be closed.');
+        $this->assertLessThan(0.5, $elapsed, 'The event loop should stop as soon as all connections are closed.');
+        $this->assertFalse(@stream_socket_client("tcp://127.0.0.1:{$port}", timeout: 0.1), 'The server should no longer accept connections.');
+
+        fclose($firstClient);
+        fclose($secondClient);
+    }
+
+    #[TestDox('Forcibly closes connections which have not closed when the shutdown timeout expires')]
+    public function testShutdownForciblyClosesConnectionsAfterTheTimeout(): void
+    {
+        [$server, $port, $closedCount] = $this->createServerForShutdown(sendOnOpen: true);
+
+        // The client never reads the data sent to it, so its connection cannot finish flushing and close
+        $client = stream_socket_client("tcp://127.0.0.1:{$port}");
+
+        $this->assertIsResource($client);
+
+        $this->tickLoop(Loop::get());
+
+        $elapsed = $this->runLoopUntilStopped(static function () use ($server): void {
+            $server->shutdown(0.1);
+        });
+
+        $this->assertSame(1, $closedCount->value, 'The connection should be closed.');
+        $this->assertGreaterThanOrEqual(0.1, $elapsed, 'The connection should only be closed once the timeout expires.');
+        $this->assertLessThan(1.0, $elapsed);
+
+        fclose($client);
+    }
+
+    /**
+     * @return array{ReactPhpServer, int, object{value: int}}
+     */
+    private function createServerForShutdown(bool $sendOnOpen): array
+    {
+        // The connections are made to this test's server, not the one created in setUp()
+        $this->middleware->expects($this->never())
+            ->method('onOpen');
+
+        $socket = new SocketServer('127.0.0.1:0', [], Loop::get());
+
+        $port = parse_url((string) $socket->getAddress(), \PHP_URL_PORT);
+
+        if (!\is_int($port)) {
+            $socket->close();
+
+            self::fail('Could not extract port from socket server address');
+        }
+
+        $closedCount = new class {
+            public int $value = 0;
+        };
+
+        $middleware = $this->createStub(ServerMiddleware::class);
+        $middleware->method('onOpen')
+            ->willReturnCallback(static function (Connection $connection) use ($sendOnOpen): void {
+                if ($sendOnOpen) {
+                    for ($i = 0; $i < 64; ++$i) {
+                        $connection->send(str_repeat('a', 65536));
+                    }
+                }
+            });
+
+        $middleware->method('onClose')
+            ->willReturnCallback(static function () use ($closedCount): void {
+                ++$closedCount->value;
+            });
+
+        return [new ReactPhpServer($middleware, $socket, Loop::get(), $this->logger, null), $port, $closedCount];
+    }
+
+    /**
+     * Runs the event loop until it is stopped (or a 2 second safety limit expires), returning the elapsed time.
+     *
+     * @param callable(): void $callback Called on the first tick of the loop
+     */
+    private function runLoopUntilStopped(callable $callback): float
+    {
+        $loop = Loop::get();
+
+        $loop->futureTick($callback);
+
+        $safetyTimer = $loop->addTimer(2.0, static function () use ($loop): void {
+            $loop->stop();
+        });
+
+        $start = microtime(true);
+
+        $loop->run();
+
+        $loop->cancelTimer($safetyTimer);
+
+        return microtime(true) - $start;
+    }
+
     /**
      * Runs a server which sends 4 MiB of data to a connected client which never reads it.
      *

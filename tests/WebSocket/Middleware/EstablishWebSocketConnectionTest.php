@@ -392,6 +392,28 @@ final class EstablishWebSocketConnectionTest extends TestCase
         $this->assertSame(0, $connection->closeCount);
     }
 
+    #[TestDox('Closes all established connections with a "1001 Going Away" close frame')]
+    public function testClosesAllConnections(): void
+    {
+        $negotiator = $this->createStub(NegotiatorInterface::class);
+        $negotiator->method('handshake')
+            ->willReturn(new Response(101, ['Upgrade' => 'websocket', 'Connection' => 'Upgrade']));
+
+        $middleware = new EstablishWebSocketConnection($this->createStub(ServerMiddleware::class), $negotiator);
+
+        $connections = [$this->openConnection($middleware), $this->openConnection($middleware)];
+
+        $middleware->closeAllConnections();
+
+        foreach ($connections as $connection) {
+            $closeFrame = $this->lastSent($connection);
+
+            $this->assertSame(Frame::OP_CLOSE, $this->getOpcode($closeFrame));
+            $this->assertSame(Frame::CLOSE_GOING_AWAY, unpack('n', $this->getPayload($closeFrame))[1] ?? null);
+            $this->assertSame(1, $connection->closeCount);
+        }
+    }
+
     /**
      * @return array{EstablishWebSocketConnection, callable(): void}
      */
