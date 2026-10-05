@@ -13,6 +13,8 @@ use PHPUnit\Framework\TestCase;
 use React\EventLoop\Loop;
 use React\EventLoop\LoopInterface;
 use React\EventLoop\StreamSelectLoop;
+use React\Socket\Connection as ReactConnection;
+use React\Socket\ConnectionInterface;
 use React\Socket\ServerInterface;
 use React\Socket\SocketServer;
 
@@ -114,6 +116,70 @@ final class ReactPhpServerTest extends TestCase
             $gcEnabled ? gc_enable() : gc_disable();
             set_time_limit((int) $maxExecutionTime);
         }
+    }
+
+    #[TestDox('Identifies a connection by its stream resource')]
+    public function testUsesTheStreamResourceIdForReactConnections(): void
+    {
+        $resourceId = null;
+        $streamId = null;
+
+        $this->middleware->expects($this->once())
+            ->method('onOpen')
+            ->willReturnCallback(static function (Connection $connection) use (&$resourceId, &$streamId): void {
+                $resourceId = $connection->getAttributeStore()->get('resource_id');
+
+                $reactConnection = $connection->getConnection();
+
+                if ($reactConnection instanceof ReactConnection && \is_resource($reactConnection->stream)) {
+                    $streamId = (int) $reactConnection->stream;
+                }
+            });
+
+        $client = stream_socket_client("tcp://localhost:{$this->port}");
+
+        $this->tickLoop(Loop::get());
+
+        $this->assertIsInt($streamId);
+        $this->assertSame($streamId, $resourceId);
+
+        if (\is_resource($client)) {
+            fclose($client);
+        }
+    }
+
+    #[TestDox('Identifies a connection which does not expose a stream resource by its object ID')]
+    public function testUsesTheObjectIdForOtherConnections(): void
+    {
+        $resourceId = null;
+
+        $this->middleware->expects($this->never())
+            ->method('onOpen');
+
+        $middleware = $this->createStub(ServerMiddleware::class);
+        $middleware->method('onOpen')
+            ->willReturnCallback(static function (Connection $connection) use (&$resourceId): void {
+                $resourceId = $connection->getAttributeStore()->get('resource_id');
+            });
+
+        $connection = $this->createStub(ConnectionInterface::class);
+
+        $warnings = [];
+
+        set_error_handler(static function (int $errno, string $errstr) use (&$warnings): bool {
+            $warnings[] = $errstr;
+
+            return true;
+        });
+
+        try {
+            new ReactPhpServer($middleware, $this->createStub(ServerInterface::class), Loop::get())->onConnection($connection);
+        } finally {
+            restore_error_handler();
+        }
+
+        $this->assertSame([], $warnings);
+        $this->assertSame(spl_object_id($connection), $resourceId);
     }
 
     #[TestDox('Handles a new connection being opened')]

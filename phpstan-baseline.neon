@@ -1,18 +1,6 @@
 parameters:
 	ignoreErrors:
 		-
-			message: '#^Access to an undefined property React\\Socket\\ConnectionInterface\:\:\$stream\.$#'
-			identifier: property.notFound
-			count: 1
-			path: src/ReactPhpServer.php
-
-		-
-			message: '#^Cannot cast mixed to int\.$#'
-			identifier: cast.int
-			count: 1
-			path: src/ReactPhpServer.php
-
-		-
 			message: '#^Parameter \#1 \$id of method Symfony\\Component\\HttpFoundation\\Session\\SessionInterface\:\:setId\(\) expects string, mixed given\.$#'
 			identifier: argument.type
 			count: 1

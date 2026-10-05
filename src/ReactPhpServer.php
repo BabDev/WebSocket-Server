@@ -9,6 +9,7 @@ use Psr\Log\LoggerInterface;
 use React\EventLoop\Loop;
 use React\EventLoop\LoopInterface;
 use React\EventLoop\TimerInterface;
+use React\Socket\Connection as ReactConnection;
 use React\Socket\ConnectionInterface;
 use React\Socket\ServerInterface;
 
@@ -102,7 +103,7 @@ final class ReactPhpServer implements Server
         $uri = $connection->getRemoteAddress();
 
         $decoratedConnection = new ReactSocketConnection($connection, new ArrayAttributeStore(), $this->writeBufferLimit);
-        $decoratedConnection->getAttributeStore()->set('resource_id', (int) $connection->stream);
+        $decoratedConnection->getAttributeStore()->set('resource_id', $this->getResourceId($connection));
 
         if (null !== $uri && null !== $remoteAddress = RemoteAddress::fromUri($uri)) {
             $decoratedConnection->getAttributeStore()->set('remote_address', $remoteAddress);
@@ -193,6 +194,18 @@ final class ReactPhpServer implements Server
 
             $this->closeAfterFailure($connection);
         }
+    }
+
+    /**
+     * The `stream` property is only available on the {@see ReactConnection} class, other implementations use their object ID.
+     */
+    private function getResourceId(ConnectionInterface $connection): int
+    {
+        if ($connection instanceof ReactConnection && \is_resource($connection->stream)) {
+            return (int) $connection->stream;
+        }
+
+        return spl_object_id($connection);
     }
 
     private function stopAfterShutdown(): void
