@@ -3,6 +3,7 @@
 namespace BabDev\WebSocket\Server\WAMP\Middleware;
 
 use BabDev\WebSocket\Server\Connection;
+use BabDev\WebSocket\Server\Connection\AttributeKey;
 use BabDev\WebSocket\Server\WAMP\Exception\RouteNotFound;
 use BabDev\WebSocket\Server\WAMP\Topic;
 use BabDev\WebSocket\Server\WAMP\TopicRegistry;
@@ -33,7 +34,7 @@ final readonly class UpdateTopicSubscriptions implements WAMPServerMiddleware
      */
     public function onOpen(Connection $connection): void
     {
-        $connection->getAttributeStore()->set('wamp.subscriptions', new \SplObjectStorage());
+        $connection->getAttributeStore()->set(AttributeKey::WAMP_SUBSCRIPTIONS, new \SplObjectStorage());
 
         $this->middleware->onOpen($connection);
     }
@@ -54,7 +55,7 @@ final readonly class UpdateTopicSubscriptions implements WAMPServerMiddleware
         $this->middleware->onClose($connection);
 
         /** @var \SplObjectStorage<Topic, null>|null $subscriptions */
-        $subscriptions = $connection->getAttributeStore()->get('wamp.subscriptions');
+        $subscriptions = $connection->getAttributeStore()->get(AttributeKey::WAMP_SUBSCRIPTIONS);
 
         if (!$subscriptions instanceof \SplObjectStorage) {
             return;
@@ -91,7 +92,7 @@ final readonly class UpdateTopicSubscriptions implements WAMPServerMiddleware
     public function onSubscribe(WAMPConnection $connection, Topic $topic): void
     {
         /** @var \SplObjectStorage<Topic, null> $subscriptions */
-        $subscriptions = $connection->getAttributeStore()->get('wamp.subscriptions', new \SplObjectStorage());
+        $subscriptions = $connection->getAttributeStore()->get(AttributeKey::WAMP_SUBSCRIPTIONS, new \SplObjectStorage());
 
         if ($subscriptions->offsetExists($topic)) {
             return;
@@ -121,7 +122,7 @@ final readonly class UpdateTopicSubscriptions implements WAMPServerMiddleware
     public function onUnsubscribe(WAMPConnection $connection, Topic $topic): void
     {
         /** @var \SplObjectStorage<Topic, null> $subscriptions */
-        $subscriptions = $connection->getAttributeStore()->get('wamp.subscriptions', new \SplObjectStorage());
+        $subscriptions = $connection->getAttributeStore()->get(AttributeKey::WAMP_SUBSCRIPTIONS, new \SplObjectStorage());
 
         if (!$subscriptions->offsetExists($topic)) {
             return;
@@ -153,7 +154,7 @@ final readonly class UpdateTopicSubscriptions implements WAMPServerMiddleware
     private function cleanTopic(Topic $topic, Connection $connection): void
     {
         /** @var \SplObjectStorage<Topic, null> $subscriptions */
-        $subscriptions = $connection->getAttributeStore()->get('wamp.subscriptions', new \SplObjectStorage());
+        $subscriptions = $connection->getAttributeStore()->get(AttributeKey::WAMP_SUBSCRIPTIONS, new \SplObjectStorage());
 
         if ($subscriptions->offsetExists($topic)) {
             $subscriptions->offsetUnset($topic);

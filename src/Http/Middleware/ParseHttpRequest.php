@@ -3,6 +3,7 @@
 namespace BabDev\WebSocket\Server\Http\Middleware;
 
 use BabDev\WebSocket\Server\Connection;
+use BabDev\WebSocket\Server\Connection\AttributeKey;
 use BabDev\WebSocket\Server\Connection\ClosesConnectionWithResponse;
 use BabDev\WebSocket\Server\Http\Exception\InvalidRequestTimeout;
 use BabDev\WebSocket\Server\Http\Exception\MalformedRequest;
@@ -42,7 +43,7 @@ final class ParseHttpRequest implements ServerMiddleware
      */
     public function onOpen(Connection $connection): void
     {
-        $connection->getAttributeStore()->set('http.headers_received', false);
+        $connection->getAttributeStore()->set(AttributeKey::HTTP_HEADERS_RECEIVED, false);
 
         if ($this->loop instanceof LoopInterface) {
             $this->requestTimers->offsetSet(
@@ -59,7 +60,7 @@ final class ParseHttpRequest implements ServerMiddleware
      */
     public function onMessage(Connection $connection, string $data): void
     {
-        if (true === $connection->getAttributeStore()->get('http.headers_received')) {
+        if (true === $connection->getAttributeStore()->get(AttributeKey::HTTP_HEADERS_RECEIVED)) {
             $this->middleware->onMessage($connection, $data);
 
             return;
@@ -81,8 +82,8 @@ final class ParseHttpRequest implements ServerMiddleware
 
         $this->cancelRequestTimer($connection);
 
-        $connection->getAttributeStore()->set('http.headers_received', true);
-        $connection->getAttributeStore()->set('http.request', $request);
+        $connection->getAttributeStore()->set(AttributeKey::HTTP_HEADERS_RECEIVED, true);
+        $connection->getAttributeStore()->set(AttributeKey::HTTP_REQUEST, $request);
 
         $this->middleware->onOpen($connection);
     }
@@ -94,7 +95,7 @@ final class ParseHttpRequest implements ServerMiddleware
     {
         $this->cancelRequestTimer($connection);
 
-        if (true === $connection->getAttributeStore()->get('http.headers_received')) {
+        if (true === $connection->getAttributeStore()->get(AttributeKey::HTTP_HEADERS_RECEIVED)) {
             $this->middleware->onClose($connection);
         }
     }
@@ -104,7 +105,7 @@ final class ParseHttpRequest implements ServerMiddleware
      */
     public function onError(Connection $connection, \Throwable $throwable): void
     {
-        if (true === $connection->getAttributeStore()->get('http.headers_received')) {
+        if (true === $connection->getAttributeStore()->get(AttributeKey::HTTP_HEADERS_RECEIVED)) {
             $this->middleware->onError($connection, $throwable);
         } else {
             $this->close($connection, 500);
@@ -133,11 +134,11 @@ final class ParseHttpRequest implements ServerMiddleware
     {
         $this->requestTimers->offsetUnset($connection);
 
-        if (true === $connection->getAttributeStore()->get('http.headers_received')) {
+        if (true === $connection->getAttributeStore()->get(AttributeKey::HTTP_HEADERS_RECEIVED)) {
             return;
         }
 
-        $connection->getAttributeStore()->remove('http.buffer');
+        $connection->getAttributeStore()->remove(AttributeKey::HTTP_BUFFER);
 
         try {
             $this->close($connection, 408);

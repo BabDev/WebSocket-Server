@@ -3,6 +3,7 @@
 namespace BabDev\WebSocket\Server\WAMP\Middleware;
 
 use BabDev\WebSocket\Server\Connection;
+use BabDev\WebSocket\Server\Connection\AttributeKey;
 use BabDev\WebSocket\Server\Server;
 use BabDev\WebSocket\Server\WAMP\DefaultWAMPConnection;
 use BabDev\WebSocket\Server\WAMP\Exception\InvalidMessage;
@@ -59,8 +60,8 @@ final class ParseWAMPMessage implements WebSocketServerMiddleware
     public function onOpen(Connection $connection): void
     {
         $decoratedConnection = new DefaultWAMPConnection($connection);
-        $decoratedConnection->getAttributeStore()->set('wamp.session_id', $sessionId = bin2hex(random_bytes(32)));
-        $decoratedConnection->getAttributeStore()->set('wamp.prefixes', []);
+        $decoratedConnection->getAttributeStore()->set(AttributeKey::WAMP_SESSION_ID, $sessionId = bin2hex(random_bytes(32)));
+        $decoratedConnection->getAttributeStore()->set(AttributeKey::WAMP_PREFIXES, []);
 
         try {
             $decoratedConnection->send(json_encode([MessageType::WELCOME, $sessionId, self::WAMP_PROTOCOL_VERSION, $this->serverIdentity], \JSON_THROW_ON_ERROR));
@@ -105,7 +106,7 @@ final class ParseWAMPMessage implements WebSocketServerMiddleware
                 $prefixUri = $this->getStringElement($message, 2, 'prefix URI');
 
                 /** @var array<string, string> $prefixes */
-                $prefixes = $decoratedConnection->getAttributeStore()->get('wamp.prefixes', []);
+                $prefixes = $decoratedConnection->getAttributeStore()->get(AttributeKey::WAMP_PREFIXES, []);
 
                 // Replacing an already registered prefix is allowed when the limit has been reached
                 if (!isset($prefixes[$prefix]) && \count($prefixes) >= $this->maxPrefixes) {
@@ -114,7 +115,7 @@ final class ParseWAMPMessage implements WebSocketServerMiddleware
 
                 $prefixes[$prefix] = $prefixUri;
 
-                $decoratedConnection->getAttributeStore()->set('wamp.prefixes', $prefixes);
+                $decoratedConnection->getAttributeStore()->set(AttributeKey::WAMP_PREFIXES, $prefixes);
 
                 break;
 
@@ -159,7 +160,7 @@ final class ParseWAMPMessage implements WebSocketServerMiddleware
                 $exclude = $message[3] ?? false;
 
                 if (true === $exclude) {
-                    $sessionId = $decoratedConnection->getAttributeStore()->get('wamp.session_id');
+                    $sessionId = $decoratedConnection->getAttributeStore()->get(AttributeKey::WAMP_SESSION_ID);
 
                     $exclude = \is_string($sessionId) ? [$sessionId] : [];
                 } elseif (false === $exclude) {

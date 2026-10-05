@@ -3,6 +3,7 @@
 namespace BabDev\WebSocket\Server\WAMP;
 
 use BabDev\WebSocket\Server\Connection;
+use BabDev\WebSocket\Server\Connection\AttributeKey;
 use BabDev\WebSocket\Server\Exception\UnsupportedConnection;
 
 /**
@@ -83,7 +84,7 @@ final readonly class Topic implements \IteratorAggregate, \Countable, \Stringabl
 
         /** @var WAMPConnection $subscriber */
         foreach ($this->subscribers as $subscriber) {
-            $sessionId = $subscriber->getAttributeStore()->get('wamp.session_id');
+            $sessionId = $subscriber->getAttributeStore()->get(AttributeKey::WAMP_SESSION_ID);
 
             if ($useExclude && \in_array($sessionId, $exclude, true)) {
                 continue;

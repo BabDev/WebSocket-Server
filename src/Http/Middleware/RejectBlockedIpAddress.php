@@ -3,6 +3,7 @@
 namespace BabDev\WebSocket\Server\Http\Middleware;
 
 use BabDev\WebSocket\Server\Connection;
+use BabDev\WebSocket\Server\Connection\AttributeKey;
 use BabDev\WebSocket\Server\Connection\ClosesConnectionWithResponse;
 use BabDev\WebSocket\Server\ServerMiddleware;
 use Symfony\Component\HttpFoundation\IpUtils;
@@ -94,7 +95,7 @@ final class RejectBlockedIpAddress implements ServerMiddleware
     private function isConnectionRemoteAddressBlocked(Connection $connection): bool
     {
         /** @var non-empty-string|null $address */
-        $address = $connection->getAttributeStore()->get('remote_address');
+        $address = $connection->getAttributeStore()->get(AttributeKey::REMOTE_ADDRESS);
 
         if (null === $address || [] === $this->blockedAddresses) {
             return false;

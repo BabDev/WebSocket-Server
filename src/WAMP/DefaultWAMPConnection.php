@@ -3,6 +3,7 @@
 namespace BabDev\WebSocket\Server\WAMP;
 
 use BabDev\WebSocket\Server\Connection;
+use BabDev\WebSocket\Server\Connection\AttributeKey;
 use BabDev\WebSocket\Server\Connection\AttributeStore;
 use BabDev\WebSocket\Server\Exception\UnsupportedConnection;
 use BabDev\WebSocket\Server\WAMP\Exception\InvalidMessage;
@@ -120,10 +121,10 @@ final readonly class DefaultWAMPConnection implements WAMPConnection
     public function prefix(string $prefix, string $uri): void
     {
         /** @var array<string, string> $prefixes */
-        $prefixes = $this->getAttributeStore()->get('wamp.prefixes', []);
+        $prefixes = $this->getAttributeStore()->get(AttributeKey::WAMP_PREFIXES, []);
         $prefixes[$prefix] = $uri;
 
-        $this->getAttributeStore()->set('wamp.prefixes', $prefixes);
+        $this->getAttributeStore()->set(AttributeKey::WAMP_PREFIXES, $prefixes);
 
         try {
             $this->send(json_encode([MessageType::PREFIX, $prefix, $uri], \JSON_THROW_ON_ERROR));
@@ -147,7 +148,7 @@ final readonly class DefaultWAMPConnection implements WAMPConnection
         [$prefix, $action] = explode(self::CURIE_SEPARATOR, $uri);
 
         /** @var array<string, string> $prefixes */
-        $prefixes = $this->getAttributeStore()->get('wamp.prefixes', []);
+        $prefixes = $this->getAttributeStore()->get(AttributeKey::WAMP_PREFIXES, []);
 
         if (isset($prefixes[$prefix])) {
             return $prefixes[$prefix].'#'.$action;

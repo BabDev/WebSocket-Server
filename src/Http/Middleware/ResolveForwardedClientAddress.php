@@ -3,6 +3,7 @@
 namespace BabDev\WebSocket\Server\Http\Middleware;
 
 use BabDev\WebSocket\Server\Connection;
+use BabDev\WebSocket\Server\Connection\AttributeKey;
 use BabDev\WebSocket\Server\Connection\ClosesConnectionWithResponse;
 use BabDev\WebSocket\Server\Connection\RemoteAddress;
 use BabDev\WebSocket\Server\Http\Exception\ConflictingForwardedHeaders;
@@ -66,14 +67,14 @@ final readonly class ResolveForwardedClientAddress implements ServerMiddleware
     public function onOpen(Connection $connection): void
     {
         /** @var RequestInterface|null $request */
-        $request = $connection->getAttributeStore()->get('http.request');
+        $request = $connection->getAttributeStore()->get(AttributeKey::HTTP_REQUEST);
 
         if (!$request instanceof RequestInterface) {
             throw new MissingRequest(\sprintf('The "%s" middleware requires the HTTP request has been processed. Ensure the "%s" middleware (or a custom middleware setting the "http.request" in the attribute store) has been run.', self::class, ParseHttpRequest::class));
         }
 
         /** @var non-empty-string|null $remoteAddress */
-        $remoteAddress = $connection->getAttributeStore()->get('remote_address');
+        $remoteAddress = $connection->getAttributeStore()->get(AttributeKey::REMOTE_ADDRESS);
 
         if (null !== $remoteAddress) {
             $trustedProxies = $this->trustRemoteAddress ? [...$this->trustedProxies, $remoteAddress] : $this->trustedProxies;
@@ -88,8 +89,8 @@ final readonly class ResolveForwardedClientAddress implements ServerMiddleware
                 }
 
                 if (null !== $clientAddress) {
-                    $connection->getAttributeStore()->set('proxy_address', $remoteAddress);
-                    $connection->getAttributeStore()->set('remote_address', $clientAddress);
+                    $connection->getAttributeStore()->set(AttributeKey::PROXY_ADDRESS, $remoteAddress);
+                    $connection->getAttributeStore()->set(AttributeKey::REMOTE_ADDRESS, $clientAddress);
                 }
             }
         }

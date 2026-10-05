@@ -3,6 +3,7 @@
 namespace BabDev\WebSocket\Server\WebSocket;
 
 use BabDev\WebSocket\Server\Connection;
+use BabDev\WebSocket\Server\Connection\AttributeKey;
 use BabDev\WebSocket\Server\Connection\AttributeStore;
 use Ratchet\RFC6455\Messaging\DataInterface;
 use Ratchet\RFC6455\Messaging\Frame;
@@ -27,7 +28,7 @@ final readonly class DefaultWebSocketConnection implements WebSocketConnection
 
     public function send(string|DataInterface $data): void
     {
-        if (false === $this->getAttributeStore()->get('websocket.closing', false)) {
+        if (false === $this->getAttributeStore()->get(AttributeKey::WEBSOCKET_CLOSING, false)) {
             if (!$data instanceof DataInterface) {
                 $data = new Frame($data);
             }
@@ -38,7 +39,7 @@ final readonly class DefaultWebSocketConnection implements WebSocketConnection
 
     public function close(mixed $data = 1000): void
     {
-        if (true === $this->getAttributeStore()->get('websocket.closing', false)) {
+        if (true === $this->getAttributeStore()->get(AttributeKey::WEBSOCKET_CLOSING, false)) {
             return;
         }
 
@@ -50,6 +51,6 @@ final readonly class DefaultWebSocketConnection implements WebSocketConnection
 
         $this->connection->close();
 
-        $this->getAttributeStore()->set('websocket.closing', true);
+        $this->getAttributeStore()->set(AttributeKey::WEBSOCKET_CLOSING, true);
     }
 }

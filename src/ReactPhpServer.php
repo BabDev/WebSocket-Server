@@ -3,6 +3,7 @@
 namespace BabDev\WebSocket\Server;
 
 use BabDev\WebSocket\Server\Connection\ArrayAttributeStore;
+use BabDev\WebSocket\Server\Connection\AttributeKey;
 use BabDev\WebSocket\Server\Connection\ReactSocketConnection;
 use BabDev\WebSocket\Server\Connection\RemoteAddress;
 use Psr\Log\LoggerInterface;
@@ -103,10 +104,10 @@ final class ReactPhpServer implements Server
         $uri = $connection->getRemoteAddress();
 
         $decoratedConnection = new ReactSocketConnection($connection, new ArrayAttributeStore(), $this->writeBufferLimit);
-        $decoratedConnection->getAttributeStore()->set('resource_id', $this->getResourceId($connection));
+        $decoratedConnection->getAttributeStore()->set(AttributeKey::RESOURCE_ID, $this->getResourceId($connection));
 
         if (null !== $uri && null !== $remoteAddress = RemoteAddress::fromUri($uri)) {
-            $decoratedConnection->getAttributeStore()->set('remote_address', $remoteAddress);
+            $decoratedConnection->getAttributeStore()->set(AttributeKey::REMOTE_ADDRESS, $remoteAddress);
         }
 
         $connection->on(
@@ -188,7 +189,7 @@ final class ReactPhpServer implements Server
                 [
                     'exception' => $handlerThrowable,
                     'original_exception' => $throwable,
-                    'resource_id' => $connection->getAttributeStore()->get('resource_id'),
+                    'resource_id' => $connection->getAttributeStore()->get(AttributeKey::RESOURCE_ID),
                 ],
             );
 
@@ -233,7 +234,7 @@ final class ReactPhpServer implements Server
                 'An uncaught Throwable was raised while closing a connection after an error.',
                 [
                     'exception' => $throwable,
-                    'resource_id' => $connection->getAttributeStore()->get('resource_id'),
+                    'resource_id' => $connection->getAttributeStore()->get(AttributeKey::RESOURCE_ID),
                 ],
             );
         }

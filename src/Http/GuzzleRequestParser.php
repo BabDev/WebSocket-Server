@@ -3,6 +3,7 @@
 namespace BabDev\WebSocket\Server\Http;
 
 use BabDev\WebSocket\Server\Connection;
+use BabDev\WebSocket\Server\Connection\AttributeKey;
 use BabDev\WebSocket\Server\Http\Exception\MalformedRequest;
 use BabDev\WebSocket\Server\Http\Exception\MessageTooLarge;
 use GuzzleHttp\Psr7\Message;
@@ -31,13 +32,13 @@ final class GuzzleRequestParser implements RequestParser
     public function parse(Connection $connection, string $data): ?RequestInterface
     {
         /** @var string $buffer */
-        $buffer = $connection->getAttributeStore()->get('http.buffer', '');
+        $buffer = $connection->getAttributeStore()->get(AttributeKey::HTTP_BUFFER, '');
         $buffer .= $data;
 
-        $connection->getAttributeStore()->set('http.buffer', $buffer);
+        $connection->getAttributeStore()->set(AttributeKey::HTTP_BUFFER, $buffer);
 
         if (\strlen($buffer) > $this->maxRequestSize) {
-            $connection->getAttributeStore()->remove('http.buffer');
+            $connection->getAttributeStore()->remove(AttributeKey::HTTP_BUFFER);
 
             throw new MessageTooLarge("Maximum buffer size of {$this->maxRequestSize} exceeded parsing HTTP header");
         }
@@ -51,7 +52,7 @@ final class GuzzleRequestParser implements RequestParser
         } catch (\InvalidArgumentException $exception) {
             throw new MalformedRequest('The incoming request could not be parsed', previous: $exception);
         } finally {
-            $connection->getAttributeStore()->remove('http.buffer');
+            $connection->getAttributeStore()->remove(AttributeKey::HTTP_BUFFER);
         }
 
         return $request;

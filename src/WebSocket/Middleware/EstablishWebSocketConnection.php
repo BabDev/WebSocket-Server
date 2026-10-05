@@ -3,6 +3,7 @@
 namespace BabDev\WebSocket\Server\WebSocket\Middleware;
 
 use BabDev\WebSocket\Server\Connection;
+use BabDev\WebSocket\Server\Connection\AttributeKey;
 use BabDev\WebSocket\Server\Http\Exception\MissingRequest;
 use BabDev\WebSocket\Server\Http\Middleware\ParseHttpRequest;
 use BabDev\WebSocket\Server\ServerMiddleware;
@@ -81,13 +82,13 @@ final class EstablishWebSocketConnection implements ServerMiddleware
     public function onOpen(Connection $connection): void
     {
         /** @var RequestInterface|null $request */
-        $request = $connection->getAttributeStore()->get('http.request');
+        $request = $connection->getAttributeStore()->get(AttributeKey::HTTP_REQUEST);
 
         if (!$request instanceof RequestInterface) {
             throw new MissingRequest(\sprintf('The "%s" middleware requires the HTTP request has been processed. Ensure the "%s" middleware (or a custom middleware setting the "http.request" in the attribute store) has been run.', self::class, ParseHttpRequest::class));
         }
 
-        $connection->getAttributeStore()->set('websocket.closing', false);
+        $connection->getAttributeStore()->set(AttributeKey::WEBSOCKET_CLOSING, false);
 
         $response = $this->negotiator->handshake($request)
             ->withoutHeader('X-Powered-By');
@@ -139,7 +140,7 @@ final class EstablishWebSocketConnection implements ServerMiddleware
      */
     public function onMessage(Connection $connection, string $data): void
     {
-        if (true === $connection->getAttributeStore()->get('websocket.closing', false)) {
+        if (true === $connection->getAttributeStore()->get(AttributeKey::WEBSOCKET_CLOSING, false)) {
             return;
         }
 

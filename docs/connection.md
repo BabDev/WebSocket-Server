@@ -11,7 +11,7 @@ During the message lifecycle, the connection object will be decorated by `BabDev
 
 ## Attribute Store
 
-Each connection has a `BabDev\WebSocket\Server\Connection\AttributeStore` attached to it and allows storing arbitrary data for the connection. During the connection lifecycle, several pieces of data will be added to the store by the middleware provided by this package. The below keys are reserved for specific purposes and should not be replaced:
+Each connection has a `BabDev\WebSocket\Server\Connection\AttributeStore` attached to it and allows storing arbitrary data for the connection. During the connection lifecycle, several pieces of data will be added to the store by the middleware provided by this package. The below keys are reserved for specific purposes and should not be replaced (each key is also available as a constant on the `BabDev\WebSocket\Server\Connection\AttributeKey` class):
 
 | Key                     | Data                                                                            | Description                                                                                                                  |
 |-------------------------|---------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------|
