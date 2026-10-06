@@ -268,16 +268,14 @@ final class RejectBlockedIpAddressTest extends TestCase
         /** @var list<non-empty-string> $addresses */
         $addresses = $blockedAddresses->getValue($middleware);
 
-        $this->assertContains('192.168.1.1', $addresses);
-        $this->assertContains('192.168.0.0/24', $addresses);
+        $this->assertArraysHaveIdenticalValuesIgnoringOrder(['192.168.1.1', '192.168.0.0/24'], $addresses);
 
         $middleware->allowAddress('192.168.1.1');
 
         /** @var list<non-empty-string> $addresses */
         $addresses = $blockedAddresses->getValue($middleware);
 
-        $this->assertNotContains('192.168.1.1', $addresses);
-        $this->assertContains('192.168.0.0/24', $addresses);
+        $this->assertArraysHaveIdenticalValuesIgnoringOrder(['192.168.0.0/24'], $addresses);
     }
 
     /**

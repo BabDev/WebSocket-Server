@@ -37,7 +37,7 @@ final class UpdateTopicSubscriptionsTest extends TestCase
             ->method('getSubProtocols')
             ->willReturn(['wamp']);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['wamp'],
             $this->middleware->getSubProtocols(),
         );

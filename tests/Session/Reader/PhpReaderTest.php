@@ -35,7 +35,7 @@ final class PhpReaderTest extends TestCase
     #[TestDox('Reads data with scalar values, including a null value at the end of the data')]
     public function testReadsScalarValues(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['bool' => false, 'int' => 42, 'string' => 'a|b', 'null' => null],
             new PhpReader()->read('bool|b:0;int|i:42;string|s:3:"a|b";null|N;'),
         );

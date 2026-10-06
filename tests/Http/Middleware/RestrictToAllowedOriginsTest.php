@@ -324,16 +324,14 @@ final class RestrictToAllowedOriginsTest extends TestCase
         /** @var list<non-empty-string> $origins */
         $origins = $allowedOrigins->getValue($middleware);
 
-        $this->assertContains('192.168.1.1', $origins);
-        $this->assertContains('localhost', $origins);
+        $this->assertArraysHaveIdenticalValuesIgnoringOrder(['192.168.1.1', 'localhost'], $origins);
 
         $middleware->removeAllowedOrigin('192.168.1.1');
 
         /** @var list<non-empty-string> $origins */
         $origins = $allowedOrigins->getValue($middleware);
 
-        $this->assertNotContains('192.168.1.1', $origins);
-        $this->assertContains('localhost', $origins);
+        $this->assertArraysHaveIdenticalValuesIgnoringOrder(['localhost'], $origins);
     }
 
     /**

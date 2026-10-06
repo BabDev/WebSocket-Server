@@ -31,7 +31,7 @@ final class ParseWAMPMessageTest extends TestCase
             ->method('getSubProtocols')
             ->willReturn(['ws']);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['ws', 'wamp'],
             new ParseWAMPMessage($decoratedMiddleware, $this->createStub(TopicRegistry::class))->getSubProtocols(),
         );
@@ -589,7 +589,7 @@ final class ParseWAMPMessageTest extends TestCase
         $middleware->onOpen($connection);
         $middleware->onMessage($connection, json_encode([MessageType::PUBLISH, $uri, $event, true], \JSON_THROW_ON_ERROR));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [$attributeStore->get('wamp.session_id')],
             $excludedSessions,
             'When the "excludeMe" param is provided, the user\'s connection should be in the exclude list.'
@@ -639,7 +639,7 @@ final class ParseWAMPMessageTest extends TestCase
         $middleware->onOpen($connection);
         $middleware->onMessage($connection, json_encode([MessageType::PUBLISH, $uri, $event, $exclude], \JSON_THROW_ON_ERROR));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             $exclude,
             $excludedSessions,
             'The list of excluded sessions should be forwarded to inner middleware.'
@@ -689,7 +689,7 @@ final class ParseWAMPMessageTest extends TestCase
         $middleware->onOpen($connection);
         $middleware->onMessage($connection, json_encode([MessageType::PUBLISH, $uri, $event, [], $eligible], \JSON_THROW_ON_ERROR));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             $eligible,
             $eligibleSessions,
             'The list of eligible sessions should be forwarded to inner middleware.'

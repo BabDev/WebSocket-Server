@@ -49,7 +49,7 @@ final class PhpBinaryReaderTest extends TestCase
             restore_error_handler();
         }
 
-        $this->assertSame(['foo' => 'bar', 'null' => null, 'false' => false], $output);
+        $this->assertArraysAreIdentical(['foo' => 'bar', 'null' => null, 'false' => false], $output);
         $this->assertSame([], $warnings);
     }
 
