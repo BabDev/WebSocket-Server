@@ -225,10 +225,7 @@ final class EstablishWebSocketConnectionTest extends TestCase
         // The constructor call setStrictSubProtocolCheck to enable strict checks by default
         $negotiator->expects($this->exactly(2))
             ->method('setStrictSubProtocolCheck')
-            ->willReturnMap([
-                [true],
-                [false],
-            ]);
+            ->withParameterSetsInOrder([true], [false]);
 
         new EstablishWebSocketConnection($this->createStub(ServerMiddleware::class), $negotiator)->setStrictSubProtocolCheck(false);
     }

@@ -110,21 +110,20 @@ final class ApplicationTest extends TestCase
         $loop = $this->createMock(LoopInterface::class);
         $loop->expects($this->exactly(2))
             ->method('addSignal')
+            ->withParameterSetsInOrder([\SIGTERM, $this->isCallable()], [\SIGINT, $this->isCallable()])
             ->willReturnCallback(static function (int $signal, callable $listener) use (&$handlers): void {
                 $handlers[$signal] = $listener;
             });
 
         $loop->expects($this->exactly(2))
             ->method('removeSignal')
-            ->with($this->logicalOr(\SIGTERM, \SIGINT), $this->isCallable());
+            ->withParameterSetsInAnyOrder([\SIGTERM, $this->isCallable()], [\SIGINT, $this->isCallable()]);
 
         // With no open connections, the server stops the loop immediately when shut down
         $loop->expects($this->once())
             ->method('stop');
 
         new Application("unix://{$this->socketPath}", [], $loop)->run();
-
-        $this->assertSame([\SIGTERM, \SIGINT], array_keys($handlers));
 
         $handlers[\SIGTERM]();
     }

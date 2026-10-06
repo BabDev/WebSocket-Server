@@ -565,7 +565,7 @@ final class DispatchMessageToHandlerTest extends TestCase
     {
         $matcher = $this->createStub(UrlMatcherInterface::class);
         $matcher->method('match')
-            ->willReturnMap([[$uri, ['_controller' => 'rpc.handler']]]);
+            ->willReturnStrictMap([[$uri, ['_controller' => 'rpc.handler']]]);
 
         return $matcher;
     }

@@ -56,20 +56,15 @@ final class ReactSocketConnectionTest extends TestCase
         /** @var MockObject&ReactSocketConnectionInterface $reactConnection */
         $reactConnection = $this->createMock(ReactSocketConnectionInterface::class);
 
-        $writes = [];
-
         $reactConnection->expects($this->once())
             ->method('on')
             ->with('drain', $this->isCallable());
 
+        // The write buffer is full after the first write, so data over the limit should not be written
         $reactConnection->expects($this->exactly(2))
             ->method('write')
-            ->willReturnCallback(static function (string $data) use (&$writes): bool {
-                $writes[] = $data;
-
-                // The write buffer is full after the first write
-                return false;
-            });
+            ->withParameterSetsInOrder(['first'], ['second'])
+            ->willReturn(false);
 
         $reactConnection->expects($this->once())
             ->method('close');
@@ -78,8 +73,6 @@ final class ReactSocketConnectionTest extends TestCase
         $connection->send('first');
         $connection->send('second');
         $connection->send('third');
-
-        $this->assertSame(['first', 'second'], $writes, 'Data over the limit should not be written.');
     }
 
     #[TestDox('Resets the write buffer limit once the write buffer is drained')]
