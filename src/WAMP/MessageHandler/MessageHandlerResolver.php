@@ -11,8 +11,7 @@ use BabDev\WebSocket\Server\WAMP\Exception\UnknownMessageHandler;
 use BabDev\WebSocket\Server\WAMP\WAMPMessageRequest;
 
 /**
- * The message handler resolver is responsible for resolving the {@see MessageHandler} (including
- * its {@see MessageMiddleware}) for a request.
+ * Resolves the {@see MessageHandler}, or the {@see MessageMiddleware} wrapping it, that handles a WAMP request.
  */
 interface MessageHandlerResolver
 {

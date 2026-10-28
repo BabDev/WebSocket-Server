@@ -3,7 +3,7 @@
 namespace BabDev\WebSocket\Server;
 
 /**
- * The server middleware interface defines a middleware component for the WebSocket server.
+ * Handles the connections to the websocket server, their messages and their errors, as one layer of the middleware stack.
  */
 interface ServerMiddleware extends Middleware
 {

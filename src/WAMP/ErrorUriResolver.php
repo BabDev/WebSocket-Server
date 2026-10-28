@@ -5,8 +5,7 @@ namespace BabDev\WebSocket\Server\WAMP;
 use BabDev\WebSocket\Server\WAMP\Middleware\DispatchMessageToHandler;
 
 /**
- * The error URI resolver is responsible for resolving URIs for identifying errors,
- * which is provided as part of the "CALLERROR" WAMP message to the client.
+ * Resolves the URI or CURIE identifying an error type, which is sent to the client in a WAMP "CALLERROR" message.
  */
 interface ErrorUriResolver
 {

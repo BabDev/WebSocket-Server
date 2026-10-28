@@ -6,7 +6,7 @@ use BabDev\WebSocket\Server\WAMP\Exception\TopicAlreadyRegistered;
 use BabDev\WebSocket\Server\WAMP\Exception\TopicNotFound;
 
 /**
- * A topic registry is a runtime store containing the active {@see Topic} instances for the server.
+ * Holds the {@see Topic} instances that have subscribers on the websocket server keyed by the topic's ID.
  */
 interface TopicRegistry
 {

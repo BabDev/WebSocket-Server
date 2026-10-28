@@ -3,7 +3,7 @@
 namespace BabDev\WebSocket\Server;
 
 /**
- * The options handler interface provides an abstraction layer to the PHP `ini_get()` and `ini_set()` functions.
+ * Reads and changes PHP ini settings in a way that tests can mock.
  */
 interface OptionsHandler
 {

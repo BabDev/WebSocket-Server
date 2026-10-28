@@ -8,7 +8,7 @@ use BabDev\WebSocket\Server\Http\Exception\MessageTooLarge;
 use Psr\Http\Message\RequestInterface;
 
 /**
- * The request parser interface is responsible for converting an HTTP request into a {@see RequestInterface} object.
+ * Buffers the data received on a connection until it holds a complete HTTP request, then parses it.
  */
 interface RequestParser
 {
