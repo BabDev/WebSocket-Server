@@ -25,7 +25,7 @@ $middleware = new ResolveForwardedClientAddress(
 
 The list of trusted proxies supports single IP addresses and subnet ranges, as well as two special values:
 
-- `PRIVATE_SUBNETS` - trusts all private network ranges (see `Symfony\Component\HttpFoundation\IpUtils::PRIVATE_SUBNETS`)
+- `PRIVATE_SUBNETS` - trusts all private network ranges (see `Symfony\Component\HttpFoundation\IpUtils::PRIVATE_RANGES`)
 - `REMOTE_ADDR` - trusts every connection; only use this when the server can only be reached through the proxy
 
 Only the `Request::HEADER_X_FORWARDED_FOR` (the `X-Forwarded-For` header) and `Request::HEADER_FORWARDED` (the [RFC 7239](https://datatracker.ietf.org/doc/html/rfc7239) `Forwarded` header) values are used by this middleware, any other headers in the bit field are ignored.

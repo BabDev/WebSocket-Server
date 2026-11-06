@@ -90,6 +90,15 @@ final class ResolveForwardedClientAddressTest extends TestCase
 
         yield 'Private subnets keyword' => [['PRIVATE_SUBNETS'], $xff, '192.168.1.10', ['X-Forwarded-For' => '203.0.113.5'], '203.0.113.5', '192.168.1.10', true];
 
+        yield 'Private ranges keyword' => [['private_ranges'], $xff, '10.0.0.1', ['X-Forwarded-For' => '203.0.113.5'], '203.0.113.5', '10.0.0.1', true];
+
+        // These ranges embed an IPv4 address in a public IPv6 address a client can connect from, so they must not be trusted as private networks
+        yield 'Private subnets keyword does not trust a 6to4 address' => [['PRIVATE_SUBNETS'], $xff, '2002:cb00:7105::1', ['X-Forwarded-For' => '198.51.100.1'], '2002:cb00:7105::1', null, true];
+
+        yield 'Private subnets keyword does not trust a Teredo address' => [['PRIVATE_SUBNETS'], $xff, '2001:0:4136:e378:8000:63bf:3fff:fdd2', ['X-Forwarded-For' => '198.51.100.1'], '2001:0:4136:e378:8000:63bf:3fff:fdd2', null, true];
+
+        yield 'Private subnets keyword does not trust a NAT64 address' => [['PRIVATE_SUBNETS'], $xff, '64:ff9b::cb00:7105', ['X-Forwarded-For' => '198.51.100.1'], '64:ff9b::cb00:7105', null, true];
+
         yield 'Remote address keyword trusts any connection' => [['REMOTE_ADDR'], $xff, '203.0.113.99', ['X-Forwarded-For' => '198.51.100.1'], '198.51.100.1', '203.0.113.99', true];
     }
 

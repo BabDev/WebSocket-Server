@@ -271,7 +271,7 @@ final class Application
      * instead of the proxy's address. This follows the same conventions as Symfony's {@see Request::setTrustedProxies()}.
      *
      * @param list<string>                   $proxies          The addresses or subnets of the trusted proxies; the string "REMOTE_ADDR" trusts the
-     *                                                         address of every connection, and "PRIVATE_SUBNETS" trusts all private network ranges
+     *                                                         address of every connection, and "PRIVATE_SUBNETS" trusts all private network ranges ({@see \Symfony\Component\HttpFoundation\IpUtils::PRIVATE_RANGES})
      * @param int-mask-of<Request::HEADER_*> $trustedHeaderSet A bit field of the headers to trust from the proxies; only the
      *                                                         {@see Request::HEADER_FORWARDED} and {@see Request::HEADER_X_FORWARDED_FOR} headers are used
      */

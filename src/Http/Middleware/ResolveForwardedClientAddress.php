@@ -34,7 +34,7 @@ final readonly class ResolveForwardedClientAddress implements ServerMiddleware
 
     /**
      * @param list<string>                   $trustedProxies   The addresses or subnets of the trusted proxies; the string "REMOTE_ADDR" trusts
-     *                                                         the address of every connection, and "PRIVATE_SUBNETS" is replaced by {@see IpUtils::PRIVATE_SUBNETS}
+     *                                                         the address of every connection, and "PRIVATE_SUBNETS" (or "private_ranges") is replaced by {@see IpUtils::PRIVATE_RANGES}
      * @param int-mask-of<Request::HEADER_*> $trustedHeaderSet A bit field of the headers to trust from the proxies; only the
      *                                                         {@see Request::HEADER_FORWARDED} and {@see Request::HEADER_X_FORWARDED_FOR} headers are used
      */
@@ -49,7 +49,8 @@ final readonly class ResolveForwardedClientAddress implements ServerMiddleware
 
         foreach ($trustedProxies as $trustedProxy) {
             if ('PRIVATE_SUBNETS' === $trustedProxy || 'private_ranges' === $trustedProxy) {
-                array_push($proxies, ...IpUtils::PRIVATE_SUBNETS);
+                // Unlike IpUtils::PRIVATE_SUBNETS, this list has no range a remote client can connect from, such as the 6to4, Teredo, or NAT64 ranges
+                array_push($proxies, ...IpUtils::PRIVATE_RANGES);
             } elseif ('REMOTE_ADDR' !== $trustedProxy) {
                 $proxies[] = $trustedProxy;
             }
