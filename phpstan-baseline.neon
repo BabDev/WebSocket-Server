@@ -27,7 +27,7 @@ parameters:
 		-
 			message: '#^Call to an undefined method SessionHandlerInterface\|Symfony\\Component\\HttpFoundation\\Session\\Storage\\Proxy\\AbstractProxy\:\:getName\(\)\.$#'
 			identifier: method.notFound
-			count: 2
+			count: 1
 			path: src/Session/Storage/ReadOnlyNativeSessionStorage.php
 
 		-

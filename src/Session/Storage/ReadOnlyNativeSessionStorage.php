@@ -27,6 +27,11 @@ final class ReadOnlyNativeSessionStorage implements SessionStorageInterface
     private bool $closed = false;
 
     /**
+     * @var array<string, string>
+     */
+    private array $options = [];
+
+    /**
      * @var array<string, SessionBagInterface>
      */
     private array $bags = [];
@@ -53,18 +58,8 @@ final class ReadOnlyNativeSessionStorage implements SessionStorageInterface
             throw new SessionMisconfigured('PHP extension "session" is required.');
         }
 
-        $options = [
-            'auto_start' => 0,
-            'cache_limiter' => '',
-            'cache_expire' => 0,
-            'use_cookies' => 0,
-            'lazy_write' => 1,
-            'use_strict_mode' => 1,
-            ...$options,
-        ];
-
         $this->setMetadataBag($metaBag);
-        $this->setOptions($options);
+        $this->setOptions(['use_strict_mode' => 1, ...$options]);
         $this->setSaveHandler($handler);
 
         $this->reader = $reader ?? $this->createReader();
@@ -87,7 +82,7 @@ final class ReadOnlyNativeSessionStorage implements SessionStorageInterface
             return true;
         }
 
-        $this->saveHandler->open((string) $this->optionsHandler->get('session.save_path'), $this->saveHandler->getName());
+        $this->saveHandler->open((string) $this->optionsHandler->get('session.save_path'), $this->getName());
 
         if ($this->isStrictMode() && $this->saveHandler instanceof \SessionUpdateTimestampHandlerInterface && !$this->saveHandler->validateId($id)) {
             $this->loadSession([]);
@@ -128,7 +123,7 @@ final class ReadOnlyNativeSessionStorage implements SessionStorageInterface
 
     public function getName(): string
     {
-        return $this->saveHandler->getName();
+        return $this->options['name'] ?? $this->saveHandler->getName();
     }
 
     /**
@@ -204,14 +199,15 @@ final class ReadOnlyNativeSessionStorage implements SessionStorageInterface
     }
 
     /**
-     * Sets session.* ini variables.
+     * Sets the session options, using the "session." ini setting names without the prefix.
      *
-     * For convenience we omit 'session.' from the beginning of the keys.
-     * Explicitly ignores other ini keys.
+     * The options are kept by the storage, the PHP ini settings are not changed.
      *
      * @see NativeSessionStorage::setOptions()
      *
      * @note The options list is based on the supported options as of Symfony 7.2.0
+     *
+     * @throws \TypeError if an option value is not a scalar or null
      */
     public function setOptions(array $options): void
     {
@@ -235,8 +231,12 @@ final class ReadOnlyNativeSessionStorage implements SessionStorageInterface
                     continue;
                 }
 
-                // @phpstan-ignore-next-line argument.type
-                $this->optionsHandler->set('session.'.$key, $value);
+                $this->options[$key] = match (true) {
+                    null === $value, false === $value => '',
+                    true === $value => '1',
+                    \is_scalar($value) => (string) $value,
+                    default => throw new \TypeError(\sprintf('The "%s" session option must be a scalar or null, "%s" given.', $key, get_debug_type($value))),
+                };
             }
         }
     }
@@ -257,11 +257,13 @@ final class ReadOnlyNativeSessionStorage implements SessionStorageInterface
      */
     private function createReader(): Reader
     {
-        return match ($this->optionsHandler->get('session.serialize_handler')) {
+        $serializeHandler = $this->getOption('serialize_handler');
+
+        return match ($serializeHandler) {
             'php' => new PhpReader(),
             'php_binary' => new PhpBinaryReader(),
             'php_serialize' => new PhpSerializeReader(),
-            default => throw new SessionMisconfigured(\sprintf('The "%s" serialize handler is not supported in "%s", set the PHP "session.serialize_handler" option to a supported handler or inject your own "%s" instance.', $this->optionsHandler->get('session.serialize_handler'), self::class, Reader::class)),
+            default => throw new SessionMisconfigured(\sprintf('The "%s" serialize handler is not supported in "%s", set the "serialize_handler" storage option or the PHP "session.serialize_handler" setting to a supported handler or inject your own "%s" instance.', $serializeHandler, self::class, Reader::class)),
         };
     }
 
@@ -278,7 +280,12 @@ final class ReadOnlyNativeSessionStorage implements SessionStorageInterface
 
     private function isStrictMode(): bool
     {
-        return filter_var($this->optionsHandler->get('session.use_strict_mode'), \FILTER_VALIDATE_BOOLEAN);
+        return filter_var($this->getOption('use_strict_mode'), \FILTER_VALIDATE_BOOLEAN);
+    }
+
+    private function getOption(string $key): string|false
+    {
+        return $this->options[$key] ?? $this->optionsHandler->get('session.'.$key);
     }
 
     private function loadSession(array $session): void

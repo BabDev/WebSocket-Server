@@ -14,42 +14,40 @@ final class ReadOnlyNativeSessionStorageFactoryTest extends TestCase
 {
     private const string SESSION_NAME = 'TestSession';
 
-    private readonly ReadOnlyNativeSessionStorageFactory $factory;
-
-    protected function setUp(): void
-    {
-        $optionsHandler = $this->createOptionsHandler();
-        $optionsHandler->set('session.save_handler', 'user');
-        $optionsHandler->set('session.name', self::SESSION_NAME);
-
-        $this->factory = new ReadOnlyNativeSessionStorageFactory(
-            optionsHandler: $optionsHandler,
-            reader: $this->createStub(Reader::class),
-            handler: $this->createStub(\SessionHandlerInterface::class),
-        );
-    }
-
     public function testCreatesTheStorageInstance(): void
     {
-        $this->assertInstanceOf(ReadOnlyNativeSessionStorage::class, $this->factory->createStorage(null));
+        $factory = new ReadOnlyNativeSessionStorageFactory(
+            optionsHandler: $this->createOptionsHandler(['session.save_handler' => 'user', 'session.name' => self::SESSION_NAME]),
+            reader: $this->createStub(Reader::class),
+            options: ['name' => 'CustomSession'],
+            handler: $this->createStub(\SessionHandlerInterface::class),
+        );
+
+        $storage = $factory->createStorage(null);
+
+        $this->assertInstanceOf(ReadOnlyNativeSessionStorage::class, $storage);
+        $this->assertSame('CustomSession', $storage->getName());
     }
 
-    private function createOptionsHandler(): OptionsHandler
+    /**
+     * @param array<string, string> $ini
+     */
+    private function createOptionsHandler(array $ini = []): OptionsHandler
     {
-        return new class implements OptionsHandler {
+        return new readonly class($ini) implements OptionsHandler {
             /**
-             * @var array<string, string>
+             * @param array<string, string> $ini
              */
-            private array $options = [];
+            public function __construct(private array $ini) {}
 
             public function get(string $option): string
             {
-                return $this->options[$option] ?? '';
+                return $this->ini[$option] ?? '';
             }
 
-            public function set(string $option, string|int|float|bool|null $value): string
+            public function set(string $option, string|int|float|bool|null $value): never
             {
-                return $this->options[$option] = (string) $value;
+                throw new \LogicException(\sprintf('The "%s" ini setting must not be changed.', $option));
             }
         };
     }

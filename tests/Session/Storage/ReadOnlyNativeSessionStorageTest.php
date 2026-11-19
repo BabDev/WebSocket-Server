@@ -5,6 +5,7 @@ namespace BabDev\WebSocket\Server\Tests\Session\Storage;
 use BabDev\WebSocket\Server\OptionsHandler;
 use BabDev\WebSocket\Server\Session\Exception\InvalidSession;
 use BabDev\WebSocket\Server\Session\Exception\ReadOnlySession;
+use BabDev\WebSocket\Server\Session\Exception\SessionMisconfigured;
 use BabDev\WebSocket\Server\Session\Reader\Reader;
 use BabDev\WebSocket\Server\Session\Storage\ReadOnlyNativeSessionStorage;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -199,7 +200,7 @@ final class ReadOnlyNativeSessionStorageTest extends TestCase
         $reader->expects($this->never())
             ->method('read');
 
-        $storage = $this->createStorage($reader, $handler, strictMode: true);
+        $storage = $this->createStorage($reader, $handler, options: ['use_strict_mode' => true]);
         $storage->setId(self::SESSION_ID);
         $storage->registerBag($bag = new AttributeBag('_sf2_attributes'));
 
@@ -230,7 +231,7 @@ final class ReadOnlyNativeSessionStorageTest extends TestCase
             ->with('')
             ->willReturn([]);
 
-        $storage = $this->createStorage($reader, $handler, strictMode: false);
+        $storage = $this->createStorage($reader, $handler, options: ['use_strict_mode' => false]);
         $storage->setId(self::SESSION_ID);
 
         $this->assertTrue($storage->start());
@@ -255,7 +256,7 @@ final class ReadOnlyNativeSessionStorageTest extends TestCase
             ->method('read')
             ->willReturn([]);
 
-        $storage = $this->createStorage($reader, $handler, savePath: '/var/lib/websocket-sessions');
+        $storage = $this->createStorage($reader, $handler, ini: ['session.save_path' => '/var/lib/websocket-sessions']);
         $storage->setId(self::SESSION_ID);
         $storage->start();
     }
@@ -284,40 +285,108 @@ final class ReadOnlyNativeSessionStorageTest extends TestCase
         $storage->start();
     }
 
-    private function createStorage(?Reader $reader = null, ?\SessionHandlerInterface $handler = null, ?bool $strictMode = null, ?string $savePath = null): ReadOnlyNativeSessionStorage
+    #[TestDox('Keeps the session options without changing the PHP ini settings')]
+    public function testKeepsTheSessionOptionsWithoutChangingTheIniSettings(): void
     {
-        $optionsHandler = $this->createOptionsHandler();
-        $optionsHandler->set('session.save_handler', 'user');
-        $optionsHandler->set('session.name', self::SESSION_NAME);
+        $handler = $this->createMock(\SessionHandlerInterface::class);
+        $handler->expects($this->once())
+            ->method('open')
+            ->with($this->isString(), 'CustomSession')
+            ->willReturn(true);
 
-        if (null !== $savePath) {
-            $optionsHandler->set('session.save_path', $savePath);
-        }
+        $handler->expects($this->once())
+            ->method('read')
+            ->with(self::SESSION_ID)
+            ->willReturn(serialize(['_sf2_attributes' => ['foo' => 'bar']]));
 
+        $storage = new ReadOnlyNativeSessionStorage(
+            optionsHandler: $this->createOptionsHandler(['session.name' => self::SESSION_NAME, 'session.serialize_handler' => 'php']),
+            options: [
+                'cache_expire' => 180,
+                'cache_limiter' => 'nocache',
+                'cookie_domain' => 'example.com',
+                'cookie_httponly' => true,
+                'cookie_lifetime' => 0,
+                'cookie_path' => '/',
+                'cookie_secure' => 'auto',
+                'cookie_samesite' => null,
+                'gc_divisor' => 100,
+                'gc_maxlifetime' => 1440,
+                'gc_probability' => 1,
+                'lazy_write' => false,
+                'name' => 'CustomSession',
+                'serialize_handler' => 'php_serialize',
+                'use_strict_mode' => false,
+                'use_cookies' => true,
+                'not_a_session_option' => 'ignored',
+            ],
+            handler: $handler,
+        );
+
+        $storage->setId(self::SESSION_ID);
+        $storage->registerBag($bag = new AttributeBag('_sf2_attributes'));
+
+        $this->assertSame('CustomSession', $storage->getName());
+        $this->assertTrue($storage->start());
+        $this->assertSame('bar', $bag->get('foo'));
+    }
+
+    #[TestDox('Throws an exception when the serialize handler option is not supported')]
+    public function testThrowsAnExceptionWhenTheSerializeHandlerOptionIsNotSupported(): void
+    {
+        $this->expectException(SessionMisconfigured::class);
+
+        new ReadOnlyNativeSessionStorage(
+            optionsHandler: $this->createOptionsHandler(['session.serialize_handler' => 'php']),
+            options: ['serialize_handler' => 'unsupported'],
+            handler: $this->createStub(\SessionHandlerInterface::class),
+        );
+    }
+
+    #[TestDox('Throws an exception when an option value is not a scalar or null')]
+    public function testThrowsAnExceptionWhenAnOptionValueIsNotScalar(): void
+    {
+        $this->expectException(\TypeError::class);
+
+        $this->createStorage(options: ['name' => ['invalid']]);
+    }
+
+    /**
+     * @param array<string, mixed>  $options
+     * @param array<string, string> $ini
+     */
+    private function createStorage(?Reader $reader = null, ?\SessionHandlerInterface $handler = null, array $options = [], array $ini = []): ReadOnlyNativeSessionStorage
+    {
         return new ReadOnlyNativeSessionStorage(
-            optionsHandler: $optionsHandler,
+            optionsHandler: $this->createOptionsHandler(['session.save_handler' => 'user', 'session.name' => self::SESSION_NAME, ...$ini]),
             reader: $reader ?? $this->createStub(Reader::class),
-            options: null !== $strictMode ? ['use_strict_mode' => $strictMode ? 1 : 0] : [],
+            options: $options,
             handler: $handler ?? $this->createStub(\SessionHandlerInterface::class),
         );
     }
 
-    private function createOptionsHandler(): OptionsHandler
+    /**
+     * Creates an options handler which rejects changes, as PHP does for session ini settings at runtime when
+     * "session.upload_progress.enabled" is on.
+     *
+     * @param array<string, string> $ini
+     */
+    private function createOptionsHandler(array $ini = []): OptionsHandler
     {
-        return new class implements OptionsHandler {
+        return new readonly class($ini) implements OptionsHandler {
             /**
-             * @var array<string, string>
+             * @param array<string, string> $ini
              */
-            private array $options = [];
+            public function __construct(private array $ini) {}
 
             public function get(string $option): string
             {
-                return $this->options[$option] ?? '';
+                return $this->ini[$option] ?? '';
             }
 
-            public function set(string $option, string|int|float|bool|null $value): string
+            public function set(string $option, string|int|float|bool|null $value): never
             {
-                return $this->options[$option] = (string) $value;
+                throw new \LogicException(\sprintf('The "%s" ini setting must not be changed.', $option));
             }
         };
     }
